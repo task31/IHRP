@@ -28,13 +28,23 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ## Completed Phases
 
-_None yet — phases will be summarized here as they close._
+### Phase 0 — Scaffold + Auth ✅ _(closed 2026-03-19)_
+
+- Laravel 13 + PHP 8.3 scaffolded into `web/` (Composer resolved 13.x; plan said 11 — runtime is 13)
+- 14 MySQL migrations: 11 from SQLite schema + `daily_call_reports`, `placements`, `users` (extended)
+- Laravel Breeze (Blade), Livewire, barryvdh/laravel-dompdf, Alpine.js via CDN
+- `RequireRole` middleware (variadic roles, `abort(403)`); Gate `admin` + `account_manager`
+- `AdminUserController` + `/admin/users` CRUD (list, create, edit, toggle active)
+- Seeded admin: `admin@matchpointegroup.com` / `changeme123` / role=admin
+- Shell layout: Tailwind CDN, sidebar placeholders, `@can('admin')` nav, flash messages
+- HTTP smoke passed: `/login` 200, admin→`/admin/users` 200, employee→403
+- Known carry-forward: PHPUnit needs SQLite fix for test env; `daily_call_reports` + `placements` are stubs
 
 ---
 
 ## Active Phase
 
-**Phase 0** — Scaffold + Auth — IN PROGRESS
+**Phase 1** — Backend Port — PENDING
 
 ---
 

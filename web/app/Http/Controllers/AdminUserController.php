@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Consultant;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
+
+class AdminUserController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): View
+    {
+        $this->authorize('admin');
+
+        $users = User::query()
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.users.index', compact('users'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): View
+    {
+        $this->authorize('admin');
+
+        $consultants = Consultant::query()
+            ->where('active', true)
+            ->orderBy('full_name')
+            ->get();
+
+        return view('admin.users.create', compact('consultants'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $this->authorize('admin');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8'],
+            'role' => ['required', 'in:admin,account_manager,employee'],
+            'consultant_id' => ['nullable', 'exists:consultants,id'],
+            'active' => ['nullable', 'boolean'],
+        ]);
+
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'consultant_id' => $validated['consultant_id'] ?? null,
+            'active' => (bool) ($validated['active'] ?? true),
+        ]);
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User created successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id): RedirectResponse
+    {
+        $this->authorize('admin');
+
+        return redirect()->route('admin.users.edit', $id);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(User $user): View
+    {
+        $this->authorize('admin');
+
+        $consultants = Consultant::query()
+            ->where('active', true)
+            ->orderBy('full_name')
+            ->get();
+
+        return view('admin.users.edit', compact('user', 'consultants'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        $this->authorize('admin');
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'password' => ['nullable', 'string', 'min:8'],
+            'role' => ['required', 'in:admin,account_manager,employee'],
+            'consultant_id' => ['nullable', 'exists:consultants,id'],
+            'active' => ['nullable', 'boolean'],
+        ]);
+
+        $payload = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'consultant_id' => $validated['consultant_id'] ?? null,
+            'active' => (bool) ($validated['active'] ?? false),
+        ];
+
+        if (! empty($validated['password'])) {
+            $payload['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($payload);
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(User $user): RedirectResponse
+    {
+        $this->authorize('admin');
+
+        if ($user->id === auth()->id()) {
+            return redirect()
+                ->route('admin.users.index')
+                ->with('error', 'You cannot deactivate your own account.');
+        }
+
+        $user->update(['active' => false]);
+
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'User deactivated.');
+    }
+}

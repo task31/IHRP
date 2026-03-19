@@ -3,9 +3,10 @@
   "configurations": [
     {
       "name": "Laravel Dev Server",
-      "runtimeExecutable": "php",
+      "runtimeExecutable": "C:\\Users\\zobel\\AppData\\Local\\Microsoft\\WinGet\\Packages\\PHP.PHP.8.3_Microsoft.Winget.Source_8wekyb3d8bbwe\\php.exe",
       "runtimeArgs": ["artisan", "serve", "--port=8000"],
-      "port": 8000
+      "port": 8000,
+      "cwd": "${workspaceFolder}/web"
     }
   ]
 }
