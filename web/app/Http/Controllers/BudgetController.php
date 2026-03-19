@@ -153,6 +153,10 @@ class BudgetController extends Controller
 
             if ($pct >= $critThreshold && ! ($r['budget_alert_critical_sent'] ?? false)) {
                 Client::query()->where('id', $cid)->update(['budget_alert_critical_sent' => true]);
+                AppService::auditLog('clients', $cid, 'BUDGET_ALERT', [], [
+                    'type' => 'critical',
+                    'pct' => $pct,
+                ]);
                 $newAlerts[] = [
                     'client_id' => $cid,
                     'client_name' => $r['client_name'],
@@ -162,6 +166,10 @@ class BudgetController extends Controller
                 ];
             } elseif ($pct >= $warnThreshold && ! ($r['budget_alert_warning_sent'] ?? false)) {
                 Client::query()->where('id', $cid)->update(['budget_alert_warning_sent' => true]);
+                AppService::auditLog('clients', $cid, 'BUDGET_ALERT', [], [
+                    'type' => 'warning',
+                    'pct' => $pct,
+                ]);
                 $newAlerts[] = [
                     'client_id' => $cid,
                     'client_name' => $r['client_name'],

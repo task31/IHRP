@@ -2,21 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Backup;
+use App\Models\InvoiceSequence;
 use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\View\View;
 
 class SettingsController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $this->authorize('admin');
-        $rows = DB::table('settings')->select('key', 'value')->get();
+        $rows = DB::table('settings')->pluck('value', 'key');
+        $sequence = InvoiceSequence::query()->firstOrCreate(
+            ['id' => 1],
+            ['prefix' => '', 'next_number' => 1]
+        );
 
-        return response()->json($rows->pluck('value', 'key'));
+        if ($request->expectsJson()) {
+            return response()->json($rows);
+        }
+
+        return view('settings.index', [
+            'settings' => $rows,
+            'sequence' => $sequence,
+            'backups' => Backup::query()->orderByDesc('created_at')->limit(50)->get(),
+        ]);
     }
 
     public function update(Request $request): JsonResponse
@@ -34,24 +50,30 @@ class SettingsController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function setLogo(Request $request): JsonResponse
+    public function setLogo(Request $request): JsonResponse|RedirectResponse
     {
         $this->authorize('admin');
         $request->validate(['logo' => ['required', 'image', 'max:5120']]);
 
         $path = $request->file('logo')->getRealPath();
         if ($path === false) {
-            return response()->json(['ok' => false, 'error' => 'Invalid file'], 422);
+            return $request->expectsJson()
+                ? response()->json(['ok' => false, 'error' => 'Invalid file'], 422)
+                : back()->with('error', 'Invalid file');
         }
 
         $contents = file_get_contents($path);
         if ($contents === false) {
-            return response()->json(['ok' => false, 'error' => 'Could not read file'], 422);
+            return $request->expectsJson()
+                ? response()->json(['ok' => false, 'error' => 'Could not read file'], 422)
+                : back()->with('error', 'Could not read file');
         }
 
         $img = @imagecreatefromstring($contents);
         if ($img === false) {
-            return response()->json(['ok' => false, 'error' => 'Could not load image'], 422);
+            return $request->expectsJson()
+                ? response()->json(['ok' => false, 'error' => 'Could not load image'], 422)
+                : back()->with('error', 'Could not load image');
         }
 
         $w = imagesx($img);
@@ -64,7 +86,9 @@ class SettingsController extends Controller
         $resized = imagescale($img, $newW, $newH);
         imagedestroy($img);
         if ($resized === false) {
-            return response()->json(['ok' => false, 'error' => 'Resize failed'], 422);
+            return $request->expectsJson()
+                ? response()->json(['ok' => false, 'error' => 'Resize failed'], 422)
+                : back()->with('error', 'Resize failed');
         }
 
         ob_start();
@@ -72,14 +96,20 @@ class SettingsController extends Controller
         $png = ob_get_clean();
         imagedestroy($resized);
         if ($png === false) {
-            return response()->json(['ok' => false, 'error' => 'Encode failed'], 422);
+            return $request->expectsJson()
+                ? response()->json(['ok' => false, 'error' => 'Encode failed'], 422)
+                : back()->with('error', 'Encode failed');
         }
 
         $dataUri = 'data:image/png;base64,'.base64_encode($png);
         AppService::setSetting('agency_logo_base64', $dataUri);
         AppService::auditLog('settings', 0, 'SETTINGS_CHANGE', ['agency_logo_base64' => '[updated]'], []);
 
-        return response()->json(['ok' => true, 'dataUri' => $dataUri]);
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'dataUri' => $dataUri]);
+        }
+
+        return redirect()->route('settings.index')->with('success', 'Logo updated');
     }
 
     public function testSmtp(Request $request): JsonResponse
