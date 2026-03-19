@@ -81,11 +81,11 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::get('ledger', [LedgerController::class, 'index'])->name('ledger.index');
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/monthly-csv', [ReportController::class, 'downloadMonthlyCsv'])->name('reports.monthly-csv');
     Route::get('reports/monthly', [ReportController::class, 'monthly'])->name('reports.monthly');
     Route::get('reports/year-end', [ReportController::class, 'yearEnd'])->name('reports.year-end');
     Route::get('reports/quickbooks', [ReportController::class, 'quickbooks'])->name('reports.quickbooks');
     Route::post('reports/save-pdf', [ReportController::class, 'savePdf'])->name('reports.save-pdf');
-    Route::post('reports/save-csv', [ReportController::class, 'saveCsv'])->name('reports.save-csv');
 
     Route::get('budget', [BudgetController::class, 'index'])->name('budget.index');
     Route::get('budget/{year}', [BudgetController::class, 'show'])->name('budget.show');
