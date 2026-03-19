@@ -45,9 +45,18 @@ class BudgetController extends Controller
             $arr = (array) $row;
             $tb = (float) ($arr['total_budget'] ?? 0);
             $billed = (float) ($arr['total_billed'] ?? 0);
-            $arr['utilization_pct'] = $tb > 0 ? ($billed / $tb * 100) : 0;
+            $pct = $tb > 0 ? ($billed / $tb * 100) : 0.0;
 
-            return $arr;
+            return [
+                'client_id' => (int) ($arr['client_id'] ?? 0),
+                'client_name' => (string) ($arr['client_name'] ?? ''),
+                'budget' => $tb,
+                'spent' => $billed,
+                'pct' => $pct,
+                'remaining' => $tb - $billed,
+                'budget_alert_warning_sent' => (bool) ($arr['budget_alert_warning_sent'] ?? false),
+                'budget_alert_critical_sent' => (bool) ($arr['budget_alert_critical_sent'] ?? false),
+            ];
         }, $rows);
 
         return response()->json($out);

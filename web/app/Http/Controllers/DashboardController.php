@@ -4,9 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function page(): View
+    {
+        return view('dashboard');
+    }
+
     public function index(): JsonResponse
     {
         $role = auth()->user()?->role;
