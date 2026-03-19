@@ -7,10 +7,29 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
+        <style>[x-cloak] { display: none !important; }</style>
+
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <script src="https://cdn.tailwindcss.com"></script>
+
+        <script>
+            function apiFetch(url, options = {}) {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                const token = meta ? meta.content : '';
+                const { headers: optHeaders = {}, ...rest } = options;
+                return fetch(url, {
+                    ...rest,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                        ...optHeaders,
+                    },
+                });
+            }
+        </script>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -24,16 +43,56 @@
                 <p class="mt-1 text-xs text-gray-400">Internal Payroll Portal</p>
 
                 <nav class="mt-6 space-y-2 text-sm">
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="{{ route('dashboard') }}">Dashboard</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Clients</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Consultants</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Timesheets</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Invoices</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Reports</a>
-                    <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Ledger</a>
+                    <a href="{{ route('dashboard') }}" @class([
+                        'block rounded px-3 py-2',
+                        'bg-gray-800 font-medium text-white' => request()->routeIs('dashboard'),
+                        'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('dashboard'),
+                    ])>Dashboard</a>
+
+                    @can('account_manager')
+                        <a href="{{ route('clients.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('clients.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('clients.*'),
+                        ])>Clients</a>
+                        <a href="{{ route('consultants.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('consultants.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('consultants.*'),
+                        ])>Consultants</a>
+                        <a href="{{ route('timesheets.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('timesheets.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('timesheets.*'),
+                        ])>Timesheets</a>
+                        <a href="{{ route('invoices.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('invoices.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('invoices.*'),
+                        ])>Invoices</a>
+                        <a href="{{ route('ledger.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('ledger.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('ledger.*'),
+                        ])>Ledger</a>
+                        <a href="{{ route('reports.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('reports.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('reports.*'),
+                        ])>Reports</a>
+                    @endcan
+
                     @can('admin')
-                        <a class="block rounded px-3 py-2 hover:bg-gray-800" href="{{ route('admin.users.index') }}">Admin Users</a>
-                        <a class="block rounded px-3 py-2 hover:bg-gray-800" href="#">Settings</a>
+                        <a href="{{ route('settings.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('settings.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('settings.*'),
+                        ])>Settings</a>
+                        <a href="{{ route('admin.users.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('admin.users.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('admin.users.*'),
+                        ])>Admin</a>
                     @endcan
                 </nav>
 
@@ -72,5 +131,39 @@
                 {{ $slot }}
             </main>
         </div>
+
+        <div
+            x-data="toastManager()"
+            x-on:toast.window="add($event.detail)"
+            class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+        >
+            <template x-for="t in toasts" :key="t.id">
+                <div
+                    x-show="t.show"
+                    x-transition
+                    class="flex items-center gap-2 rounded px-4 py-3 text-sm text-white shadow-lg"
+                    :class="t.type === 'error' ? 'bg-red-600' : 'bg-green-600'"
+                >
+                    <span x-text="t.message"></span>
+                    <button type="button" @click="remove(t.id)" class="ml-auto opacity-70 hover:opacity-100" aria-label="Dismiss">✕</button>
+                </div>
+            </template>
+        </div>
+
+        <script>
+            function toastManager() {
+                return {
+                    toasts: [],
+                    add({ message, type = 'success', duration = 3500 }) {
+                        const id = Date.now() + Math.random();
+                        this.toasts.push({ id, message, type, show: true });
+                        setTimeout(() => this.remove(id), duration);
+                    },
+                    remove(id) {
+                        this.toasts = this.toasts.filter((t) => t.id !== id);
+                    },
+                };
+            }
+        </script>
     </body>
 </html>

@@ -420,3 +420,22 @@ _Mode: SEQUENTIAL | PARALLEL_
 
 ---
 -->
+
+### 🔨 [BUILD — Cursor] — Phase 2 Step 0 _(2026-03-19)_
+**Assigned workstream:** [Phase 2] Step 0 — Shared layout setup (pre-2a / 2b)
+
+**Todos completed:**
+- [x] [Phase 2] Step 0 — Wire sidebar to named routes with `@can('account_manager')` / `@can('admin')` and `request()->routeIs()` active states
+- [x] [Phase 2] Step 0 — Alpine toast host + `toastManager()` (`x-on:toast.window`)
+- [x] [Phase 2] Step 0 — Global `apiFetch()` with JSON + CSRF headers; `[x-cloak]` CSS
+- [x] [Phase 2] Step 0 — `DashboardController` carry-forward comment above `abort_unless`
+
+**Deviations from plan:**
+- `apiFetch` merges `options.headers` so caller overrides do not replace the entire `headers` object (avoids losing CSRF when passing only `body`/`method`).
+
+**Files actually modified:**
+- `web/resources/views/layouts/app.blade.php` ✅
+- `web/app/Http/Controllers/DashboardController.php` ✅
+
+**Git:** `feat: wire sidebar nav, add toast system, csrf helper`
+

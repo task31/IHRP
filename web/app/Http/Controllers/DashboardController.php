@@ -10,6 +10,9 @@ class DashboardController extends Controller
     public function index(): JsonResponse
     {
         $role = auth()->user()?->role;
+        // abort_unless used intentionally (not $this->authorize) — employees can access
+        // this endpoint to see their own stub stats; $this->authorize('account_manager')
+        // would block them. Remove this comment if employee dashboard is removed in Phase 3.
         abort_unless(in_array($role, ['admin', 'account_manager', 'employee'], true), 403);
 
         if ($role === 'employee') {
