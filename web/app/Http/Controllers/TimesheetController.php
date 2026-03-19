@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Consultant;
 use App\Models\Timesheet;
 use App\Models\TimesheetDailyHour;
@@ -9,13 +10,15 @@ use App\Services\AppService;
 use App\Services\OvertimeCalculator;
 use App\Services\TimesheetParseService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TimesheetController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $this->authorize('account_manager');
 
@@ -41,7 +44,15 @@ class TimesheetController extends Controller
             return $a;
         });
 
-        return response()->json($rows);
+        if ($request->expectsJson()) {
+            return response()->json($rows);
+        }
+
+        return view('timesheets.index', [
+            'timesheets' => $rows,
+            'consultants' => Consultant::query()->where('active', true)->orderBy('full_name')->get(['id', 'full_name', 'client_id', 'state']),
+            'clients' => Client::query()->where('active', true)->orderBy('name')->get(['id', 'name']),
+        ]);
     }
 
     public function show(string $id): JsonResponse
@@ -64,9 +75,47 @@ class TimesheetController extends Controller
     public function upload(Request $request, TimesheetParseService $parser): JsonResponse
     {
         $this->authorize('admin');
-        $request->validate(['timesheet' => ['required', 'file']]);
+        $request->validate(['timesheet' => ['required', 'file', 'mimes:xlsx,csv,txt', 'max:10240']]);
 
-        return response()->json($parser->parse($request->file('timesheet')));
+        $file = $request->file('timesheet');
+        $result = $parser->parse($file);
+        $storedPath = $file->storeAs(
+            'uploads/timesheets',
+            now()->format('Ymd_His').'_'.$file->getClientOriginalName(),
+            'local'
+        );
+        $result['storedPath'] = $storedPath;
+
+        return response()->json($result);
+    }
+
+    /**
+     * Batch import timesheets (used by POST /timesheets/save and Livewire wizard).
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{saved: int, overwrote: int, errors: list<string>}
+     */
+    public function saveBatch(array $rows, ?string $sourceFilePath = null, bool $saveMapping = false, ?array $mapping = null): array
+    {
+        if ($saveMapping && $mapping !== null) {
+            AppService::setSetting('timesheet_import_column_mapping', json_encode($mapping));
+        }
+
+        $saved = 0;
+        $overwrote = 0;
+        $errors = [];
+
+        foreach ($rows as $row) {
+            try {
+                $r = $this->persistTimesheetRow($row, $errors, $sourceFilePath);
+                $saved += $r['saved'];
+                $overwrote += $r['overwrote'];
+            } catch (\Throwable $e) {
+                $errors[] = 'Row error: '.$e->getMessage();
+            }
+        }
+
+        return ['saved' => $saved, 'overwrote' => $overwrote, 'errors' => $errors];
     }
 
     public function save(Request $request): JsonResponse
@@ -81,29 +130,72 @@ class TimesheetController extends Controller
             'rows.*.payPeriodStart' => ['required', 'date'],
             'rows.*.payPeriodEnd' => ['required', 'date'],
             'rows.*.overwrite' => ['boolean'],
+            'rows.*.state' => ['nullable', 'string', 'size:2'],
+            'sourceFilePath' => ['nullable', 'string', 'max:500'],
             'saveMapping' => ['boolean'],
             'mapping' => ['nullable', 'array'],
         ]);
 
-        if (! empty($payload['saveMapping']) && isset($payload['mapping'])) {
-            AppService::setSetting('timesheet_import_column_mapping', json_encode($payload['mapping']));
-        }
+        $out = $this->saveBatch(
+            $payload['rows'],
+            $payload['sourceFilePath'] ?? null,
+            ! empty($payload['saveMapping']),
+            $payload['mapping'] ?? null
+        );
 
-        $saved = 0;
-        $overwrote = 0;
-        $errors = [];
+        return response()->json($out);
+    }
 
-        foreach ($payload['rows'] as $row) {
-            try {
-                $r = $this->persistTimesheetRow($row, $errors);
-                $saved += $r['saved'];
-                $overwrote += $r['overwrote'];
-            } catch (\Throwable $e) {
-                $errors[] = 'Row error: '.$e->getMessage();
-            }
-        }
+    public function previewOt(Request $request): JsonResponse
+    {
+        $this->authorize('account_manager');
+        $data = $request->validate([
+            'state' => ['required', 'string', 'size:2'],
+            'week1Hours' => ['required', 'array', 'size:7'],
+            'week2Hours' => ['required', 'array', 'size:7'],
+            'payRate' => ['required', 'numeric', 'min:0'],
+        ]);
 
-        return response()->json(['saved' => $saved, 'overwrote' => $overwrote, 'errors' => $errors]);
+        $week1Hours = array_map(fn ($h) => (float) $h, $data['week1Hours']);
+        $week2Hours = array_map(fn ($h) => (float) $h, $data['week2Hours']);
+        $payRate = (float) $data['payRate'];
+        $state = strtoupper($data['state']);
+
+        $w1 = OvertimeCalculator::calculateOvertimePay([
+            'state' => $state,
+            'industry' => 'general',
+            'hoursPerDay' => $week1Hours,
+            'regularRate' => $payRate,
+            'billRate' => $payRate,
+            'hireDate' => null,
+        ]);
+        $w2 = OvertimeCalculator::calculateOvertimePay([
+            'state' => $state,
+            'industry' => 'general',
+            'hoursPerDay' => $week2Hours,
+            'regularRate' => $payRate,
+            'billRate' => $payRate,
+            'hireDate' => null,
+        ]);
+
+        return response()->json([
+            'week1' => [
+                'regularHours' => $w1['regularHours'],
+                'otHours' => $w1['otHours'],
+                'doubleTimeHours' => $w1['doubleTimeHours'],
+            ],
+            'week2' => [
+                'regularHours' => $w2['regularHours'],
+                'otHours' => $w2['otHours'],
+                'doubleTimeHours' => $w2['doubleTimeHours'],
+            ],
+            'totals' => [
+                'regularHours' => (float) $w1['regularHours'] + (float) $w2['regularHours'],
+                'otHours' => (float) $w1['otHours'] + (float) $w2['otHours'],
+                'doubleTimeHours' => (float) $w1['doubleTimeHours'] + (float) $w2['doubleTimeHours'],
+            ],
+            'otRuleApplied' => (string) $w1['otRuleApplied'],
+        ]);
     }
 
     /**
@@ -111,7 +203,7 @@ class TimesheetController extends Controller
      * @param  list<string>  $errors
      * @return array{saved: int, overwrote: int}
      */
-    private function persistTimesheetRow(array $row, array &$errors): array
+    private function persistTimesheetRow(array $row, array &$errors, ?string $sourceFilePath = null): array
     {
         $consultant = Consultant::query()->find($row['consultantId']);
         if (! $consultant) {
@@ -127,6 +219,10 @@ class TimesheetController extends Controller
             return ['saved' => 0, 'overwrote' => 0];
         }
 
+        $state = (isset($row['state']) && is_string($row['state']) && strlen($row['state']) === 2)
+            ? strtoupper($row['state'])
+            : (string) $consultant->state;
+
         $industry = $consultant->industry_type === 'other' ? 'general' : $consultant->industry_type;
         $hireDate = $consultant->project_start_date?->format('Y-m-d');
 
@@ -137,7 +233,7 @@ class TimesheetController extends Controller
         $week2Hours = array_map(fn ($h) => (float) $h, $row['week2Hours']);
 
         $week1Result = OvertimeCalculator::calculateOvertimePay([
-            'state' => $consultant->state,
+            'state' => $state,
             'industry' => $industry,
             'hoursPerDay' => $week1Hours,
             'regularRate' => $payRate,
@@ -145,7 +241,7 @@ class TimesheetController extends Controller
             'hireDate' => $hireDate,
         ]);
         $week2Result = OvertimeCalculator::calculateOvertimePay([
-            'state' => $consultant->state,
+            'state' => $state,
             'industry' => $industry,
             'hoursPerDay' => $week2Hours,
             'regularRate' => $payRate,
@@ -168,13 +264,13 @@ class TimesheetController extends Controller
         return DB::transaction(function () use (
             $existing, $row, $consultant, $clientId, $payRate, $billRate, $week1Result, $week2Result,
             $totalConsultantCost, $totalClientBillable, $grossMarginDollars, $grossMarginPercent, $otRuleApplied,
-            $week1Hours, $week2Hours, &$errors
+            $week1Hours, $week2Hours, &$errors, $state, $sourceFilePath
         ) {
             $attrs = [
                 'client_id' => $clientId,
                 'pay_rate_snapshot' => $payRate,
                 'bill_rate_snapshot' => $billRate,
-                'state_snapshot' => $consultant->state,
+                'state_snapshot' => $state,
                 'industry_type_snapshot' => $consultant->industry_type,
                 'ot_rule_applied' => $otRuleApplied,
                 'week1_regular_hours' => $week1Result['regularHours'],
@@ -214,11 +310,15 @@ class TimesheetController extends Controller
                 return ['saved' => 0, 'overwrote' => 1];
             }
             if (! $existing) {
-                $ts = Timesheet::query()->create(array_merge($attrs, [
+                $create = array_merge($attrs, [
                     'consultant_id' => $consultant->id,
                     'pay_period_start' => $row['payPeriodStart'],
                     'pay_period_end' => $row['payPeriodEnd'],
-                ]));
+                ]);
+                if ($sourceFilePath !== null && $sourceFilePath !== '') {
+                    $create['source_file_path'] = $sourceFilePath;
+                }
+                $ts = Timesheet::query()->create($create);
                 $this->insertDailyHours((int) $ts->id, $week1Hours, $week2Hours);
                 AppService::auditLog('timesheets', (int) $ts->id, 'TIMESHEET_IMPORT', [], [
                     'consultant' => $consultant->full_name,
@@ -276,20 +376,56 @@ class TimesheetController extends Controller
         return response()->json($row);
     }
 
-    public function downloadTemplate(): BinaryFileResponse|JsonResponse
+    public function storeManual(Request $request): RedirectResponse|JsonResponse
     {
         $this->authorize('admin');
+        $data = $request->validate([
+            'consultant_id' => ['required', 'integer', 'exists:consultants,id'],
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'pay_period_start' => ['required', 'date'],
+            'pay_period_end' => ['required', 'date', 'after_or_equal:pay_period_start'],
+            'week1' => ['required', 'array', 'size:7'],
+            'week2' => ['required', 'array', 'size:7'],
+            'week1.*' => ['numeric', 'min:0'],
+            'week2.*' => ['numeric', 'min:0'],
+            'state' => ['nullable', 'string', 'size:2'],
+        ]);
+
+        $row = [
+            'consultantId' => (int) $data['consultant_id'],
+            'clientId' => isset($data['client_id']) ? (int) $data['client_id'] : null,
+            'payPeriodStart' => $data['pay_period_start'],
+            'payPeriodEnd' => $data['pay_period_end'],
+            'week1Hours' => array_values($data['week1']),
+            'week2Hours' => array_values($data['week2']),
+            'overwrite' => false,
+            'state' => $data['state'] ?? null,
+        ];
+
+        $out = $this->saveBatch([$row], null, false, null);
+
+        if ($request->expectsJson()) {
+            return response()->json($out);
+        }
+
+        $msg = $out['saved'] > 0
+            ? 'Timesheet saved.'
+            : ($out['errors'][0] ?? 'Could not save timesheet.');
+
+        return redirect()
+            ->route('timesheets.index')
+            ->with($out['saved'] > 0 ? 'success' : 'error', $msg);
+    }
+
+    public function downloadTemplate(): BinaryFileResponse|JsonResponse
+    {
+        $this->authorize('account_manager');
         $path = storage_path('app/templates/timesheet_template.xlsx');
         if (! is_file($path)) {
             return response()->json(['error' => 'Template not installed at storage/app/templates/timesheet_template.xlsx'], 404);
         }
 
         return response()->download($path, 'timesheet_template.xlsx');
-    }
-
-    public function store(Request $request): JsonResponse
-    {
-        return $this->save($request);
     }
 
     public function update(Request $request, string $timesheet): JsonResponse

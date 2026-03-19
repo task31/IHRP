@@ -31,6 +31,8 @@
             }
         </script>
 
+        @livewireStyles
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <!-- Alpine.js (temporary via CDN; no npm required in Phase 0) -->
@@ -149,6 +151,8 @@
                 </div>
             </template>
         </div>
+
+        @livewireScripts
 
         <script>
             function toastManager() {

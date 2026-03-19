@@ -64,6 +64,8 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
 
     Route::post('timesheets/upload', [TimesheetController::class, 'upload'])->name('timesheets.upload');
     Route::post('timesheets/save', [TimesheetController::class, 'save'])->name('timesheets.save');
+    Route::post('timesheets/preview-ot', [TimesheetController::class, 'previewOt'])->name('timesheets.preview-ot');
+    Route::post('timesheets', [TimesheetController::class, 'storeManual'])->name('timesheets.store');
     Route::get('timesheets/check-duplicate', [TimesheetController::class, 'checkDuplicate'])->name('timesheets.check-duplicate');
     Route::get('timesheets/template/download', [TimesheetController::class, 'downloadTemplate'])->name('timesheets.template');
     Route::resource('timesheets', TimesheetController::class)->only(['index', 'show']);
