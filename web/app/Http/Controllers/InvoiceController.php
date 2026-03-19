@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Mail\InvoiceMailable;
+use App\Models\Client;
+use App\Models\Consultant;
 use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
 use App\Models\InvoiceSequence;
@@ -16,17 +18,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class InvoiceController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $this->authorize('account_manager');
 
         $q = Invoice::query()
-            ->with(['consultant:id,full_name', 'client:id,name'])
+            ->with(['consultant:id,full_name', 'client:id,name,email,smtp_email'])
             ->orderByDesc('created_at');
 
         if ($request->filled('status')) {
@@ -45,15 +48,34 @@ class InvoiceController extends Controller
             $q->whereDate('invoice_date', '<=', $request->date('endDate'));
         }
 
-        $rows = $q->get()->map(function (Invoice $inv) {
-            $a = $inv->toArray();
-            $a['consultant_name'] = $inv->consultant?->full_name;
-            $a['client_name'] = $inv->client?->name;
+        if ($request->expectsJson()) {
+            $rows = $q->get()->map(function (Invoice $inv) {
+                $a = $inv->toArray();
+                $a['consultant_name'] = $inv->consultant?->full_name;
+                $a['client_name'] = $inv->client?->name;
 
-            return $a;
-        });
+                return $a;
+            });
 
-        return response()->json($rows);
+            return response()->json($rows);
+        }
+
+        $invoices = (clone $q)->orderByDesc('invoice_date')->get();
+        $clients = Client::query()->orderBy('name')->get(['id', 'name']);
+        $consultants = Consultant::query()->where('active', true)->orderBy('full_name')->get(['id', 'full_name']);
+
+        return view('invoices.index', [
+            'invoices' => $invoices,
+            'clients' => $clients,
+            'consultants' => $consultants,
+            'filters' => [
+                'status' => $request->string('status')->toString(),
+                'clientId' => $request->input('clientId'),
+                'consultantId' => $request->input('consultantId'),
+                'startDate' => $request->input('startDate'),
+                'endDate' => $request->input('endDate'),
+            ],
+        ]);
     }
 
     public function show(string $id): JsonResponse
