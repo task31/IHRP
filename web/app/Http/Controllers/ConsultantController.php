@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Consultant;
 use App\Models\ConsultantOnboardingItem;
 use App\Services\AppService;
@@ -9,6 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ConsultantController extends Controller
 {
@@ -27,7 +30,7 @@ class ConsultantController extends Controller
         'client_id', 'project_start_date', 'project_end_date',
     ];
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $this->authorize('account_manager');
 
@@ -41,7 +44,19 @@ class ConsultantController extends Controller
             ORDER BY c.full_name
         ');
 
-        return response()->json($rows);
+        if ($request->expectsJson()) {
+            return response()->json($rows);
+        }
+
+        $clients = Client::query()
+            ->where('active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('consultants.index', [
+            'consultants' => $rows,
+            'clients' => $clients,
+        ]);
     }
 
     public function show(string $id): JsonResponse
@@ -269,16 +284,31 @@ class ConsultantController extends Controller
         return response()->json(['ok' => true, 'path' => $name]);
     }
 
-    public function w9Path(string $id): JsonResponse
+    public function w9Path(Request $request, string $id): JsonResponse|BinaryFileResponse
     {
         $this->authorize('account_manager');
         $consultant = Consultant::query()->find($id);
         if (! $consultant || ! $consultant->w9_file_path) {
-            return response()->json(null);
+            if ($request->expectsJson()) {
+                return response()->json(null);
+            }
+
+            abort(404);
         }
         $full = storage_path('app/uploads/w9s/'.$consultant->w9_file_path);
         if (! is_file($full)) {
-            return response()->json(['missing' => true]);
+            if ($request->expectsJson()) {
+                return response()->json(['missing' => true]);
+            }
+
+            abort(404);
+        }
+
+        if (! $request->expectsJson()) {
+            return response()->file($full, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.str_replace('"', '', $consultant->w9_file_path).'"',
+            ]);
         }
 
         return response()->json(['path' => $full, 'fileName' => $consultant->w9_file_path]);
