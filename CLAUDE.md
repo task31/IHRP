@@ -1,16 +1,16 @@
-# CLAUDE.md — [Project Name]
+# CLAUDE.md — IHRP (Internal HR Portal)
 
-> This file is the lean summary of completed phases.
-> Claude Code appends to this at Step 8 (close the phase).
-> It is NOT the full record — that lives in DEVLOG.md.
-> Claude Code reads this at the start of every session to understand project state
-> without re-reading source code from completed phases.
+> Lean summary of completed phases. Append-only — phases are never removed.
+> Full decision + build history lives in DEVLOG.md.
+> Read this at the start of every session to understand project state.
 
 ---
 
 ## Project Overview
 
-[One paragraph summary — what this project is and what it does]
+Laravel 11 (PHP) web app migrating the Matchpointe Electron payroll desktop app to
+`hr.matchpointegroup.com`. Multi-user with role-based access (admin, account_manager,
+employee). Hosted on Bluehost Business Hosting (PHP/MySQL/Apache, $0 extra).
 
 See `PROJECT_CONTEXT.md` for full brief, stack decisions, and constraints.
 
@@ -20,7 +20,9 @@ See `PROJECT_CONTEXT.md` for full brief, stack decisions, and constraints.
 
 All projects live at: `C:\Users\zobel\Claude-Workspace\projects\`
 
-This project is at: `C:\Users\zobel\Claude-Workspace\projects\[project-folder-name]\`
+This project is at: `C:\Users\zobel\Claude-Workspace\projects\IHRP\`
+
+Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ---
 
@@ -28,27 +30,24 @@ This project is at: `C:\Users\zobel\Claude-Workspace\projects\[project-folder-na
 
 _None yet — phases will be summarized here as they close._
 
-<!--
-  Claude Code appends a block like this at Step 8 of each phase:
-
-  ### Phase 1 — [Phase Name] ✅
-  _Closed: YYYY-MM-DD_
-  **What was built:** [Summary of what this phase delivered]
-  **Key files:** [The main files this phase produced — treat as a black box]
-  **Known carry-forwards:** [Any open items passed to future phases]
--->
-
 ---
 
 ## Active Phase
 
-**Phase 1** is currently in progress.
+**Phase 0** — Scaffold + Auth — IN PROGRESS
 
 ---
 
 ## Conventions for This Project
 
-[Any project-specific rules Claude Code should follow — naming conventions, patterns, etc.]
+- All Controllers in `app/Http/Controllers/` — one controller per IPC module
+- Blade views in `resources/views/` — mirroring page names from original app
+- Services in `app/Services/` — OvertimeCalculator, PdfService, etc.
+- Every controller method must call `$this->authorize()` or check role explicitly
+- Money fields stored as `DECIMAL(12,4)` in MySQL — never FLOAT
+- OT calculation always goes through `OvertimeCalculator` — never inline
+- File uploads stored in `storage/app/uploads/` — served via storage symlink
+- Audit log entries must include `user_id` = `Auth::id()`
 
 ---
 
@@ -60,4 +59,4 @@ _None yet — phases will be summarized here as they close._
 | Full decision + build history | `DEVLOG.md` |
 | Phase summaries (completed) | This file (`CLAUDE.md`) |
 | Current phase plan | `phase-N-plan.md` |
-| Session state | `~/.claude/projects/.../today.md` |
+| Phase map + status | `PHASES.md` |

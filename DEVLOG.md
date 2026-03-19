@@ -7,30 +7,43 @@
 
 ---
 
-## Phase 1 | [Phase Name]
-_Opened: YYYY-MM-DD | Closed: YYYY-MM-DD_
-_Mode: SEQUENTIAL | PARALLEL_
+## Phase 0 | Scaffold + Auth
+_Opened: 2026-03-19 | Closed: —_
+_Mode: SEQUENTIAL_
 
 ### 🏗️ [ARCHITECT — Claude Code]
-**Goal:** [What this phase is building and why]
-**Mode:** SEQUENTIAL | PARALLEL ([Phase 1a] + [Phase 1b])
+**Goal:** Create running Laravel 11 app with MySQL migrations (14 tables), role-based auth,
+login page, and admin user management. Deployable skeleton — no Electron features ported yet.
+**Mode:** SEQUENTIAL
 
 **Dependency diagram:**
 ```
-[Phase 1] → [Phase 2a]
-           → [Phase 2b]
-           → [Phase 3] (waits for 2a + 2b)
+[Phase 0] → [Phase 1] → [Phase 2] → [Phase 3] → [Phase 4] → [Phase 5]
 ```
 
 **Decisions made:**
-- [Decision — reason]
+- PHP + Laravel (not Next.js) — manager decision, enables free Bluehost Business Hosting
+- Blade + Alpine.js frontend (not React) — pure PHP, no npm build pipeline
+- Livewire for complex interactive pages (Timesheets, Placements)
+- MySQL (Bluehost included) instead of PostgreSQL — Prisma not used
+- No Railway needed — Bluehost covers everything at $0 extra
+- Laravel Breeze for auth scaffolding (fastest path to working auth)
+- dompdf for PDF generation (replaces pdfkit)
 
 **Risks flagged:**
-- [Anything to watch for during build or in future phases]
+- Bluehost `.htaccess` / AllowOverride: Apache may ignore .htaccess on shared hosting → routes 404. Verify or contact Bluehost support before Phase 5.
+- PHP version: confirm PHP 8.2+ available in cPanel before starting Phase 0.
+- OT engine is a full rewrite (not a port) — highest regression risk. 116 PHPUnit tests are the safety net.
+- dompdf produces different layout than pdfkit — PDF templates need visual comparison against original invoices.
 
 **Files planned:**
-- `/path/to/file.ts`
-- `/path/to/other.ts`
+- `app/Http/Controllers/AdminUserController.php`
+- `app/Http/Middleware/RequireRole.php`
+- `database/migrations/[14 files]`
+- `database/seeders/DatabaseSeeder.php`
+- `resources/views/layouts/app.blade.php`
+- `resources/views/admin/users/*.blade.php`
+- `routes/web.php`
 
 ---
 
