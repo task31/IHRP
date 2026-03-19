@@ -17,11 +17,11 @@ _Last updated: 2026-03-19_
   └─ dompdf PDF generation (invoice + reports)
   └─ Laravel Mail (replaces nodemailer)
 
-[Phase 2] — Frontend Port | SEQUENTIAL
-  └─ Blade + Alpine.js for all 8 pages
-  └─ Timesheets → Livewire component (file upload wizard)
-  └─ Sidebar with @can role-based nav
-  └─ PDF preview + download via Response::download()
+[Phase 2] — Frontend Port | PARALLEL
+  ├─ [Phase 2a] — Table Pages (Dashboard, Clients, Consultants, Invoices, Ledger)
+  │    └─ Step 0: shared layout fixes → Step 1–4: Blade + Alpine.js per page
+  └─ [Phase 2b] — Complex Pages (Timesheets Livewire wizard, Reports, Budget/Settings)
+       └─ Livewire TimesheetWizard → Reports PDF/CSV → Budget+Settings Blade
 
 [Phase 3] — New Features | SEQUENTIAL
   └─ Employee call reporting (/calls)
@@ -45,7 +45,9 @@ _Last updated: 2026-03-19_
 ## Dependency Rules
 
 - [Phase 1] requires [Phase 0] complete (auth + DB must exist)
-- [Phase 2] requires [Phase 1] complete (Controllers must exist for Blade to call)
+- [Phase 2a] and [Phase 2b] require [Phase 1] complete (all controllers + routes must exist)
+- [Phase 2a] and [Phase 2b] can run simultaneously (no shared files except app.blade.php — do Step 0 first)
+- [Phase 3] requires [Phase 2a] + [Phase 2b] merged (frontend must exist for new Phase 3 pages to follow)
 - [Phase 3] requires [Phase 0] complete (auth/roles needed; can run alongside Phase 2 if needed)
 - [Phase 4] requires [Phase 1] + [Phase 2] complete (full feature parity before migration)
 - [Phase 5] requires [Phase 4] complete (QA gate before production deploy)
@@ -53,8 +55,9 @@ _Last updated: 2026-03-19_
 ## Status
 
 - [Phase 0] ✅ Complete _(2026-03-19)_
-- [Phase 1] ⏳ Pending
-- [Phase 2] ⏳ Pending
+- [Phase 1] ✅ Complete _(2026-03-19)_
+- [Phase 2a] ⏳ Pending
+- [Phase 2b] ⏳ Pending (parallel with 2a)
 - [Phase 3] ⏳ Pending
 - [Phase 4] ⏳ Pending
 - [Phase 5] ⏳ Pending

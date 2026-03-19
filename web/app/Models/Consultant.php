@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Consultant extends Model
 {
@@ -33,5 +34,13 @@ class Consultant extends Model
             'project_start_date' => 'date',
             'project_end_date' => 'date',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Client, $this>
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 }

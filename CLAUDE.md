@@ -42,9 +42,22 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ---
 
+### Phase 1 — Backend Port ✅ _(closed 2026-03-19)_
+
+- 13 controllers ported from Electron IPC (Client, AuditLog, Dashboard, Budget, Ledger, InvoiceSequence, Consultant, Settings, Timesheet, Invoice, Report, Backup + existing Admin)
+- `OvertimeCalculator.php` — 52-jurisdiction PHP port of `overtime.js`; 45 PHPUnit tests, 120 assertions, 0 failures
+- `AppService` (auditLog / getSetting / setSetting / **applySmtpSettings** — runtime SMTP override from settings table)
+- `TimesheetParseService` (PhpSpreadsheet), `PdfService` (DomPDF), `InvoiceFormatter`, `LedgerQueryService`
+- `InvoiceMailable` + `mail/invoice-note.blade.php` + `pdf/invoice.blade.php` + `pdf/report-monthly.blade.php` + `pdf/report-yearend.blade.php`
+- phpunit.xml → SQLite in-memory (feature tests run without live MySQL)
+- SMTP credentials loaded from settings table at runtime via `AppService::applySmtpSettings()` + `Mail::forgetMailers()`
+- Known carry-forwards: `BudgetController::alerts()` audit log; `ReportController::saveCsv()` server-side query; `timesheets.source_file_path` populate-or-drop; `storage/app/templates/timesheet_template.xlsx` placeholder needed
+
+---
+
 ## Active Phase
 
-**Phase 1** — Backend Port — PENDING
+**Phase 2** — Frontend Port — NEXT
 
 ---
 

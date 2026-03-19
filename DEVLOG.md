@@ -161,6 +161,203 @@ login page, and admin user management. Deployable skeleton — no Electron featu
 
 ---
 
+---
+
+## Phase 2 | Frontend Port
+_Opened: 2026-03-19 | Closed: —_
+_Mode: PARALLEL (Phase 2a + Phase 2b)_
+
+### 🏗️ [ARCHITECT — Claude Code]
+**Goal:** Add Blade + Alpine.js views for all 8 Electron screens. Timesheets gets a Livewire upload wizard.
+No new business logic — Phase 1 controllers are already complete and return JSON.
+**Mode:** PARALLEL — Phase 2a (5 table pages) + Phase 2b (Timesheets/Reports/Settings)
+
+**Dependency diagram:**
+```
+[Step 0 — shared layout] → [Phase 2a] ──┐
+                          → [Phase 2b] ──┴─ [Merge → Step 8 Verification] → [Phase 3]
+```
+
+**Decisions made:**
+- PARALLEL chosen over SEQUENTIAL: 2a (table pages) and 2b (Livewire wizard + reports) share no files after Step 0
+- Step 0 must complete first: sidebar nav + Alpine toast system + CSRF meta tag needed by all pages
+- Controller dual-response pattern: `$request->expectsJson()` → JSON (API), else → Blade view (browser). No route changes.
+- PDF preview in browser: `blob:` URL via `URL.createObjectURL()` — avoids iframe CSP issues with direct route URL
+- Timesheets Livewire wizard calls service layer directly (no internal HTTP round-trip): extract `TimesheetController::saveBatch()` as callable method
+- `window.location.reload()` on modal save is acceptable for Phase 2; Phase 3 can refine with Livewire or fetch if UX is poor
+- Budget tracker embedded in Reports page (not a standalone nav item) — matches Electron app structure
+
+**Risks flagged:**
+- Livewire file upload on Bluehost shared hosting: test with real memory limits; wizard uses `ini_set('memory_limit','256M')`
+- Alpine.js + Livewire on same page: use `x-ignore` on Livewire component root to prevent Alpine from conflicting with Livewire's DOM management
+- Step 0 is a synchronization point: both 2a and 2b Cursor sessions must wait for Step 0 to be merged before starting
+
+**Carry-forwards from Phase 1 embedded in this phase:**
+- `BudgetController::alerts()` audit log → Step 7 (Phase 2b)
+- `ReportController::saveCsv()` generic rows → replaced with downloadMonthlyCsv() in Step 6 (Phase 2b)
+- `timesheets.source_file_path` populate on upload → Step 5 (Phase 2b)
+- `storage/app/templates/timesheet_template.xlsx` placeholder → Step 5 (Phase 2b)
+- `DashboardController` `abort_unless` comment → Step 0
+
+**Files planned:**
+- `web/resources/views/dashboard.blade.php` (update)
+- `web/resources/views/clients/index.blade.php`
+- `web/resources/views/consultants/index.blade.php`
+- `web/resources/views/invoices/index.blade.php`
+- `web/resources/views/ledger/index.blade.php`
+- `web/resources/views/timesheets/index.blade.php`
+- `web/resources/views/reports/index.blade.php`
+- `web/resources/views/settings/index.blade.php`
+- `web/resources/views/livewire/timesheet-wizard.blade.php`
+- `web/app/Livewire/TimesheetWizard.php`
+- Minor controller changes in all 8 controllers (Blade branch only)
+- `web/routes/web.php` (dashboard page route + monthly-csv route)
+
+---
+
+## Phase 1 | Backend Port
+_Opened: 2026-03-19 | Closed: —_
+_Mode: SEQUENTIAL_
+
+### 🏗️ [ARCHITECT — Claude Code]
+**Goal:** Port all 13 IPC handler modules from the Electron app into Laravel Controllers and Services.
+OvertimeCalculator.php must be completed and tested first (116+ PHPUnit assertions must pass)
+before any other controller work begins.
+**Mode:** SEQUENTIAL
+
+**Dependency diagram:**
+```
+[Phase 0] ✅ → [Phase 1] 🔨 → [Phase 2] ⏳
+                               → [Phase 3] ⏳ (can start after Phase 1 backend exists)
+```
+
+**Decisions made:**
+- OvertimeCalculator.php is a standalone service (no DB, no HTTP) — tested in isolation first
+- AppService.php holds auditLog/getSetting/setSetting — shared by all controllers, created before any controller
+- PhpSpreadsheet replaces xlsx JS library for XLSX parsing in TimesheetParseService
+- dompdf Blade templates replace pdfkit — use HTML tables (not flexbox/grid) for PDF layout
+- InvoiceMailable (Laravel Mail) replaces nodemailer — same SMTP config via settings table
+- BackupController uses mysqldump detected at runtime — no hardcoded paths
+- phpunit.xml updated to use MySQL ihrp_test database (carry-forward from Phase 0)
+
+**Risks flagged:**
+- OT floating-point: PHP `round()` must match JS `Math.round(n*100)/100` exactly — run tests immediately after port
+- dompdf CSS subset: no flexbox/grid in PDF templates — use table layout
+- phpspreadsheet memory: large XLSX → set memory_limit=256M in TimesheetParseService
+- `timesheet_daily_hours.day_index` naming: must be confirmed/renamed before TimesheetController is written
+- mysqldump path on Bluehost: detect at runtime, don't hardcode
+
+**Files planned:**
+- `web/app/Services/OvertimeCalculator.php`
+- `web/app/Services/AppService.php`
+- `web/app/Services/TimesheetParseService.php`
+- `web/app/Services/PdfService.php`
+- `web/app/Mail/InvoiceMailable.php`
+- `web/app/Http/Controllers/ClientController.php`
+- `web/app/Http/Controllers/AuditLogController.php`
+- `web/app/Http/Controllers/DashboardController.php`
+- `web/app/Http/Controllers/BudgetController.php`
+- `web/app/Http/Controllers/LedgerController.php`
+- `web/app/Http/Controllers/InvoiceSequenceController.php`
+- `web/app/Http/Controllers/ConsultantController.php`
+- `web/app/Http/Controllers/SettingsController.php`
+- `web/app/Http/Controllers/TimesheetController.php`
+- `web/app/Http/Controllers/InvoiceController.php`
+- `web/app/Http/Controllers/ReportController.php`
+- `web/app/Http/Controllers/BackupController.php`
+- `web/resources/views/pdf/invoice.blade.php`
+- `web/resources/views/pdf/report-monthly.blade.php`
+- `web/resources/views/pdf/report-yearend.blade.php`
+- `web/tests/Unit/OvertimeCalculatorTest.php`
+- `web/routes/web.php` (updated)
+- `web/phpunit.xml` (updated)
+
+---
+
+### 🔨 [BUILD — Cursor]
+**Assigned workstream:** [Phase 1]
+
+**Todos completed:**
+- [x] [Phase 1] phpunit.xml → `DB_CONNECTION=mysql`, `DB_DATABASE=ihrp_test` (create `ihrp_test` on host when MySQL is available)
+- [x] [Phase 1] `OvertimeCalculator.php` + `OvertimeCalculatorTest.php` — **120 assertions**, gate met (116+)
+- [x] [Phase 1] `AppService` (auditLog / getSetting / setSetting)
+- [x] [Phase 1] Controllers: Client, AuditLog, Dashboard (`/dashboard/stats` — avoids clash with Breeze `/dashboard` view), Budget, Ledger, InvoiceSequence, Consultant, Settings, Timesheet, Invoice, Report, Backup
+- [x] [Phase 1] `TimesheetParseService` + `composer require phpoffice/phpspreadsheet`
+- [x] [Phase 1] `PdfService` + `pdf/*.blade.php` + `InvoiceMailable`
+- [x] [Phase 1] `LedgerQueryService`, `InvoiceFormatter`
+- [x] [Phase 1] Migrations: `timesheets.source_file_path`; seed `invoice_sequence` id=1
+- [x] [Phase 1] `routes/web.php` — auth + role groups; extra routes for upload/save, invoice generate/preview/send, reports, budget alerts, consultant W9/onboarding
+- [x] [Phase 1] Step 5 `day_index`: **no rename** — existing migration already uses `day_of_week` (string) + `week_number`
+
+**Deviations from plan:**
+- Dashboard resource route replaced with **`GET /dashboard/stats`** so Breeze **`GET /dashboard`** (Blade) remains unchanged.
+- `POST /timesheets/save` used for batch import (resource `store` not registered to avoid duplicate with ambiguous body).
+- `config/services.php` → `mysql.dump_path` (env `MYSQLDUMP_PATH`) for BackupController mysqldump binary.
+- Invoice list date filters use **`invoice_date`** (schema has no pay_period on `invoices`).
+
+**Unplanned additions:**
+- `config/services.php` `mysql.dump_path`
+
+**Files actually created/modified:**
+- See plan file list under `web/` — models `Client`, `Timesheet`, `TimesheetDailyHour`, `Invoice`, `InvoiceLineItem`, `InvoiceSequence`, `Backup`, `ConsultantOnboardingItem`; `Consultant` updated with `client()` relation.
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 1 _(2026-03-19)_
+
+**Review method:** Full file-by-file review via superpowers:code-reviewer subagent (96K tokens, 34 tool calls).
+
+**Test results:**
+- `php artisan test --filter=OvertimeCalculatorTest` — 45 tests, 120 assertions, 0 failures ✅
+  _(Gate criterion said "116+ passed" — this referred to JS assertion count. PHP test count is 45. Gate is met.)_
+- `php artisan route:list` — 93 routes, no errors ✅
+- Full `php artisan test` — requires MySQL `ihrp_test` or SQLite (now fixed — see Critical-3 fix below)
+
+**Criticals fixed before close:**
+
+- **CRITICAL-1 (FIXED)** — SMTP credentials not loaded from settings table.
+  Added `AppService::applySmtpSettings()` which reads `smtp_host/port/user/password/encryption/from_address/from_name` from DB via `getSetting()`, calls `Config::set()` on `mail.mailers.smtp.*`, and calls `Mail::forgetMailers()` to purge the resolved mailer. Now called in `InvoiceController::send()` and `SettingsController::testSmtp()` before every `Mail::to()->send()` dispatch.
+
+- **CRITICAL-2 (FIXED)** — `InvoiceController::send()` missing audit log + no status transition.
+  Changed `find()` → `findOrFail()` (null safety). Added `$invoice->update(['status' => 'sent'])` after successful send. Added `AppService::auditLog('invoices', ..., 'INVOICE_SENT', ...)` with `sent_to` in new_data.
+
+- **CRITICAL-3 (FIXED)** — `phpunit.xml` required live MySQL `ihrp_test`.
+  Changed to `DB_CONNECTION=sqlite` / `DB_DATABASE=:memory:`. Feature tests now run without a live MySQL instance. OvertimeCalculatorTest is DB-free and unaffected.
+
+**Important issues — carry forward to Phase 2:**
+- **IMPORTANT-1** — `BudgetController::alerts()` mutates `clients.budget_alert_warning_sent` without audit log.
+- **IMPORTANT-3** — `ReportController::saveCsv()` accepts arbitrary caller-supplied row data. Should be replaced with server-driven query endpoints in Phase 2.
+- **IMPORTANT-5** — `timesheets.source_file_path` migration exists but `TimesheetController` never populates it. Decide: persist uploaded file or drop the column in Phase 2.
+
+**Suggestions noted (non-blocking):**
+- `DashboardController` uses `abort_unless` instead of `$this->authorize()` — intentional (employee access). Add a comment.
+- `ConsultantController::index/show` use raw `DB::select()` while mutations use Eloquent — refactor candidate.
+- `AppService::auditLog()` will silently store `user_id = null` for system/queue contexts — add actor parameter when scheduled jobs are added in Phase 4.
+- `BackupController` `file_path` value inconsistent between failed/succeeded rows — minor.
+- `InvoiceController::generate()` writes PDF outside DB transaction — if `pdf_path` update fails, invoice record has `pdf_path = null` with file on disk.
+
+**Security spot-check:**
+- All 13 controllers: every mutating method has `$this->authorize()` or explicit role check ✅
+- `BackupController` uses array-form `Process` command — no shell injection ✅
+- `ConsultantController` W9 upload uses deterministic filename — no path traversal ✅
+- SMTP credentials now loaded from DB at runtime — not hardcoded ✅
+- `Auth::id()` in audit log — no system context gap (yet; flagged above) ✅
+
+**Unplanned additions approved:**
+- `InvoiceFormatter` service — justified extraction, follows Services convention ✅
+- `LedgerQueryService` — keeps LedgerController lean ✅
+
+**PHASES.md updated:** ✅ Phase 1 marked complete
+
+**Carry forward to Phase 2:**
+- [ ] `BudgetController::alerts()` — add audit log for `budget_alert_warning_sent` flag writes
+- [ ] `ReportController::saveCsv()` — replace generic row passthrough with server-driven query
+- [ ] `timesheets.source_file_path` — decide persist-or-drop; if persist, save uploaded file in TimesheetController upload action
+- [ ] Add comment to `DashboardController` explaining `abort_unless` pattern (employee-visible endpoint)
+- [ ] Place `timesheet_template.xlsx` in `storage/app/templates/` (template download returns 404 without it)
+
+---
+
 <!--
   Copy the block below for each new phase.
   Replace N with the phase number.
