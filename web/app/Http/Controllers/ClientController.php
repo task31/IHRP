@@ -7,6 +7,8 @@ use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class ClientController extends Controller
 {
@@ -15,13 +17,27 @@ class ClientController extends Controller
         'email', 'smtp_email', 'payment_terms', 'total_budget', 'po_number',
     ];
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $this->authorize('account_manager');
 
-        $clients = Client::query()->where('active', true)->orderBy('name')->get();
+        $clients = Client::query()->orderBy('name')->get();
 
-        return response()->json($clients);
+        if ($request->expectsJson()) {
+            return response()->json(
+                Client::query()->where('active', true)->orderBy('name')->get()
+            );
+        }
+
+        $spentByClient = DB::table('timesheets')
+            ->select('client_id', DB::raw('COALESCE(SUM(total_client_billable), 0) as spent'))
+            ->groupBy('client_id')
+            ->pluck('spent', 'client_id');
+
+        return view('clients.index', [
+            'clients' => $clients,
+            'spentByClient' => $spentByClient,
+        ]);
     }
 
     public function show(string $id): JsonResponse|Response
