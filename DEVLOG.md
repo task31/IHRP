@@ -439,3 +439,26 @@ _Mode: SEQUENTIAL | PARALLEL_
 
 **Git:** `feat: wire sidebar nav, add toast system, csrf helper`
 
+### 🔨 [BUILD — Cursor] — Phase 2 parallel _(2026-03-19)_
+**Assigned workstream:** [Phase 2a] Steps 1–4 + [Phase 2b] Steps 5–7 (ran as two parallel agent sessions after Step 0 commit `e524a1e`)
+
+**Phase 2a commits (linear history):**
+- `894ec56` — `feat: add dashboard Blade view with stats cards and alerts`
+- `e9752bc` — `feat: add clients Blade view with CRUD modal`
+- `f6b8d5c` — `feat: add consultants Blade view`
+- `a122281` — `feat: add invoices and ledger Blade views`
+
+**Phase 2b commits (interleaved before final 2a commit in history: timesheets landed as `c682466` between consultants and invoices/ledger):**
+- `c682466` — `feat: add timesheets Blade view and Livewire upload wizard`
+- `5c3e7a1` — `feat: add reports Blade view, fix saveCsv carry-forward`
+- `3732311` — `feat: add settings Blade view with 6-tab layout, fix budget alerts audit log`
+
+**Notable integration outcomes:**
+- `web/routes/web.php` combines `/dashboard` → `DashboardController::page`, timesheet routes (`preview-ot`, `storeManual`), `reports/monthly-csv`, removal of `reports/save-csv`.
+- Layout gained `@livewireStyles` / `@livewireScripts` for the timesheet wizard.
+- Carry-forwards addressed in 2b: `ReportController::downloadMonthlyCsv`, budget alerts audit log, timesheet template + `source_file_path`, settings Blade + backups.
+
+**Verification (host PM):** `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions (2026-03-19).
+
+**Remaining:** [Phase 2] Step 8 — full merge smoke checklist in `phase-2-plan.md`.
+
