@@ -61,6 +61,7 @@
                     <th class="px-4 py-3">Bill Rate</th>
                     <th class="px-4 py-3">PO#</th>
                     <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Account Manager</th>
                     @can('account_manager')
                         <th class="px-4 py-3 text-right">Actions</th>
                     @endcan
@@ -88,6 +89,7 @@
                                 <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">Cancelled</span>
                             @endif
                         </td>
+                        <td class="px-4 py-3 text-gray-600">{{ $p->placedBy?->name ?? '—' }}</td>
                         @can('account_manager')
                             <td class="px-4 py-3 text-right">
                                 <div class="flex flex-wrap items-center justify-end gap-2">
@@ -115,7 +117,7 @@
                 @empty
                     <tr>
                         <td
-                            colspan="{{ auth()->user()?->can('account_manager') ? 10 : 9 }}"
+                            colspan="{{ auth()->user()?->can('account_manager') ? 11 : 10 }}"
                             class="px-4 py-8 text-center text-gray-500"
                         >
                             No placements found.
