@@ -22,11 +22,11 @@ final class PdfService
 
         $inv = [
             'invoice_number' => $invoice->invoice_number,
-            'invoice_date' => $invoice->invoice_date?->format('Y-m-d'),
-            'due_date' => $invoice->due_date?->format('Y-m-d'),
+            'invoice_date' => $invoice->invoice_date?->format('m-d-Y'),
+            'due_date' => $invoice->due_date?->format('m-d-Y'),
             'consultant_name' => $invoice->consultant?->full_name,
-            'pay_period_start' => $invoice->timesheet?->pay_period_start?->format('Y-m-d'),
-            'pay_period_end' => $invoice->timesheet?->pay_period_end?->format('Y-m-d'),
+            'pay_period_start' => $invoice->timesheet?->pay_period_start?->format('m/d/Y'),
+            'pay_period_end' => $invoice->timesheet?->pay_period_end?->format('m/d/Y'),
             'bill_to_name' => $invoice->bill_to_name,
             'bill_to_contact' => $invoice->bill_to_contact,
             'bill_to_address' => $invoice->bill_to_address,
@@ -37,13 +37,32 @@ final class PdfService
             'notes' => $invoice->notes,
         ];
 
-        $lineItems = $invoice->lineItems->map(fn ($li) => [
-            'description' => $li->description,
-            'hours' => $li->hours !== null ? (float) $li->hours : null,
-            'rate' => (float) $li->rate,
-            'multiplier' => (float) $li->multiplier,
-            'amount' => (float) $li->amount,
-        ])->all();
+        // Consolidate stored line items into a single per-consultant row matching the Excel template.
+        // Regular hours = multiplier 1.0; OT hours = all premium multipliers (1.5, 2.0, etc.)
+        $regularHours = 0.0;
+        $otHours = 0.0;
+        $baseRate = 0.0;
+        $totalPayroll = 0.0;
+
+        foreach ($invoice->lineItems as $li) {
+            $mult = (float) $li->multiplier;
+            $totalPayroll += (float) $li->amount;
+            if ($mult <= 1.0) {
+                $regularHours += (float) $li->hours;
+                $baseRate = (float) $li->rate;
+            } else {
+                $otHours += (float) $li->hours;
+            }
+        }
+
+        $lineItems = [[
+            'consultant_name' => $invoice->consultant?->full_name ?? '',
+            'regular_hours'   => $regularHours,
+            'rate'            => $baseRate,
+            'ot_hours'        => $otHours,
+            'ot_rate'         => round($baseRate * 1.5, 4),
+            'total_payroll'   => $totalPayroll,
+        ]];
 
         return Pdf::loadView('pdf.invoice', [
             'agency' => $agency,
