@@ -57,7 +57,7 @@
                         'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('calls.*'),
                     ])>Calls</a>
 
-                    @can('account_manager')
+                    @can('admin')
                         <a href="{{ route('clients.index') }}" @class([
                             'block rounded px-3 py-2',
                             'bg-gray-800 font-medium text-white' => request()->routeIs('clients.*'),
@@ -88,6 +88,9 @@
                             'bg-gray-800 font-medium text-white' => request()->routeIs('reports.*'),
                             'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('reports.*'),
                         ])>Reports</a>
+                    @endcan
+
+                    @can('account_manager')
                         <a href="{{ route('placements.index') }}" @class([
                             'block rounded px-3 py-2',
                             'bg-gray-800 font-medium text-white' => request()->routeIs('placements.*'),
@@ -109,12 +112,6 @@
                     @endcan
                 </nav>
 
-                @isset($header)
-                    <div class="mt-6 border-t border-gray-700 pt-4 px-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
-                        {{ $header }}
-                    </div>
-                @endisset
-
                 <div class="mt-6 border-t border-gray-700 pt-4 text-sm">
                     <div class="text-gray-300">{{ auth()->user()->name ?? '' }}</div>
                     <div class="text-xs text-gray-400">{{ auth()->user()->email ?? '' }}</div>
@@ -130,6 +127,12 @@
             </aside>
 
             <main class="flex-1 p-4 sm:p-6 lg:p-8">
+                @isset($header)
+                    <div class="mb-4">
+                        {{ $header }}
+                    </div>
+                @endisset
+
                 @if (session('success'))
                     <div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                         {{ session('success') }}
