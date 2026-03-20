@@ -639,3 +639,31 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Commit:** `f0c56e2` — `feat: add DailyCallReport + Placement models and controllers`
 
+### ✅ [REVIEW — Claude Code] — Phase 3 Step 2 _(2026-03-19)_
+
+**Step reviewed:** Phase 3 Step 2 — DailyCallReport + Placement models and controllers
+**Git range:** `cc8ee87..ae7de64`
+**OT regression:** `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 0 failures ✅
+
+**Verdict:** Ready to proceed to Step 3 — with three data-integrity fixes applied inline (see below).
+
+**Strengths:**
+- Full plan coverage: all models, policies, controllers, routes delivered — no items skipped
+- Policy architecture correct: auto-discovered, clean role-layer scoping
+- `whereRaw('1 = 0')` for null `consultant_id` edge case — correct and intentional
+- `validatedPlacementPayload()` DRY extraction — shared between store/update with PHPDoc type shape
+- Audit trail complete: INSERT + UPDATE before/after snapshots on all three mutating operations
+- Dual-response pattern applied uniformly on all 5 methods
+
+**Issues found and resolved inline (before commit):**
+- ✅ Added `before_or_equal:today` to `report_date` — prevented future-dated call reports from reserving daily upsert keys and inflating aggregate stats (`DailyCallReportController.php:54`)
+- ✅ Added `after_or_equal:start_date` to `end_date` — prevented logically invalid placements that would corrupt future date-range queries (`PlacementController.php:154`)
+- ✅ Added `min:0` to `pay_rate` and `bill_rate` — prevented negative rates from corrupting payroll calculations (`PlacementController.php:155-156`)
+
+**Known carry-forwards to Step 3:**
+- [ ] `aggregate()` uses Gate `account_manager` instead of a Policy method — currently correct at runtime, but inconsistent with the rest of the codebase. Should be resolved before Step 4 (aggregate Blade view) ships. Acceptable short-term.
+- [ ] No feature tests for access control (employee → 403 on aggregate; employee sees own rows only; AM cannot delete placement). Pre-existing SQLite PDO environment issue blocks feature suite. Add tests once environment is fixed — before Phase 4.
+- [ ] `DailyCallReportController::index()` returns all rows with no pagination. Acceptable at current team size; add default 30-day filter or `paginate(50)` before go-live.
+
+**Next:** Step 3 — Call Reporting Blade (`calls/index.blade.php`). Views for `calls.*` and `placements.*` do not exist yet — JSON API is safe but browser hits will 500 until Step 3/5 land.
+
