@@ -16,33 +16,13 @@ class DashboardController extends Controller
 
         abort_if($user->role === 'account_manager', 403);
 
-        if ($user->role === 'employee') {
-            $placement = null;
-            if ($user->consultant_id !== null) {
-                $placement = Placement::query()
-                    ->with(['consultant', 'client'])
-                    ->where('consultant_id', $user->consultant_id)
-                    ->where('status', 'active')
-                    ->orderByDesc('start_date')
-                    ->first();
-            }
-
-            $recentCalls = DailyCallReport::query()
-                ->where('user_id', $user->id)
-                ->where('report_date', '>=', now()->subDays(6)->toDateString())
-                ->orderByDesc('report_date')
-                ->get();
-
-            return view('dashboard', compact('placement', 'recentCalls'));
-        }
-
         return view('dashboard');
     }
 
     public function index(): JsonResponse
     {
         $role = auth()->user()?->role;
-        abort_unless(in_array($role, ['admin', 'employee'], true), 403);
+        abort_unless($role === 'admin', 403);
 
         $mtdMonth = now()->format('Y-m');
 

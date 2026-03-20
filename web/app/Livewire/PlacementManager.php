@@ -86,12 +86,8 @@ class PlacementManager extends Component
             ->orderByDesc('start_date')
             ->orderByDesc('id');
 
-        if (Gate::allows('admin')) {
-            // admin sees all placements
-        } elseif (Gate::allows('account_manager')) {
+        if (Gate::allows('account_manager') && ! Gate::allows('admin')) {
             $query->where('placed_by', auth()->id());
-        } else {
-            $query->where('consultant_id', auth()->user()->consultant_id ?? 0);
         }
 
         if ($this->filters['consultant_name'] !== '' && $this->filters['consultant_name'] !== null) {

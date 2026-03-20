@@ -14,15 +14,7 @@ class PlacementPolicy
 
     public function view(User $user, Placement $placement): bool
     {
-        if ($user->role === 'admin' || $user->role === 'account_manager') {
-            return true;
-        }
-
-        if ($user->role !== 'employee' || $user->consultant_id === null) {
-            return false;
-        }
-
-        return (int) $placement->consultant_id === (int) $user->consultant_id;
+        return in_array($user->role, ['admin', 'account_manager'], true);
     }
 
     public function create(User $user): bool

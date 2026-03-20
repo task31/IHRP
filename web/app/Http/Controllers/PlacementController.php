@@ -38,13 +38,6 @@ class PlacementController extends Controller
                 ->orderByDesc('start_date')
                 ->orderByDesc('id');
 
-            if ($user->role === 'employee') {
-                if ($user->consultant_id === null) {
-                    $query->whereRaw('1 = 0');
-                } else {
-                    $query->where('consultant_id', $user->consultant_id);
-                }
-            }
 
             return response()->json($query->get());
         }

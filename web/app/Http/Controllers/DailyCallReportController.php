@@ -32,9 +32,6 @@ class DailyCallReportController extends Controller
         $user = Auth::user();
         $query = DailyCallReport::query()->with('user')->orderByDesc('report_date')->orderByDesc('id');
 
-        if ($user->role === 'employee') {
-            $query->where('user_id', $user->id);
-        }
 
         $reports = $query->get();
 
@@ -61,7 +58,7 @@ class DailyCallReportController extends Controller
             'reports' => $reports,
             'myReportsByDate' => $myReportsPayload,
             'todayDate' => now()->toDateString(),
-            'showEmployeeColumn' => $user->role !== 'employee',
+            'showEmployeeColumn' => true,
         ]);
     }
 
