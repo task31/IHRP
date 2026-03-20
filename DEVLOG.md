@@ -854,3 +854,33 @@ placement management (Livewire), and an employee-specific dashboard.
 - Employee: Dashboard + Calls only
 - Admin/Account Manager: Dashboard + Calls + AM links including Placements
 
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 3 Complete _(2026-03-19)_
+
+**Reviewed:** Step 7 — sidebar nav + dead stub removal (commit 256fa1b)
+
+**Verified:**
+- `app.blade.php` — Calls link at top level (all roles); Placements link inside `@can('account_manager')` after Reports, before `@endcan` ✅
+- `DashboardController::index()` — stub branch removed; stale comment removed; `abort_unless()` guard intact ✅
+- No unintended files touched per Cursor build report ✅
+- `php artisan view:cache` — no errors ✅
+- `php artisan route:list` — no errors ✅
+- `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions ✅
+
+**Phase 3 acceptance criteria — all met:**
+- [x] Employee can log in, submit a daily call report, and see their own placement
+- [x] Account Manager can view all call reports + aggregate, manage placements
+- [x] Admin has full access to all Phase 3 features
+- [x] All new routes have `$this->authorize()` or equivalent role check
+- [x] New tables use `DECIMAL(12,4)` for money fields
+- [x] Audit log entries written for placement creates/updates/status changes
+- [x] OvertimeCalculatorTest still passes (no regression)
+- [x] `php artisan route:list` — no errors
+
+**Carry-forwards to Phase 4:**
+- [ ] `users.consultant_id` FK — admin UI to link an employee to a consultant record (currently set manually in DB)
+- [ ] `auditLog` actor gap for queue contexts (flagged in Phase 1, deferred to Phase 4)
+- [ ] `smoke_debug.py` / `smoke_test.py` in repo root — delete or gitignore before Phase 4 starts
+

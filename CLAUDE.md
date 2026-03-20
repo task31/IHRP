@@ -57,7 +57,22 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ## Active Phase
 
-**Phase 3** — New Features — NEXT _(browser smoke gate must pass first — see PHASES.md)_
+**Phase 4** — Data Migration + QA _(see PHASES.md)_
+
+---
+
+### Phase 3 — New Features ✅ _(closed 2026-03-19)_
+
+- `daily_call_reports` + `placements` full schema migrations (DECIMAL(12,4) rates, UNIQUE constraint on call reports)
+- `DailyCallReport` + `Placement` models; `DailyCallReportController` (index, store, aggregate) + `PlacementController` (index, store, update, destroy)
+- `/calls` — all roles submit; own history; AM/admin see all employees
+- `/calls/report` — AM + admin aggregate summary with per-employee totals; employee → 403
+- `/placements` — Livewire `PlacementManager` (filters, inline status change, CRUD modal); employee read-only scoped view
+- Employee dashboard — My Placement card + 7-day call activity + quick-submit form; admin/AM unchanged (4 Alpine stat cards)
+- Sidebar: Calls (all roles) + Placements (AM/admin only) nav links added
+- Bug fixed: Blade directive inside HTML attribute `colspan` caused unclosed PHP `if` → 500 on `/placements`; fixed with PHP expression
+- Smoke: 12/12 PASS across all 3 roles
+- Carry-forwards to Phase 4: `users.consultant_id` admin UI; auditLog actor gap (queue context); clean up `smoke_*.py` files
 
 ---
 
