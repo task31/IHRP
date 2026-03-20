@@ -31,29 +31,25 @@ class PlacementController extends Controller
     {
         $this->authorize('viewAny', Placement::class);
 
-        $user = Auth::user();
-        $query = Placement::query()
-            ->with(['consultant', 'client', 'placedBy'])
-            ->orderByDesc('start_date')
-            ->orderByDesc('id');
-
-        if ($user->role === 'employee') {
-            if ($user->consultant_id === null) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->where('consultant_id', $user->consultant_id);
-            }
-        }
-
-        $placements = $query->get();
-
         if ($request->expectsJson()) {
-            return response()->json($placements);
+            $user = Auth::user();
+            $query = Placement::query()
+                ->with(['consultant', 'client', 'placedBy'])
+                ->orderByDesc('start_date')
+                ->orderByDesc('id');
+
+            if ($user->role === 'employee') {
+                if ($user->consultant_id === null) {
+                    $query->whereRaw('1 = 0');
+                } else {
+                    $query->where('consultant_id', $user->consultant_id);
+                }
+            }
+
+            return response()->json($query->get());
         }
 
-        return view('placements.index', [
-            'placements' => $placements,
-        ]);
+        return view('placements.index');
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse

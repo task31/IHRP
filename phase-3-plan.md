@@ -239,14 +239,14 @@ Methods:
 - Fields: Consultant (dropdown), Client (dropdown), Job Title, Start Date, End Date (optional),
   Pay Rate, Bill Rate, Notes, Status
 
-- [ ] **[Phase 3]** Write `PlacementManager` Livewire component (PHP class)
-- [ ] **[Phase 3]** Write `placement-manager.blade.php` Livewire view
-- [ ] **[Phase 3]** Write `placements/index.blade.php` (wraps Livewire component)
-- [ ] **[Phase 3]** Add Blade branch to `PlacementController::index()`
+- [x] **[Phase 3]** Write `PlacementManager` Livewire component (PHP class)
+- [x] **[Phase 3]** Write `placement-manager.blade.php` Livewire view
+- [x] **[Phase 3]** Write `placements/index.blade.php` (wraps Livewire component)
+- [x] **[Phase 3]** Add Blade branch to `PlacementController::index()`
 - [ ] **[Phase 3]** Smoke: AM creates placement → appears in table
 - [ ] **[Phase 3]** Smoke: status change works inline
 - [ ] **[Phase 3]** Smoke: employee sees only own placement, no edit actions
-- [ ] **[Phase 3]** Commit: `feat: add placement management with Livewire`
+- [x] **[Phase 3]** Commit: `feat: add placement management with Livewire`
 
 ---
 

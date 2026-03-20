@@ -705,3 +705,28 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Manual smoke (deferred):** AM aggregate page render; employee 403 on `/calls/report`
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 5 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `PlacementManager` Livewire — filters (`wire:model.live`), employee scope via `consultant_id ?? 0`, AM/admin full list + CRUD
+- [x] [Phase 3] `save()` / `updateStatus()` — `abort_unless(Gate::allows('account_manager'), 403)`; `Gate::authorize('create'|'update', …)`; `AppService::auditLog` INSERT + UPDATE with `AUDIT_FIELDS` snapshots (aligned with `PlacementController`)
+- [x] [Phase 3] `placement-manager.blade.php` — table, filter bar, modal form, status badges, actions column `@can('account_manager')` only; `x-ignore` root (TimesheetWizard pattern)
+- [x] [Phase 3] `placements/index.blade.php` — `x-app-layout` + `@livewire('placement-manager')`
+- [x] [Phase 3] `PlacementController::index()` — JSON path unchanged (scoped query + `expectsJson`); Blade path returns view only (no eager-loaded collection — Livewire loads data)
+
+**Deviations from plan:** None
+
+**Unplanned additions:** None
+
+**Files actually created/modified:**
+- `web/app/Livewire/PlacementManager.php` ➕
+- `web/resources/views/livewire/placement-manager.blade.php` ➕
+- `web/resources/views/placements/index.blade.php` ➕
+- `web/app/Http/Controllers/PlacementController.php` ✅
+
+**Verification:** `php artisan view:cache` OK; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
+
+**Manual smoke (deferred):** AM create/edit; inline End/Cancel; employee read-only scoped list
+
+**Git:** `feat: add placement management with Livewire`
+
