@@ -151,7 +151,7 @@
                             </td>
                             <td class="px-4 py-2">
                                 <button type="button"
-                                    @click="viewOpen = true; viewLoading = true; viewData = null; apiFetch(@json(route('timesheets.show', $t['id']))).then(r => r.json()).then(d => { viewData = d; viewLoading = false; })"
+                                    x-on:click="viewOpen = true; viewLoading = true; viewData = null; apiFetch('{{ route('timesheets.show', $t['id']) }}').then(r => r.json()).then(d => { viewData = d; viewLoading = false; })"
                                     class="text-xs font-medium text-indigo-600 hover:underline">
                                     View
                                 </button>
