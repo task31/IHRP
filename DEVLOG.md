@@ -612,3 +612,30 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Commit:** `f52f1f7` — `feat: flesh out daily_call_reports and placements migrations`
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 2 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `DailyCallReport` + `Placement` Eloquent models (casts, relations, `placedBy` nullable FK)
+- [x] [Phase 3] `DailyCallReportPolicy` + `PlacementPolicy` (authorize `viewAny`/`create`/`update`/`delete` aligned with role rules)
+- [x] [Phase 3] `DailyCallReportController` — `index` (scoped list + dual-response), `store` (validated upsert + audit), `aggregate` (AM/admin gate, grouped SQL summary + filters + dual-response)
+- [x] [Phase 3] `PlacementController` — `index` (scoped + relations), `store`/`update` (AM/admin + audit), `destroy` (admin-only, sets `status` = `cancelled` + audit)
+- [x] [Phase 3] Routes registered under `auth` in `web/routes/web.php` (`calls.*`, `placements.*`)
+
+**Deviations from plan:** None (spec: `placed_by` nullable `nullOnDelete` — matches current migration).
+
+**Unplanned additions:**
+- `DailyCallReportPolicy` / `PlacementPolicy` — required so `$this->authorize()` is used consistently on call/placement actions (gates alone do not cover `viewAny`/`create` on models).
+
+**Files actually created/modified:**
+- `web/app/Models/DailyCallReport.php` ➕
+- `web/app/Models/Placement.php` ➕
+- `web/app/Policies/DailyCallReportPolicy.php` ➕
+- `web/app/Policies/PlacementPolicy.php` ➕
+- `web/app/Http/Controllers/DailyCallReportController.php` ➕
+- `web/app/Http/Controllers/PlacementController.php` ➕
+- `web/routes/web.php` ✅
+
+**Verification:** `php artisan migrate:fresh --seed --force` exit 0; `php artisan route:list` — `calls*` / `placements*` registered; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed. Full `php artisan test` still fails on feature suite (SQLite PDO missing on this host — pre-existing).
+
+**Commit:** `c63b29c` — `feat: add DailyCallReport + Placement models and controllers`
+

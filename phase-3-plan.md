@@ -120,12 +120,12 @@ Role rules:
 - Placements CRUD: account_manager + admin
 - Placement read (own): employee
 
-- [ ] **[Phase 3]** Create/update `DailyCallReport` model
-- [ ] **[Phase 3]** Create `Placement` model
-- [ ] **[Phase 3]** Create/update `DailyCallReportController` (index, store, aggregate)
-- [ ] **[Phase 3]** Create `PlacementController` (index, store, update, destroy)
-- [ ] **[Phase 3]** Register routes in `routes/web.php`
-- [ ] **[Phase 3]** Commit: `feat: add DailyCallReport + Placement models and controllers`
+- [x] **[Phase 3]** Create/update `DailyCallReport` model
+- [x] **[Phase 3]** Create `Placement` model
+- [x] **[Phase 3]** Create/update `DailyCallReportController` (index, store, aggregate)
+- [x] **[Phase 3]** Create `PlacementController` (index, store, update, destroy)
+- [x] **[Phase 3]** Register routes in `routes/web.php`
+- [x] **[Phase 3]** Commit: `feat: add DailyCallReport + Placement models and controllers`
 
 **Routes to add:**
 ```php

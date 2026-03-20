@@ -6,10 +6,12 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ConsultantController;
+use App\Http\Controllers\DailyCallReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\PlacementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
@@ -28,6 +30,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Call reports
+    Route::get('/calls', [DailyCallReportController::class, 'index'])->name('calls.index');
+    Route::post('/calls', [DailyCallReportController::class, 'store'])->name('calls.store');
+    Route::get('/calls/report', [DailyCallReportController::class, 'aggregate'])->name('calls.report');
+
+    // Placements
+    Route::get('/placements', [PlacementController::class, 'index'])->name('placements.index');
+    Route::post('/placements', [PlacementController::class, 'store'])->name('placements.store');
+    Route::put('/placements/{placement}', [PlacementController::class, 'update'])->name('placements.update');
+    Route::delete('/placements/{placement}', [PlacementController::class, 'destroy'])->name('placements.destroy');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
