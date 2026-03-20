@@ -112,7 +112,7 @@ class DailyCallReportController extends Controller
 
     public function aggregate(Request $request): JsonResponse|View
     {
-        $this->authorize('account_manager');
+        $this->authorize('admin');
 
         $filters = $request->validate([
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
