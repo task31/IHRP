@@ -829,3 +829,28 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Remaining:** Step 7 code changes (sidebar nav + dead stub removal), then Phase 3 is done.
 
+---
+
+### 🔨 [BUILD — Cursor] — Phase 3 Step 7 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `web/resources/views/layouts/app.blade.php` — added `Placements` nav link inside `@can('account_manager')`, after `Reports` and before `@endcan`; kept `Calls` link in-place for all roles.
+- [x] [Phase 3] `web/app/Http/Controllers/DashboardController.php` — removed dead employee stub JSON branch from `index()` and removed stale stub comment above `abort_unless()`, leaving the guard intact.
+
+**Deviations from plan:** None
+
+**Unplanned additions:** None
+
+**Files actually modified:**
+- `web/resources/views/layouts/app.blade.php` ✅
+- `web/app/Http/Controllers/DashboardController.php` ✅
+
+**Verification:**
+- `php artisan view:cache` — OK
+- `php artisan route:list` — OK
+- `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
+
+**Sidebar behavior target:**
+- Employee: Dashboard + Calls only
+- Admin/Account Manager: Dashboard + Calls + AM links including Placements
+

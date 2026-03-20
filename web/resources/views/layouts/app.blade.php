@@ -51,6 +51,12 @@
                         'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('dashboard'),
                     ])>Dashboard</a>
 
+                    <a href="{{ route('calls.index') }}" @class([
+                        'block rounded px-3 py-2',
+                        'bg-gray-800 font-medium text-white' => request()->routeIs('calls.*'),
+                        'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('calls.*'),
+                    ])>Calls</a>
+
                     @can('account_manager')
                         <a href="{{ route('clients.index') }}" @class([
                             'block rounded px-3 py-2',
@@ -82,6 +88,11 @@
                             'bg-gray-800 font-medium text-white' => request()->routeIs('reports.*'),
                             'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('reports.*'),
                         ])>Reports</a>
+                        <a href="{{ route('placements.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('placements.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('placements.*'),
+                        ])>Placements</a>
                     @endcan
 
                     @can('admin')
