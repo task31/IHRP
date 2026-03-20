@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-20 (Phase 4 closed)_
+_Last updated: 2026-03-20 (Phase 5 in progress)_
 
 ## Phase Map
 
@@ -63,4 +63,4 @@ _Last updated: 2026-03-20 (Phase 4 closed)_
 - [Phase 2b] ✅ Complete _(2026-03-19)_
 - [Phase 3] ✅ Complete _(2026-03-19)_
 - [Phase 4] ✅ Complete _(2026-03-20)_
-- [Phase 5] ⏳ Pending
+- [Phase 5] 🔨 In Progress

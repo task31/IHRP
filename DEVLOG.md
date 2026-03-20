@@ -1145,3 +1145,32 @@ placement management (Livewire), and an employee-specific dashboard.
 - `php artisan route:list` — exit 0, 102 routes listed ✅
 
 ---
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 5 Step 1 pre-deploy fixes _(2026-03-20)_
+
+**Reviewed:** d255873 — feat: prepare Bluehost production deploy — remove @vite, commit vendor, add cpanel config
+
+**Verified:**
+- `@vite()` removed from `app.blade.php` — grep returns no matches ✅
+- `@vite()` removed from `guest.blade.php` — grep returns no matches ✅
+- `/vendor` line removed from `web/.gitignore` ✅
+- `web/vendor/` committed to git — visible in commit stat (autoload.php + full vendor tree) ✅
+- `.cpanel.yml` created in repo root with correct copy + cache tasks ✅
+- `web/.env.production.example` created with all required fields ✅
+- `php artisan route:list` — 102 routes, no errors ✅
+- Commit message matches plan exactly ✅
+
+**Deviations (both correct):**
+- `guest.blade.php` had no CDN scripts before — Cursor added Tailwind CDN alongside removing @vite.
+  Correct: the guest layout (login page) now loads Tailwind the same way as app layout ✅
+- Cursor added a comment `<!-- No Vite on Bluehost — Tailwind via CDN matches app layout -->`
+  in guest.blade.php — good documentation, no issue ✅
+
+**Carry-forwards into Step 2:**
+- [ ] Raf: confirm Bluehost cPanel username (may not be `matchpoi`) → update `.cpanel.yml` if different
+- [ ] Raf: create MySQL DB + user in cPanel
+- [ ] Raf: create hr.matchpointegroup.com subdomain with document root = web/public/
+- [ ] Raf: run AutoSSL for hr subdomain
+- [ ] Push d255873 to origin before configuring Bluehost Git pull
