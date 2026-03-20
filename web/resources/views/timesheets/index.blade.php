@@ -189,9 +189,110 @@
                     <button type="button" @click="viewOpen = false" class="text-gray-500 hover:text-gray-800">✕</button>
                 </div>
                 <div class="mt-4 text-sm">
-                    <template x-if="viewLoading"><p class="text-gray-500">Loading…</p></template>
+                    <template x-if="viewLoading">
+                        <p class="text-gray-500">Loading…</p>
+                    </template>
                     <template x-if="!viewLoading && viewData">
-                        <pre class="max-h-[60vh] overflow-auto rounded bg-gray-50 p-3 text-xs" x-text="JSON.stringify(viewData, null, 2)"></pre>
+                        <div class="space-y-5">
+
+                            {{-- Header info --}}
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-gray-50 p-4 text-sm sm:grid-cols-3">
+                                <div>
+                                    <p class="text-xs text-gray-500">Consultant</p>
+                                    <p class="font-medium" x-text="viewData.consultant_name ?? '—'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Client</p>
+                                    <p class="font-medium" x-text="viewData.client_name ?? '—'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Pay period</p>
+                                    <p class="font-medium" x-text="viewData.pay_period_start + ' → ' + viewData.pay_period_end"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">State</p>
+                                    <p class="font-medium" x-text="viewData.state_snapshot"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Pay rate</p>
+                                    <p class="font-medium" x-text="'$' + parseFloat(viewData.pay_rate_snapshot).toFixed(2) + ' / hr'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Bill rate</p>
+                                    <p class="font-medium" x-text="'$' + parseFloat(viewData.bill_rate_snapshot).toFixed(2) + ' / hr'"></p>
+                                </div>
+                                <div class="col-span-2 sm:col-span-3">
+                                    <p class="text-xs text-gray-500">OT rule applied</p>
+                                    <p class="font-medium" x-text="viewData.ot_rule_applied"></p>
+                                </div>
+                            </div>
+
+                            {{-- Hours & pay by week --}}
+                            <div>
+                                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Hours &amp; Pay</p>
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b text-xs text-gray-500">
+                                            <th class="pb-1 text-left font-normal"></th>
+                                            <th class="pb-1 text-right font-normal">Reg hrs</th>
+                                            <th class="pb-1 text-right font-normal">OT hrs</th>
+                                            <th class="pb-1 text-right font-normal">DT hrs</th>
+                                            <th class="pb-1 text-right font-normal">Consultant pay</th>
+                                            <th class="pb-1 text-right font-normal">Client billable</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr>
+                                            <td class="py-1.5 text-gray-600">Week 1</td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_regular_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_ot_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_dt_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week1_regular_pay) + parseFloat(viewData.week1_ot_pay) + parseFloat(viewData.week1_dt_pay)).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week1_regular_billable) + parseFloat(viewData.week1_ot_billable) + parseFloat(viewData.week1_dt_billable)).toFixed(2)"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-gray-600">Week 2</td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_regular_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_ot_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_dt_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week2_regular_pay) + parseFloat(viewData.week2_ot_pay) + parseFloat(viewData.week2_dt_pay)).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week2_regular_billable) + parseFloat(viewData.week2_ot_billable) + parseFloat(viewData.week2_dt_billable)).toFixed(2)"></td>
+                                        </tr>
+                                        <tr class="font-semibold">
+                                            <td class="py-1.5">Total</td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_regular_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_ot_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_dt_hours).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + parseFloat(viewData.total_consultant_cost).toFixed(2)"></td>
+                                            <td class="py-1.5 text-right" x-text="'$' + parseFloat(viewData.total_client_billable).toFixed(2)"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {{-- Margin summary --}}
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="rounded-lg border border-gray-200 p-3 text-center">
+                                    <p class="text-xs text-gray-500">Gross revenue</p>
+                                    <p class="mt-0.5 text-lg font-semibold" x-text="'$' + parseFloat(viewData.gross_revenue).toFixed(2)"></p>
+                                </div>
+                                <div class="rounded-lg border border-gray-200 p-3 text-center">
+                                    <p class="text-xs text-gray-500">Gross margin</p>
+                                    <p class="mt-0.5 text-lg font-semibold" x-text="'$' + parseFloat(viewData.gross_margin_dollars).toFixed(2)"></p>
+                                </div>
+                                <div class="rounded-lg border border-gray-200 p-3 text-center">
+                                    <p class="text-xs text-gray-500">Margin %</p>
+                                    <p class="mt-0.5 text-lg font-semibold" x-text="parseFloat(viewData.gross_margin_percent).toFixed(1) + '%'"></p>
+                                </div>
+                            </div>
+
+                            {{-- Invoice status --}}
+                            <div class="flex items-center gap-2 text-sm text-gray-600">
+                                <span class="text-xs text-gray-500">Invoice status:</span>
+                                <span class="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium" x-text="viewData.invoice_status ?? 'pending'"></span>
+                            </div>
+
+                        </div>
                     </template>
                 </div>
             </div>

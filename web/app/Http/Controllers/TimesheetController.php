@@ -69,7 +69,11 @@ class TimesheetController extends Controller
             ->orderBy('day_of_week')
             ->get();
 
-        return response()->json(array_merge($t->toArray(), ['dailyHours' => $daily]));
+        return response()->json(array_merge($t->toArray(), [
+            'consultant_name' => $t->consultant?->full_name,
+            'client_name'     => $t->client?->name,
+            'dailyHours'      => $daily,
+        ]));
     }
 
     public function upload(Request $request, TimesheetParseService $parser): JsonResponse
