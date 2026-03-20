@@ -244,6 +244,18 @@ class PlacementManager extends Component
             $placement->fresh()->only(self::AUDIT_FIELDS),
         );
 
+        if ($placement->consultant_id) {
+            $consultant = Consultant::query()->find($placement->consultant_id);
+            if ($consultant) {
+                if ($status === 'ended' || $status === 'cancelled') {
+                    $consultant->project_end_date = now()->toDateString();
+                } elseif ($status === 'active') {
+                    $consultant->project_end_date = null;
+                }
+                $consultant->save();
+            }
+        }
+
         $this->loadPlacements();
     }
 
