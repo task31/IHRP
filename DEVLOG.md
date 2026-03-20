@@ -884,3 +884,30 @@ placement management (Livewire), and an employee-specific dashboard.
 - [ ] `auditLog` actor gap for queue contexts (flagged in Phase 1, deferred to Phase 4)
 - [ ] `smoke_debug.py` / `smoke_test.py` in repo root — delete or gitignore before Phase 4 starts
 
+---
+
+### 🔨 [BUILD — Cursor] — Placement PO# + invoice _(2026-03-20)_
+
+**Todos completed:**
+- [x] Migration `add_po_number_to_placements_table` — nullable `po_number` string after `bill_rate` on `placements`
+- [x] `Placement` model — `po_number` in `$fillable`
+- [x] `PlacementManager` — audit field, property, `openEdit` / `save` / validation / `resetFormFields`
+- [x] `placement-manager.blade.php` — PO# in Add/Edit modal (admin input, AM read-only text); PO# table column after Bill Rate; empty-state colspan 10 / 9
+- [x] `InvoiceController::generate()` — active placement PO# by consultant + client, latest `start_date`, fallback to `client.po_number` (note: `store()` remains 405 stub; PO is set only on generate path)
+
+**Deviations from plan:** PO# wiring applied in `InvoiceController::generate()` (where `Invoice::create` runs), not `store()`.
+
+**Unplanned additions:** None
+
+**Files actually modified:**
+- `web/database/migrations/2026_03_20_053035_add_po_number_to_placements_table.php` ✅
+- `web/app/Models/Placement.php` ✅
+- `web/app/Livewire/PlacementManager.php` ✅
+- `web/resources/views/livewire/placement-manager.blade.php` ✅
+- `web/app/Http/Controllers/InvoiceController.php` ✅
+
+**Verification:**
+- `php artisan migrate` — OK
+- `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
+- `php artisan route:list` — OK
+

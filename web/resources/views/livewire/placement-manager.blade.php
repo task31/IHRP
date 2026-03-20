@@ -62,6 +62,7 @@
                     <th class="px-4 py-3">End</th>
                     <th class="px-4 py-3">Pay Rate</th>
                     <th class="px-4 py-3">Bill Rate</th>
+                    <th class="px-4 py-3">PO#</th>
                     <th class="px-4 py-3">Status</th>
                     @can('account_manager')
                         <th class="px-4 py-3 text-right">Actions</th>
@@ -80,6 +81,7 @@
                         <td class="px-4 py-3 whitespace-nowrap">{{ $p->end_date?->format('Y-m-d') ?? '—' }}</td>
                         <td class="px-4 py-3">${{ number_format((float) $p->pay_rate, 2) }}</td>
                         <td class="px-4 py-3">${{ number_format((float) $p->bill_rate, 2) }}</td>
+                        <td class="px-4 py-3">{{ $p->po_number ?? '—' }}</td>
                         <td class="px-4 py-3">
                             @if ($p->status === 'active')
                                 <span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">Active</span>
@@ -117,7 +119,7 @@
                 @empty
                     <tr>
                         <td
-                            colspan="{{ auth()->user()?->can('account_manager') ? 9 : 8 }}"
+                            colspan="{{ auth()->user()?->can('account_manager') ? 10 : 9 }}"
                             class="px-4 py-8 text-center text-gray-500"
                         >
                             No placements found.
@@ -229,6 +231,18 @@
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </label>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">PO Number</label>
+                        @if (auth()->user()?->role === 'admin')
+                            <input
+                                type="text"
+                                wire:model="po_number"
+                                class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                            />
+                        @else
+                            <p class="mt-1 text-sm text-gray-600">{{ $po_number ?: '—' }}</p>
+                        @endif
                     </div>
                     <label class="block text-xs text-gray-500">
                         Notes

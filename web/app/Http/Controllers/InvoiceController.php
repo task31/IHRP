@@ -8,6 +8,7 @@ use App\Models\Consultant;
 use App\Models\Invoice;
 use App\Models\InvoiceLineItem;
 use App\Models\InvoiceSequence;
+use App\Models\Placement;
 use App\Models\Timesheet;
 use App\Services\AppService;
 use App\Services\InvoiceFormatter;
@@ -122,7 +123,14 @@ class InvoiceController extends Controller
         $payTerms = $client->payment_terms ?? 'Net 30';
         $dueDate = InvoiceFormatter::calcDueDate($invoiceDate, $payTerms);
 
-        $invoice = DB::transaction(function () use ($ts, $consultant, $client, $lineItems, $subtotal, $invoiceDate, $dueDate) {
+        $placementPo = Placement::query()
+            ->where('consultant_id', $consultant->id)
+            ->where('client_id', $client->id)
+            ->where('status', 'active')
+            ->orderByDesc('start_date')
+            ->value('po_number');
+
+        $invoice = DB::transaction(function () use ($ts, $consultant, $client, $lineItems, $subtotal, $invoiceDate, $dueDate, $placementPo) {
             $seq = InvoiceSequence::query()->lockForUpdate()->where('id', 1)->first();
             if (! $seq) {
                 DB::table('invoice_sequence')->insert([
@@ -148,7 +156,7 @@ class InvoiceController extends Controller
                 'bill_to_contact' => $client->billing_contact_name,
                 'bill_to_address' => $client->billing_address,
                 'payment_terms' => $payTerms,
-                'po_number' => $client->po_number,
+                'po_number' => $placementPo ?? $client->po_number,
                 'subtotal' => round($subtotal, 4),
                 'total_amount_due' => round($subtotal, 4),
                 'status' => 'pending',

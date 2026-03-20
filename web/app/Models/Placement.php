@@ -16,6 +16,7 @@ class Placement extends Model
         'end_date',
         'pay_rate',
         'bill_rate',
+        'po_number',
         'status',
         'notes',
     ];

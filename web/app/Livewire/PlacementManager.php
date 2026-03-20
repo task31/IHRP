@@ -22,6 +22,7 @@ class PlacementManager extends Component
         'end_date',
         'pay_rate',
         'bill_rate',
+        'po_number',
         'status',
         'notes',
     ];
@@ -49,6 +50,8 @@ class PlacementManager extends Component
     public $pay_rate = '';
 
     public $bill_rate = '';
+
+    public string $po_number = '';
 
     public $notes = '';
 
@@ -151,6 +154,7 @@ class PlacementManager extends Component
         $this->end_date = $placement->end_date?->format('Y-m-d') ?? '';
         $this->pay_rate = (string) $placement->pay_rate;
         $this->bill_rate = (string) $placement->bill_rate;
+        $this->po_number = (string) ($placement->po_number ?? '');
         $this->notes = (string) ($placement->notes ?? '');
         $this->status = (string) $placement->status;
         $this->resetValidation();
@@ -169,6 +173,7 @@ class PlacementManager extends Component
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'pay_rate' => ['required', 'numeric', 'min:0'],
             'bill_rate' => ['required', 'numeric', 'min:0'],
+            'po_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['active', 'ended', 'cancelled'])],
         ]);
@@ -181,6 +186,7 @@ class PlacementManager extends Component
             'end_date' => $this->end_date !== '' ? $this->end_date : null,
             'pay_rate' => $this->pay_rate,
             'bill_rate' => $this->bill_rate,
+            'po_number' => $this->po_number !== '' ? trim($this->po_number) : null,
             'notes' => $this->notes !== '' ? (string) $this->notes : null,
             'status' => $this->status,
         ];
@@ -263,6 +269,7 @@ class PlacementManager extends Component
         $this->end_date = '';
         $this->pay_rate = '';
         $this->bill_rate = '';
+        $this->po_number = '';
         $this->notes = '';
         $this->status = 'active';
         $this->resetValidation();
