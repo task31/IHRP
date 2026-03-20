@@ -995,3 +995,22 @@ placement management (Livewire), and an employee-specific dashboard.
 - Repo root: no `smoke_*.py` files present (`Get-ChildItem smoke*.py` empty)
 - `git status` — no untracked files from this workstream (only pre-existing local edits may remain)
 
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 4 cleanup _(2026-03-20)_
+
+**Reviewed:** 54ef4db + 4b0b1c2 — smoke script removal + DEVLOG/plan update
+
+**Verified:**
+- `smoke_debug.py` and `smoke_test.py` — both gone from project root ✅
+- Deviation confirmed correct: files were `.gitignore`d (`smoke_*.py`) so the commit is intentionally empty with a note — this is the right approach, not a bug ✅
+- `phase-4-plan.md` — all Cursor todos checked, acceptance line marked done, file table updated ✅
+- `DEVLOG.md` BUILD block written in correct format ✅
+- OT tests still passing: 44 passed, 120 assertions (run at commit 4316bac, no code changed since) ✅
+- `migrate:validate` 12/12 (run at commit 4316bac, MySQL data unchanged) ✅
+
+**Carry-forwards:**
+- [ ] Manual regression smoke test — Raf runs all 3 roles against the checklist in `phase-4-plan.md`
+- [ ] After regression passes: append Phase 4 summary to `CLAUDE.md`, mark Phase 4 ✅ in `PHASES.md`
+
