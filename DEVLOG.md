@@ -970,3 +970,28 @@ placement management (Livewire), and an employee-specific dashboard.
 - `web/app/Console/Commands/ValidateMigration.php` ✅
 - `web/app/Console/Commands/MigrateFiles.php` ✅
 - `phase-4-plan.md` ✅
+
+---
+
+### 🔨 [BUILD — Cursor] — Phase 4 cleanup _(2026-03-20)_
+
+**Assigned workstream:** [Phase 4]
+
+**Todos completed:**
+- [x] [Phase 4] Delete `smoke_debug.py` from project root
+- [x] [Phase 4] Delete `smoke_test.py` from project root
+- [x] [Phase 4] Commit: `chore: remove smoke test Python scripts`
+
+**Deviations from plan:** None
+
+**Unplanned additions:** None
+
+**Files actually modified:**
+- `smoke_debug.py` ❌ (removed — ad-hoc HTTP smoke helper)
+- `smoke_test.py` ❌ (removed — ad-hoc HTTP smoke script)
+- `phase-4-plan.md` ✅ (Cursor cleanup todos + acceptance + file table marked done)
+
+**Verification:**
+- Repo root: no `smoke_*.py` files present (`Get-ChildItem smoke*.py` empty)
+- `git status` — no untracked files from this workstream (only pre-existing local edits may remain)
+

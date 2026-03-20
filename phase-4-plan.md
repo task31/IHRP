@@ -40,9 +40,9 @@ Requires Phase 3 complete (all features must exist before QA). ✅
 
 ### Remaining for Cursor
 
-- [ ] [Phase 4] Delete `smoke_debug.py` from project root
-- [ ] [Phase 4] Delete `smoke_test.py` from project root
-- [ ] [Phase 4] Commit: `chore: remove smoke test Python scripts`
+- [x] [Phase 4] Delete `smoke_debug.py` from project root
+- [x] [Phase 4] Delete `smoke_test.py` from project root
+- [x] [Phase 4] Commit: `chore: remove smoke test Python scripts`
 
 ### Regression Smoke Test (manual — Raf runs this)
 
@@ -77,7 +77,7 @@ Requires Phase 3 complete (all features must exist before QA). ✅
 - [ ] `php artisan migrate:validate` shows all ✅ (already passing)
 - [ ] Invoice PDF preview works for at least one migrated invoice
 - [ ] OT tests: 44 passed, 120 assertions, 0 failures (already passing)
-- [ ] `smoke_*.py` files removed from repo
+- [x] `smoke_*.py` files removed from repo
 - [ ] All 3 roles pass the regression smoke checklist
 
 ## Files Modified/Created
@@ -87,5 +87,5 @@ Requires Phase 3 complete (all features must exist before QA). ✅
 | `web/app/Console/Commands/MigrateFromSqlite.php` | Create | ✅ Done |
 | `web/app/Console/Commands/ValidateMigration.php` | Create | ✅ Done |
 | `web/app/Console/Commands/MigrateFiles.php` | Create | ✅ Done |
-| `smoke_debug.py` | Delete | ⏳ Cursor |
-| `smoke_test.py` | Delete | ⏳ Cursor |
+| `smoke_debug.py` | Delete | ✅ Done |
+| `smoke_test.py` | Delete | ✅ Done |
