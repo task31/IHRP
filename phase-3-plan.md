@@ -170,8 +170,8 @@ Notes [textarea]
 
 - [x] **[Phase 3]** Write `calls/index.blade.php`
 - [x] **[Phase 3]** Add Blade branch to `DailyCallReportController::index()`
-- [ ] **[Phase 3]** Smoke: employee submits report → appears in table
-- [ ] **[Phase 3]** Smoke: admin sees all employees' rows
+- [x] **[Phase 3]** Smoke: employee submits report → appears in table
+- [x] **[Phase 3]** Smoke: admin sees all employees' rows
 - [ ] **[Phase 3]** Commit: `feat: add call reporting page`
 
 ---
@@ -197,8 +197,8 @@ Header: "Call Report Summary" | Access: account_manager + admin only (abort 403 
 
 - [x] **[Phase 3]** Write `calls/report.blade.php`
 - [x] **[Phase 3]** Add Blade branch to `DailyCallReportController::aggregate()`
-- [ ] **[Phase 3]** Smoke: AM sees aggregate summary
-- [ ] **[Phase 3]** Smoke: employee → 403 on `/calls/report`
+- [x] **[Phase 3]** Smoke: AM sees aggregate summary
+- [x] **[Phase 3]** Smoke: employee → 403 on `/calls/report`
 - [x] **[Phase 3]** Commit: `feat: add call report aggregate view`
 
 ---
@@ -269,8 +269,8 @@ Blade view. The Blade view switches layout based on role.
 
 - [x] **[Phase 3]** Update `DashboardController::page()` to pass employee placement + call data
 - [x] **[Phase 3]** Update `dashboard.blade.php` with employee branch
-- [ ] **[Phase 3]** Smoke: employee sees placement card + call summary + quick-submit form
-- [ ] **[Phase 3]** Smoke: admin still sees original 4-card dashboard
+- [x] **[Phase 3]** Smoke: employee sees placement card + call summary + quick-submit form
+- [x] **[Phase 3]** Smoke: admin still sees original 4-card dashboard
 - [x] **[Phase 3]** Commit: `feat: add employee dashboard with placement and call summary`
 
 ---

@@ -751,6 +751,27 @@ placement management (Livewire), and an employee-specific dashboard.
 
 ---
 
+### 🔨 [BUILD — Claude Code] — Phase 3 Smoke Tests _(2026-03-19)_
+
+**Smoke suite result: 12/12 PASS**
+
+**Bug found and fixed during smoke:** `placement-manager.blade.php:120` — `@can..@else..@endcan` inside HTML attribute `colspan="..."` without whitespace between digits and directives (`9@else8@endcan`). Blade's directive regex requires whitespace before `@` — `9@else` was treated as literal text, leaving the compiled `if` unclosed → PHP ParseError (EOF expecting endif). Fixed by replacing with `{{ auth()->user()?->can('account_manager') ? 9 : 8 }}`.
+
+**Checks passing:**
+- Employee: My Placement card, My Activity (last 7 days), Today's Report form
+- Employee: 4-card Alpine dashboard NOT shown
+- Employee: call report submits → redirects back to /dashboard
+- Employee: /calls/report → 403
+- Admin: 4-card Alpine dashboard visible, employee cards not shown
+- Admin: /calls page loads
+- AM: /calls/report aggregate loads with summary table
+- AM: /calls page loads
+- AM: /placements loads (Livewire component, no 500/403)
+
+**Smoke todos checked in phase-3-plan.md:** Steps 3, 4, 5, 6 browser smoke lines
+
+---
+
 ### ✅ [REVIEW — Claude Code] — Phase 3 Step 6 _(2026-03-19)_
 
 **Reviewed:** `DashboardController::page()` employee branch + `dashboard.blade.php`

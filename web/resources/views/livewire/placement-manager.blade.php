@@ -117,7 +117,7 @@
                 @empty
                     <tr>
                         <td
-                            colspan="@can('account_manager')9@else8@endcan"
+                            colspan="{{ auth()->user()?->can('account_manager') ? 9 : 8 }}"
                             class="px-4 py-8 text-center text-gray-500"
                         >
                             No placements found.
