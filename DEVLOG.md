@@ -667,3 +667,21 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Next:** Step 3 — Call Reporting Blade (`calls/index.blade.php`). Views for `calls.*` and `placements.*` do not exist yet — JSON API is safe but browser hits will 500 until Step 3/5 land.
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 3 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `calls/index.blade.php` — header + today line, POST form (date max today, counts, notes), Alpine prefill / Submit vs Update by date, validation `old()` restore, toast flash (`toast` key, no duplicate layout banner)
+- [x] [Phase 3] `DailyCallReportController::index()` — pass `myReportsByDate`, `todayDate`, `showEmployeeColumn` for Blade
+- [x] [Phase 3] `DailyCallReportController::store()` — web redirect uses `session('toast')` for green toast only
+- [x] [Phase 3] Verification: `php artisan view:cache` OK; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed
+
+**Deviations from plan:** None
+
+**Unplanned additions:** None
+
+**Files actually created/modified:**
+- `web/resources/views/calls/index.blade.php` ➕
+- `web/app/Http/Controllers/DailyCallReportController.php` ✅
+
+**Manual smoke (deferred):** employee submit → table row; admin sees Employee column — not run in this session (no browser); `/calls/report` Blade still Step 4
+

@@ -41,8 +41,26 @@ class DailyCallReportController extends Controller
             return response()->json($reports);
         }
 
+        $myReports = DailyCallReport::query()
+            ->where('user_id', $user->id)
+            ->get()
+            ->keyBy(fn (DailyCallReport $r) => $r->report_date->format('Y-m-d'));
+
+        $myReportsPayload = $myReports->map(
+            fn (DailyCallReport $r) => [
+                'calls_made' => $r->calls_made,
+                'contacts_reached' => $r->contacts_reached,
+                'submittals' => $r->submittals,
+                'interviews_scheduled' => $r->interviews_scheduled,
+                'notes' => $r->notes ?? '',
+            ],
+        )->all();
+
         return view('calls.index', [
             'reports' => $reports,
+            'myReportsByDate' => $myReportsPayload,
+            'todayDate' => now()->toDateString(),
+            'showEmployeeColumn' => $user->role !== 'employee',
         ]);
     }
 
@@ -88,7 +106,7 @@ class DailyCallReportController extends Controller
             return response()->json(['success' => true, 'data' => $report->load('user')]);
         }
 
-        return back()->with('success', 'Call report saved.');
+        return back()->with('toast', 'Call report saved.');
     }
 
     public function aggregate(Request $request): JsonResponse|View

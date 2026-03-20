@@ -168,8 +168,8 @@ Notes [textarea]
 - Admin/AM sees all employees (add "Employee" column)
 - Columns: Date | Employee (AM/admin only) | Calls | Contacts | Submittals | Interviews | Notes
 
-- [ ] **[Phase 3]** Write `calls/index.blade.php`
-- [ ] **[Phase 3]** Add Blade branch to `DailyCallReportController::index()`
+- [x] **[Phase 3]** Write `calls/index.blade.php`
+- [x] **[Phase 3]** Add Blade branch to `DailyCallReportController::index()`
 - [ ] **[Phase 3]** Smoke: employee submits report → appears in table
 - [ ] **[Phase 3]** Smoke: admin sees all employees' rows
 - [ ] **[Phase 3]** Commit: `feat: add call reporting page`
