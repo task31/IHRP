@@ -297,6 +297,7 @@ Blade view. The Blade view switches layout based on role.
 - [ ] `php artisan test --filter=OvertimeCalculatorTest` still passes (regression)
 
 - [ ] **[Phase 3]** Update sidebar in `app.blade.php`
+- [ ] **[Phase 3]** Remove dead `stub` response block (lines 48–53) from `DashboardController::index()` — employee path now server-rendered, stub is unreachable
 - [ ] **[Phase 3]** Run full smoke checklist above
 - [ ] **[Phase 3]** Commit: `feat: Phase 3 complete — calls, placements, employee dashboard`
 

@@ -749,3 +749,38 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Manual smoke (deferred):** employee dashboard three sections + admin 4-card unchanged
 
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 3 Step 6 _(2026-03-19)_
+
+**Reviewed:** `DashboardController::page()` employee branch + `dashboard.blade.php`
+
+**Verified:**
+- `users.consultant_id` column exists in migration — FK path confirmed
+- `Placement` has `consultant()` + `client()` BelongsTo — optional chaining in Blade handles deleted relations
+- `DailyCallReportPolicy::create()` returns `true` for all roles — employee POST to `calls.store` authorized
+- `store()` validation fields match dashboard form exactly; `updateOrCreate` prevents duplicate-per-day
+- `report_date` and `start_date` cast as `date` on both models — `.format()` calls safe
+- `calls.store` route confirmed at `web/routes/web.php:36`
+- OT regression: 44 tests / 120 assertions, 0 failures
+
+**Carry-forwards to Step 7:**
+- [ ] Remove dead `stub` response block (lines 48–53) from `DashboardController::index()` — employee path is now server-rendered, stub is unreachable (added to phase-3-plan.md Step 7)
+- [ ] Browser smoke: employee sees all 3 dashboard cards; admin still sees 4-card Alpine dashboard
+- [ ] Update sidebar (`app.blade.php`) — Calls link for all roles, Placements under `@can('account_manager')`
+
+---
+
+### 🔨 [BUILD — Claude Code] — Phase 3 UI _(2026-03-19)_
+
+**Change:** Move page header slot from top of `<main>` to left sidebar
+
+**Problem:** `$header` slot rendered as a white card at top of the main content area for every page, consuming vertical space and pushing content down.
+
+**Fix:** Removed `<header>` block from `<main>`; added `@isset($header)` into `<aside>` below nav links, styled as small uppercase label (`text-xs font-semibold uppercase tracking-widest text-gray-400`).
+
+**Files modified:**
+- `web/resources/views/layouts/app.blade.php` ✅
+
+**No individual page views changed** — all pages use `<x-slot name="header">` which feeds the same slot; moving the render location in the layout affects all pages at once.
+

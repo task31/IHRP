@@ -98,7 +98,13 @@
                     @endcan
                 </nav>
 
-                <div class="mt-8 border-t border-gray-700 pt-4 text-sm">
+                @isset($header)
+                    <div class="mt-6 border-t border-gray-700 pt-4 px-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
+                        {{ $header }}
+                    </div>
+                @endisset
+
+                <div class="mt-6 border-t border-gray-700 pt-4 text-sm">
                     <div class="text-gray-300">{{ auth()->user()->name ?? '' }}</div>
                     <div class="text-xs text-gray-400">{{ auth()->user()->email ?? '' }}</div>
                     <div class="mt-3">
@@ -123,12 +129,6 @@
                         {{ session('error') }}
                     </div>
                 @endif
-
-                @isset($header)
-                    <header class="mb-6 rounded bg-white p-4 shadow">
-                        {{ $header }}
-                    </header>
-                @endisset
 
                 {{ $slot }}
             </main>
