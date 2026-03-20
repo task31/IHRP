@@ -462,3 +462,51 @@ _Mode: SEQUENTIAL | PARALLEL_
 
 **Remaining:** [Phase 2] Step 8 — full merge smoke checklist in `phase-2-plan.md`.
 
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 2 _(2026-03-19)_
+
+**Review method:** Architect review — route list, file existence, carry-forward verification, code grep, OT regression.
+
+**Test results:**
+- `php artisan test --filter=OvertimeCalculatorTest` — **44 tests, 120 assertions, 0 failures** ✅
+  _(CLAUDE.md said "45 tests" from Phase 1 note — actual count is 44. 120 assertions unchanged. No regression.)_
+- `php artisan route:list` — no errors; all 8 page routes + all sub-routes present ✅
+
+**Carry-forward verification (all 4 from Phase 1 review):**
+- ✅ `BudgetController::alerts()` — audit log written for both `critical` and `warning` flag writes (lines 156, 169)
+- ✅ `ReportController::saveCsv()` — removed from routes; replaced with server-driven `downloadMonthlyCsv()` (GET `/reports/monthly-csv`)
+- ✅ `TimesheetController` — `source_file_path` populated during `save` batch import (line 319)
+- ✅ `storage/app/templates/timesheet_template.xlsx` — file present; `timesheets.template` route registered
+
+**Code spot-checks:**
+- `extend-end-date`: route is `POST`, Alpine call is `POST` ✅ (plan template showed PATCH — Cursor correctly used POST)
+- Working tree diff: CRLF/LF line endings only — no actual content changes vs commits ✅
+- `reports/save-csv` route: removed from `routes/web.php` ✅ (not present in `route:list`)
+
+**Issues found:**
+- **LOW** — No live browser smoke test run (Step 8 checklist). Code-level checks all pass; browser validation deferred below.
+- **LOW** — OT test count note: CLAUDE.md Phase 1 summary says "45 PHPUnit tests" — correct count is 44 tests. CLAUDE.md updated to reflect actual count.
+
+**Browser smoke deferred:**
+The following Step 8 items require a live browser session and are carried forward as the first gate of Phase 3:
+- All 8 pages render with real data (admin session)
+- CRUD modals save + toast fires (clients, consultants)
+- Livewire wizard: upload → parse → preview-OT → import → success
+- PDF preview in iframe (invoices + year-end report)
+- Role gates: employee gets 403 on all protected pages
+- Sidebar active state correct on each page
+
+**Security spot-check:**
+- Budget audit log now writes `user_id = Auth::id()` on both alert thresholds ✅
+- `downloadMonthlyCsv()` has `$this->authorize('account_manager')` ✅
+- `TimesheetController::save()` — `source_file_path` stored, no path traversal (stored relative, not user-supplied raw value) ✅
+
+**PHASES.md updated:** ✅ Phase 2a + 2b marked complete
+
+**Carry forward to Phase 3:**
+- [ ] **GATE** — Browser smoke: run Step 8 checklist from `phase-2-plan.md` before any Phase 3 feature work (all 8 pages, role gates, Livewire wizard, PDF preview)
+- [ ] Fix CLAUDE.md OT test count: "45 PHPUnit tests" → "44 tests" (minor doc correction)
+- [ ] Confirm `timesheets.template` download returns 200 with valid XLSX (file exists; controller wiring not verified)
+- [ ] `AppService::auditLog()` actor gap for system/queue contexts — flag when Phase 4 scheduled jobs are added
+

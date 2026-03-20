@@ -57,7 +57,20 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ## Active Phase
 
-**Phase 2** — Frontend Port — NEXT
+**Phase 3** — New Features — NEXT _(browser smoke gate must pass first — see PHASES.md)_
+
+---
+
+### Phase 2 — Frontend Port ✅ _(closed 2026-03-19)_
+
+- Step 0: sidebar nav wired to named routes (`@can` gates, `routeIs()` active state), Alpine toast system, global `apiFetch()` with CSRF header merge
+- Phase 2a (Steps 1–4): Dashboard (4 stat cards + end-date alerts + budget bars via Alpine fetch), Clients (CRUD modal, client-side sort), Consultants (onboarding modal, W-9 upload), Invoices (PDF preview iframe via blob URL), Ledger (detail + summary toggle)
+- Phase 2b (Steps 5–7): Timesheets Livewire wizard (`TimesheetWizard.php` — upload→parse→preview-OT→import), Reports (year-end PDF, monthly CSV server-driven), Settings (6-tab layout, SMTP test, logo upload, backup download)
+- All 3 Phase 1 carry-forwards fixed: budget alerts audit log, `downloadMonthlyCsv()` server-driven, `source_file_path` populated on import
+- Template file placed: `storage/app/templates/timesheet_template.xlsx`
+- `reports/save-csv` route removed; `reports/save-pdf` and `reports/monthly-csv` are the two report write paths
+- OT tests: 44 tests, 120 assertions, 0 failures (no regression)
+- Browser smoke (Step 8 checklist) deferred — carry-forward gate for Phase 3 start
 
 ---
 
