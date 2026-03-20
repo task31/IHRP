@@ -911,3 +911,27 @@ placement management (Livewire), and an employee-specific dashboard.
 - `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
 - `php artisan route:list` — OK
 
+
+---
+
+### ✅ [REVIEW — Claude Code] — Placement PO# _(2026-03-20)_
+
+**Reviewed:** commit 7f0f266 — PO# moved from client-level to placement-level
+
+**Verified:**
+- Migration `add_po_number_to_placements_table` — `nullable string` after `bill_rate`, reversible `down()` ✅
+- `Placement.$fillable` — `po_number` added ✅
+- `PlacementManager` — `po_number` in `AUDIT_FIELDS`, public property, `openEdit`, `save` payload, validation, `resetFormFields` ✅
+- `placement-manager.blade.php` — PO# column in table; admin gets `<input wire:model>`, AM/employee get read-only `<p>` ✅
+- `InvoiceController::generate()` — placement PO# lookup (`consultant_id + client_id + status=active + orderByDesc start_date`); fallback to `$client->po_number` for placements with no PO# set ✅
+- Deviation confirmed correct: `store()` is a 405 stub — `generate()` is the real invoice creation path. Change was applied in the right method ✅
+- `php artisan migrate` — clean ✅
+- `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions ✅
+- `php artisan route:list` — no errors ✅
+
+**Note for future devs:** `POST /invoices` (store) returns 405 by design — all invoice creation goes through `POST /invoices/generate`. The naming is a legacy of the Electron IPC port.
+
+**Carry-forwards:**
+- [ ] Browser smoke: admin edits PO# on a placement → next generated invoice picks it up
+- [ ] `clients.po_number` still exists and still editable via Client modal — consider deprecating or hiding it once all placements have PO#s populated (Phase 4 decision)
+
