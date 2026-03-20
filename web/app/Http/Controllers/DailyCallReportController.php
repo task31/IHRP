@@ -51,7 +51,7 @@ class DailyCallReportController extends Controller
         $this->authorize('create', DailyCallReport::class);
 
         $data = $request->validate([
-            'report_date' => ['required', 'date'],
+            'report_date' => ['required', 'date', 'before_or_equal:today'],
             'calls_made' => ['required', 'integer', 'min:0'],
             'contacts_reached' => ['required', 'integer', 'min:0'],
             'submittals' => ['required', 'integer', 'min:0'],

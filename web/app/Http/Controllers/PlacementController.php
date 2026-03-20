@@ -151,9 +151,9 @@ class PlacementController extends Controller
             'client_id' => ['required', 'integer', 'exists:clients,id'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'start_date' => ['required', 'date'],
-            'end_date' => ['nullable', 'date'],
-            'pay_rate' => ['required', 'numeric'],
-            'bill_rate' => ['required', 'numeric'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'pay_rate' => ['required', 'numeric', 'min:0'],
+            'bill_rate' => ['required', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(['active', 'ended', 'cancelled'])],
             'notes' => ['nullable', 'string'],
         ]);
