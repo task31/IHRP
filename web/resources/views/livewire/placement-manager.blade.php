@@ -98,17 +98,16 @@
                                     >
                                         Edit
                                     </button>
-                                    @if ($p->status === 'active')
-                                        <select
-                                            wire:key="placement-status-action-{{ $p->id }}-{{ $p->status }}"
-                                            class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800"
-                                            wire:change="updateStatus({{ $p->id }}, $event.target.value)"
-                                        >
-                                            <option value="" selected disabled>Status…</option>
-                                            <option value="ended">End</option>
-                                            <option value="cancelled">Cancel</option>
-                                        </select>
-                                    @endif
+                                    <select
+                                        wire:key="placement-status-action-{{ $p->id }}-{{ $p->status }}"
+                                        class="rounded border border-gray-300 px-2 py-1 text-xs text-gray-800"
+                                        wire:change="updateStatus({{ $p->id }}, $event.target.value)"
+                                    >
+                                        <option value="" disabled {{ $p->status ? '' : 'selected' }}>Status…</option>
+                                        <option value="active" {{ $p->status === 'active' ? 'selected' : '' }}>Active</option>
+                                        <option value="ended" {{ $p->status === 'ended' ? 'selected' : '' }}>Ended</option>
+                                        <option value="cancelled" {{ $p->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    </select>
                                 </div>
                             </td>
                         @endcan

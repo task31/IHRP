@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Client;
+use App\Models\Consultant;
 use App\Models\Placement;
 use App\Services\AppService;
 use Illuminate\Support\Facades\Gate;
@@ -151,9 +152,29 @@ class PlacementManager extends Component
             'status' => ['required', Rule::in(['active', 'ended', 'cancelled'])],
         ]);
 
+        $consultantName = trim((string) $this->consultant_name);
+        $clientId = (int) $this->client_id;
+
+        $consultant = Consultant::query()
+            ->whereRaw('LOWER(full_name) = ?', [strtolower($consultantName)])
+            ->first();
+
+        if (! $consultant) {
+            $consultant = Consultant::query()->create([
+                'full_name' => $consultantName,
+                'pay_rate' => $this->pay_rate,
+                'bill_rate' => $this->bill_rate,
+                'state' => '',
+                'industry_type' => 'other',
+                'client_id' => $clientId,
+                'project_start_date' => $this->start_date !== '' ? $this->start_date : null,
+            ]);
+        }
+
         $payload = [
-            'consultant_name' => trim((string) $this->consultant_name),
-            'client_id' => (int) $this->client_id,
+            'consultant_name' => $consultantName,
+            'consultant_id' => $consultant->id,
+            'client_id' => $clientId,
             'job_title' => $this->job_title !== '' ? trim((string) $this->job_title) : null,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date !== '' ? $this->end_date : null,
@@ -204,7 +225,7 @@ class PlacementManager extends Component
         abort_unless(Gate::allows('account_manager'), 403);
 
         $status = strtolower(trim($status));
-        if (! in_array($status, ['ended', 'cancelled'], true)) {
+        if (! in_array($status, ['active', 'ended', 'cancelled'], true)) {
             return;
         }
 
