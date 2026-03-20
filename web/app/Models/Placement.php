@@ -9,6 +9,7 @@ class Placement extends Model
 {
     protected $fillable = [
         'consultant_id',
+        'consultant_name',
         'client_id',
         'placed_by',
         'job_title',

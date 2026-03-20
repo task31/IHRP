@@ -1,4 +1,4 @@
-<div x-ignore wire:key="placement-manager-root" class="space-y-4 text-sm text-gray-800">
+<div wire:key="placement-manager-root" class="space-y-4 text-sm text-gray-800">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-xl font-semibold text-gray-900">Placements</h2>
         @can('account_manager')
@@ -15,15 +15,12 @@
     <div class="flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm">
         <label class="block min-w-[160px] text-xs font-medium text-gray-500">
             Consultant
-            <select
-                wire:model.live="filters.consultant_id"
+            <input
+                type="text"
+                wire:model.live.debounce.300ms="filters.consultant_name"
+                placeholder="Search name…"
                 class="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-gray-900"
-            >
-                <option value="">All</option>
-                @foreach ($consultantOptions as $opt)
-                    <option value="{{ $opt['id'] }}">{{ $opt['label'] }}</option>
-                @endforeach
-            </select>
+            />
         </label>
         <label class="block min-w-[160px] text-xs font-medium text-gray-500">
             Client
@@ -73,7 +70,7 @@
                 @forelse ($placements ?? [] as $p)
                     <tr wire:key="placement-row-{{ $p->id }}" class="text-gray-700">
                         <td class="px-4 py-3 font-medium text-gray-900">
-                            {{ $p->consultant?->full_name ?? '—' }}
+                            {{ $p->consultant_name ?? $p->consultant?->full_name ?? '—' }}
                         </td>
                         <td class="px-4 py-3">{{ $p->client?->name ?? '—' }}</td>
                         <td class="px-4 py-3">{{ $p->job_title ?: '—' }}</td>
@@ -131,7 +128,7 @@
     </div>
 
     @if ($showForm)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" wire:click.self="cancelForm">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" wire:click.self>
             <div
                 class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
                 @click.stop
@@ -143,16 +140,13 @@
                 <div class="mt-4 grid gap-3">
                     <label class="block text-xs text-gray-500">
                         Consultant
-                        <select
-                            wire:model="consultant_id"
+                        <input
+                            type="text"
+                            wire:model="consultant_name"
+                            placeholder="Full name"
                             class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-gray-900"
-                        >
-                            <option value="">—</option>
-                            @foreach ($consultantOptions as $opt)
-                                <option value="{{ $opt['id'] }}">{{ $opt['label'] }}</option>
-                            @endforeach
-                        </select>
-                        @error('consultant_id')
+                        />
+                        @error('consultant_name')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </label>

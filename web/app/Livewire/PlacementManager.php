@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Client;
-use App\Models\Consultant;
 use App\Models\Placement;
 use App\Services\AppService;
 use Illuminate\Support\Facades\Gate;
@@ -14,7 +13,7 @@ class PlacementManager extends Component
 {
     /** @var list<string> */
     private const AUDIT_FIELDS = [
-        'consultant_id',
+        'consultant_name',
         'client_id',
         'placed_by',
         'job_title',
@@ -28,7 +27,7 @@ class PlacementManager extends Component
     ];
 
     public array $filters = [
-        'consultant_id' => '',
+        'consultant_name' => '',
         'client_id' => '',
         'status' => '',
     ];
@@ -37,7 +36,7 @@ class PlacementManager extends Component
 
     public ?int $editingId = null;
 
-    public $consultant_id = '';
+    public $consultant_name = '';
 
     public $client_id = '';
 
@@ -61,9 +60,6 @@ class PlacementManager extends Component
     public $placements;
 
     /** @var list<array{id: int, label: string}> */
-    public array $consultantOptions = [];
-
-    /** @var list<array{id: int, label: string}> */
     public array $clientOptions = [];
 
     public function mount(): void
@@ -74,25 +70,6 @@ class PlacementManager extends Component
 
     public function loadDropdownLists(): void
     {
-        if (Gate::allows('account_manager')) {
-            $this->consultantOptions = Consultant::query()
-                ->orderBy('full_name')
-                ->get(['id', 'full_name'])
-                ->map(fn (Consultant $c) => ['id' => (int) $c->id, 'label' => (string) $c->full_name])
-                ->values()
-                ->all();
-        } else {
-            $cid = auth()->user()?->consultant_id;
-            $this->consultantOptions = $cid
-                ? Consultant::query()
-                    ->where('id', $cid)
-                    ->get(['id', 'full_name'])
-                    ->map(fn (Consultant $c) => ['id' => (int) $c->id, 'label' => (string) $c->full_name])
-                    ->values()
-                    ->all()
-                : [];
-        }
-
         $this->clientOptions = Client::query()
             ->orderBy('name')
             ->get(['id', 'name'])
@@ -108,12 +85,8 @@ class PlacementManager extends Component
             ->orderByDesc('start_date')
             ->orderByDesc('id');
 
-        if (! Gate::allows('account_manager')) {
-            $query->where('consultant_id', auth()->user()->consultant_id ?? 0);
-        }
-
-        if ($this->filters['consultant_id'] !== '' && $this->filters['consultant_id'] !== null) {
-            $query->where('consultant_id', (int) $this->filters['consultant_id']);
+        if ($this->filters['consultant_name'] !== '' && $this->filters['consultant_name'] !== null) {
+            $query->where('consultant_name', 'like', '%' . $this->filters['consultant_name'] . '%');
         }
         if ($this->filters['client_id'] !== '' && $this->filters['client_id'] !== null) {
             $query->where('client_id', (int) $this->filters['client_id']);
@@ -147,7 +120,7 @@ class PlacementManager extends Component
         Gate::authorize('update', $placement);
 
         $this->editingId = $id;
-        $this->consultant_id = (string) $placement->consultant_id;
+        $this->consultant_name = (string) ($placement->consultant_name ?? $placement->consultant?->full_name ?? '');
         $this->client_id = (string) $placement->client_id;
         $this->job_title = (string) ($placement->job_title ?? '');
         $this->start_date = $placement->start_date?->format('Y-m-d') ?? '';
@@ -166,7 +139,7 @@ class PlacementManager extends Component
         abort_unless(Gate::allows('account_manager'), 403);
 
         $this->validate([
-            'consultant_id' => ['required', 'integer', 'exists:consultants,id'],
+            'consultant_name' => ['required', 'string', 'max:255'],
             'client_id' => ['required', 'integer', 'exists:clients,id'],
             'job_title' => ['nullable', 'string', 'max:255'],
             'start_date' => ['required', 'date'],
@@ -179,7 +152,7 @@ class PlacementManager extends Component
         ]);
 
         $payload = [
-            'consultant_id' => (int) $this->consultant_id,
+            'consultant_name' => trim((string) $this->consultant_name),
             'client_id' => (int) $this->client_id,
             'job_title' => $this->job_title !== '' ? trim((string) $this->job_title) : null,
             'start_date' => $this->start_date,
@@ -262,7 +235,7 @@ class PlacementManager extends Component
 
     private function resetFormFields(): void
     {
-        $this->consultant_id = '';
+        $this->consultant_name = '';
         $this->client_id = '';
         $this->job_title = '';
         $this->start_date = '';
