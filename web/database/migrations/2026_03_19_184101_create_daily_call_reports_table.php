@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('daily_call_reports', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->date('report_date');
+            $table->unsignedInteger('calls_made')->default(0);
+            $table->unsignedInteger('contacts_reached')->default(0);
+            $table->unsignedInteger('submittals')->default(0);
+            $table->unsignedInteger('interviews_scheduled')->default(0);
+            $table->text('notes')->nullable();
             $table->timestamps();
+
+            $table->unique(['user_id', 'report_date']);
         });
     }
 

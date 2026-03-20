@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('placements', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('consultant_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('client_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('placed_by')->constrained('users')->cascadeOnDelete();
+            $table->string('job_title', 255)->nullable();
+            $table->date('start_date');
+            $table->date('end_date')->nullable();
+            $table->decimal('pay_rate', 12, 4);
+            $table->decimal('bill_rate', 12, 4);
+            $table->enum('status', ['active', 'ended', 'cancelled'])->default('active');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
