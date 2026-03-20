@@ -57,7 +57,23 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ## Active Phase
 
-**Phase 4** — Data Migration + QA _(see PHASES.md)_
+**Phase 5** — Deploy _(see PHASES.md)_
+
+---
+
+### Phase 4 — Data Migration + QA ✅ _(closed 2026-03-20)_
+
+- SQLite → MySQL migration script (`migrate:run`) + validation command (`migrate:validate`) — 12 tables, row-count + money checksum
+- File migration (`migrate:files`) — W-9s and invoice PDFs moved to `storage/app/uploads/`
+- Full manual regression smoke — all pages PASS for admin + account_manager roles
+- **Employee role removed** — DB enum altered, controllers/policies/views updated, existing users migrated to account_manager
+- **Placements refactor** — `consultant_name` free-text field (was FK dropdown); auto-creates consultant on save via case-insensitive `firstOrCreate`; always-editable status dropdown; AM column added; backdrop no longer closes modal on outside click
+- **AM access restricted** — nav limited to Calls + Placements; placements scoped to own records (`placed_by`); dashboard blocked (403); login redirects to `/placements`
+- **Calls Report** — restricted to admin only
+- **Dashboard** — Budget Utilization admin-only; employee section removed entirely
+- **Consultant end-date colors** — past dates gray, 0–7d red, 8–14d orange, 15–30d yellow (was incorrectly red for past)
+- **Layout fix** — `$header` slot moved to `<main>` (was rendering buttons inside sidebar)
+- OT tests: 44 passed, 120 assertions, 0 failures — no regression
 
 ---
 

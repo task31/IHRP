@@ -1014,3 +1014,46 @@ placement management (Livewire), and an employee-specific dashboard.
 - [ ] Manual regression smoke test — Raf runs all 3 roles against the checklist in `phase-4-plan.md`
 - [ ] After regression passes: append Phase 4 summary to `CLAUDE.md`, mark Phase 4 ✅ in `PHASES.md`
 
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 4 full regression + feature hardening _(2026-03-20)_
+
+**Reviewed:** ca1ba37 → e235c22 (11 commits — full manual regression pass + all bugs fixed in session)
+
+**Verified:**
+- All 3 roles smoke-tested by Raf: admin, account_manager — all pages PASS ✅
+- Dashboard (admin) — 4 stat cards, end-date alerts, budget utilization ✅
+- Clients — 2 migrated clients visible ✅
+- Consultants — onboarding modal, W-9 upload, end-date color coding fixed ✅
+- Timesheets — list + detail modal (human-readable format) ✅
+- Invoices — list + PDF preview ✅
+- Ledger — transactions ✅
+- Reports — PDF + CSV ✅
+- Settings — 6-tab layout, SMTP, logo, backup ✅
+- Admin users CRUD — create/edit/toggle, role dropdown limited to admin + account_manager ✅
+- Placements (admin) — free-text consultant, auto-create consultant on save, always-editable status, AM column ✅
+- Calls (admin) — submission + history ✅
+- Calls Report — admin-only ✅ (AM → 403 confirmed)
+- AM login → redirects to /placements ✅
+- AM nav — Calls + Placements only ✅
+- AM placements — scoped to own records (`placed_by`) ✅
+- AM dashboard — blocked (403) ✅
+- Employee role — fully removed from DB enum, UI, controllers, policies ✅
+- Consultant end-date colors — past dates gray, 0–7d red, 8–14d orange, 15–30d yellow ✅
+- Action buttons — render in main content area (header slot moved out of sidebar) ✅
+- Backdrop on placement modal — does NOT close on outside click ✅
+- OT tests — 44 passed, 120 assertions, 0 failures ✅
+
+**Carry-forwards into Phase 5 (backlog):**
+- [ ] Clients: show which AM manages each client
+- [ ] Consultants: merge 3/7 progress badge + checklist into unified onboarding flow (click badge → show completion checklist)
+- [ ] Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026")
+- [ ] Timesheets: allow editing entries after import
+- [ ] Invoices: optimize PDF preview load time
+- [ ] Reports: format billed/cost columns as `$2,565.00` (not `2565.0000`)
+- [ ] Calls: monthly + yearly aggregate reporting
+- [ ] Global: slide-in detail panel from right when clicking consultant or client row
+- [ ] Account Manager field on Clients, Consultants, Timesheets, Ledger, Placements — linked across all pages
+- [ ] AM features: expand AM access (deferred — Raf to scope later)
+- [ ] Auto-created consultants: state field blank — admin fills manually for now
+
