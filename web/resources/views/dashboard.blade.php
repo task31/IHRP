@@ -262,6 +262,7 @@
                 </table>
             </div>
 
+            @if(auth()->user()->role === 'admin')
             <div class="rounded-lg bg-white p-5 shadow-sm" x-show="budgets.length > 0" x-cloak>
                 <h3 class="mb-3 font-semibold">Budget Utilization</h3>
                 <template x-for="b in budgets" :key="b.client_id">
@@ -283,6 +284,7 @@
                     </div>
                 </template>
             </div>
+            @endif
         </div>
 
         <script>
