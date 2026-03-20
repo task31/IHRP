@@ -637,5 +637,5 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Verification:** `php artisan migrate:fresh --seed --force` exit 0; `php artisan route:list` — `calls*` / `placements*` registered; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed. Full `php artisan test` still fails on feature suite (SQLite PDO missing on this host — pre-existing).
 
-**Commit:** `c63b29c` — `feat: add DailyCallReport + Placement models and controllers`
+**Commit:** `f0c56e2` — `feat: add DailyCallReport + Placement models and controllers`
 
