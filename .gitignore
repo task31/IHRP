@@ -3,3 +3,7 @@
 
 # MySQL local data directory
 mysql-data/
+
+# Local smoke/debug scripts
+smoke_*.py
+debug_*.py
