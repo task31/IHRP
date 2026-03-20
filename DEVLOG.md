@@ -592,3 +592,23 @@ placement management (Livewire), and an employee-specific dashboard.
 - `web/resources/views/layouts/app.blade.php` (Calls + Placements nav)
 - `web/routes/web.php` (new routes)
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 1 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] Update `daily_call_reports` migration with full schema
+- [x] [Phase 3] Update `placements` migration with full schema
+- [x] [Phase 3] Run `php artisan migrate:fresh --seed` — verified tables and columns
+- [x] [Phase 3] Commit: `feat: flesh out daily_call_reports and placements migrations`
+
+**Deviations from plan:** None
+
+**Unplanned additions:** None
+
+**Files actually modified:**
+- `web/database/migrations/2026_03_19_184101_create_daily_call_reports_table.php` ✅
+- `web/database/migrations/2026_03_19_184102_create_placements_table.php` ✅
+
+**Verification:** `migrate:fresh --seed` exit 0; `Schema::getColumnListing` matches spec; unique index `daily_call_reports_user_id_report_date_unique` present. FKs: `user_id` → `users`, placement `consultant_id`/`client_id`/`placed_by` → `consultants`/`clients`/`users` with `cascadeOnDelete`.
+
+**Commit:** `f52f1f7` — `feat: flesh out daily_call_reports and placements migrations`
+
