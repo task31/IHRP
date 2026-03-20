@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('consultant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('client_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('placed_by')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('placed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('job_title', 255)->nullable();
             $table->date('start_date');
             $table->date('end_date')->nullable();
