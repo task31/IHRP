@@ -267,11 +267,11 @@ Blade view. The Blade view switches layout based on role.
 - `DashboardController::page()` — query `Placement::where('consultant_id', ...)` for employee's linked consultant (via `users.consultant_id` FK set by admin)
 - `dashboard.blade.php` — add `@if(auth()->user()->role === 'employee')` branch with employee layout
 
-- [ ] **[Phase 3]** Update `DashboardController::page()` to pass employee placement + call data
-- [ ] **[Phase 3]** Update `dashboard.blade.php` with employee branch
+- [x] **[Phase 3]** Update `DashboardController::page()` to pass employee placement + call data
+- [x] **[Phase 3]** Update `dashboard.blade.php` with employee branch
 - [ ] **[Phase 3]** Smoke: employee sees placement card + call summary + quick-submit form
 - [ ] **[Phase 3]** Smoke: admin still sees original 4-card dashboard
-- [ ] **[Phase 3]** Commit: `feat: add employee dashboard with placement and call summary`
+- [x] **[Phase 3]** Commit: `feat: add employee dashboard with placement and call summary`
 
 ---
 

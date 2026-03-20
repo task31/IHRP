@@ -730,3 +730,22 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Git:** `feat: add placement management with Livewire`
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 6 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `DashboardController::page()` — employee path loads active `Placement` (via `users.consultant_id`, `status` = `active`, latest `start_date`) with `consultant` + `client`; last 7 calendar days of `DailyCallReport` for `user_id`; admin/AM unchanged (`view('dashboard')` only)
+- [x] [Phase 3] `dashboard.blade.php` — `@if(employee)` branch: My Placement card, My Activity summary + table, Today's Report POST to `calls.store` + session toast (same pattern as `calls/index`); `@else` preserves prior 4-card Alpine dashboard verbatim
+- [x] [Phase 3] Commit: `feat: add employee dashboard with placement and call summary`
+
+**Deviations from plan:** None
+
+**Unplanned additions:** Defensive `$placement ?? null` / `$recentCalls ?? collect()` in Blade; optional chaining on `consultant`/`client` for edge null relations.
+
+**Files actually modified:**
+- `web/app/Http/Controllers/DashboardController.php` ✅
+- `web/resources/views/dashboard.blade.php` ✅
+
+**Verification:** `php artisan view:cache` OK; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
+
+**Manual smoke (deferred):** employee dashboard three sections + admin 4-card unchanged
+
