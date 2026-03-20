@@ -1057,3 +1057,91 @@ placement management (Livewire), and an employee-specific dashboard.
 - [ ] AM features: expand AM access (deferred — Raf to scope later)
 - [ ] Auto-created consultants: state field blank — admin fills manually for now
 
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 5 Deploy _(2026-03-20)_
+
+**Goal:** Ship the app to https://hr.matchpointegroup.com on Bluehost Business Hosting.
+**Mode:** SEQUENTIAL
+**Dependency diagram:**
+[Phase 4] ✅ → [Phase 5] 🔨
+
+**Decisions made:**
+
+1. **Remove @vite() from both layouts** — `app.css` is only Tailwind directives (redundant
+   with the Tailwind CDN script already in the layout); `app.js` only initialises Alpine
+   (redundant with the Alpine CDN script). Keeping `@vite()` would 500 on Bluehost because
+   there is no Node.js build pipeline on shared hosting. CDN already covers both.
+
+2. **Commit `vendor/` to git** — Bluehost cPanel Git deploy hooks have limited PHP/Composer
+   CLI access. Committing vendor/ after `composer install --no-dev --optimize-autoloader`
+   is the standard pattern for shared hosting and eliminates a fragile post-deploy step.
+
+3. **Migrations run manually via SSH, not in `.cpanel.yml`** — Automating migrations on
+   every push risks running `migrate --force` against production on routine code pushes.
+   Migrations stay a deliberate, confirmed SSH step.
+
+4. **Option A (fresh DB) recommended for launch** — Importing local dev data (test clients,
+   placeholder invoices) into production is noisier than starting clean and entering real
+   data through the UI. Raf can choose Option B if real migrated data is needed.
+
+5. **Document root = `web/public/`** — The repo has Laravel inside `web/`. Bluehost
+   subdomain must be configured with custom document root pointing to `web/public/`,
+   not the repo root. This is a cPanel Subdomains step, not a code step.
+
+**Risks flagged:**
+
+- cPanel username may not be `matchpoi` — Raf must confirm and update `.cpanel.yml`
+  before first push or the copy task will silently fail.
+- Bluehost AutoSSL can take 10–30 min. HTTP may work before HTTPS is ready — test HTTP
+  first, then verify HTTPS once cert is provisioned.
+- `vendor/` adds ~40–60MB to the repo. First push will be slow. Subsequent pushes are
+  normal size.
+- `storage/app/uploads/` is gitignored — uploaded files (W-9s, invoice PDFs) do NOT
+  transfer via git. These must be uploaded manually if Option B (import data) is chosen.
+
+**Files planned:**
+
+- `web/resources/views/layouts/app.blade.php` (edit — remove @vite line)
+- `web/resources/views/layouts/guest.blade.php` (edit — remove @vite line)
+- `web/.gitignore` (edit — remove /vendor line)
+- `web/vendor/` (add to git)
+- `.cpanel.yml` (create)
+- `web/.env.production.example` (create)
+
+### 🔨 [BUILD — Cursor] — Phase 5 Step 1 pre-deploy fixes _(2026-03-20)_
+
+**Assigned workstream:** [Phase 5] Step 1 — Code pre-deploy fixes
+
+**Todos completed:**
+- [x] [Phase 5] Remove `@vite(['resources/css/app.css', 'resources/js/app.js'])` from `web/resources/views/layouts/app.blade.php`
+- [x] [Phase 5] Remove `@vite([...])` from `web/resources/views/layouts/guest.blade.php` (add Tailwind CDN so guest/login stays styled)
+- [x] [Phase 5] Run `composer install --no-dev --optimize-autoloader` in `web/`
+- [x] [Phase 5] Remove `/vendor` line from `web/.gitignore`
+- [x] [Phase 5] `git add web/vendor` — stage vendor for commit
+- [x] [Phase 5] Create `.cpanel.yml` in repo root (per phase-5-plan spec)
+- [x] [Phase 5] Create `web/.env.production.example` (per phase-5-plan spec)
+- [x] [Phase 5] Commit with message per PM handoff
+- [x] [Phase 5] Verify `php artisan route:list` after changes
+
+**Deviations from plan:**
+- Commit message uses **"commit vendor"** (PM wording) instead of plan line **"add vendor"** — same intent.
+- `guest.blade.php`: plan only required removing `@vite`; **Tailwind CDN script added** because that layout had no CDN and would render unstyled login without it.
+
+**Unplanned additions:** None
+
+**Files actually created/modified:**
+- `web/resources/views/layouts/app.blade.php` ✅ (remove `@vite`)
+- `web/resources/views/layouts/guest.blade.php` ✅ (remove `@vite`, add Tailwind CDN)
+- `web/.gitignore` ✅ (stop ignoring `vendor/`)
+- `web/vendor/` ➕ (tracked — production `composer install --no-dev`)
+- `.cpanel.yml` ➕
+- `web/.env.production.example` ➕
+- `phase-5-plan.md` ✅ (Step 1 checkboxes marked done)
+- `DEVLOG.md` ✅ (this block)
+
+**Verification:**
+- `php artisan route:list` — exit 0, 102 routes listed ✅
+
+---

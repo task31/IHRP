@@ -33,9 +33,7 @@
 
         @livewireStyles
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-        <!-- Alpine.js (temporary via CDN; no npm required in Phase 0) -->
+        <!-- Alpine.js via CDN (no Vite / Node on Bluehost) -->
         <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
     <body class="font-sans antialiased bg-gray-100">
