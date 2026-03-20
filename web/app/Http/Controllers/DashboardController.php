@@ -14,6 +14,8 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
 
+        abort_if($user->role === 'account_manager', 403);
+
         if ($user->role === 'employee') {
             $placement = null;
             if ($user->consultant_id !== null) {
@@ -40,7 +42,7 @@ class DashboardController extends Controller
     public function index(): JsonResponse
     {
         $role = auth()->user()?->role;
-        abort_unless(in_array($role, ['admin', 'account_manager', 'employee'], true), 403);
+        abort_unless(in_array($role, ['admin', 'employee'], true), 403);
 
         $mtdMonth = now()->format('Y-m');
 

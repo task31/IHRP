@@ -45,11 +45,13 @@
                 <p class="mt-1 text-xs text-gray-400">Internal Payroll Portal</p>
 
                 <nav class="mt-6 space-y-2 text-sm">
+                    @unless(auth()->user()?->role === 'account_manager')
                     <a href="{{ route('dashboard') }}" @class([
                         'block rounded px-3 py-2',
                         'bg-gray-800 font-medium text-white' => request()->routeIs('dashboard'),
                         'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('dashboard'),
                     ])>Dashboard</a>
+                    @endunless
 
                     <a href="{{ route('calls.index') }}" @class([
                         'block rounded px-3 py-2',
