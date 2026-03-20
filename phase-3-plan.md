@@ -88,10 +88,10 @@ Flesh out the two stub migrations from Phase 0.
 
 Add columns exactly as specified in the schema above. Use `DECIMAL(12,4)` for rates (never FLOAT).
 
-- [ ] **[Phase 3]** Update `daily_call_reports` migration with full schema
-- [ ] **[Phase 3]** Update `placements` migration with full schema
-- [ ] **[Phase 3]** Run `php artisan migrate:fresh --seed` — verify both tables created with correct columns
-- [ ] **[Phase 3]** Commit: `feat: flesh out daily_call_reports and placements migrations`
+- [x] **[Phase 3]** Update `daily_call_reports` migration with full schema
+- [x] **[Phase 3]** Update `placements` migration with full schema
+- [x] **[Phase 3]** Run `php artisan migrate:fresh --seed` — verify both tables created with correct columns
+- [x] **[Phase 3]** Commit: `feat: flesh out daily_call_reports and placements migrations`
 
 ---
 
