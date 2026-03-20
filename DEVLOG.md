@@ -935,3 +935,38 @@ placement management (Livewire), and an employee-specific dashboard.
 - [ ] Browser smoke: admin edits PO# on a placement → next generated invoice picks it up
 - [ ] `clients.po_number` still exists and still editable via Client modal — consider deprecating or hiding it once all placements have PO#s populated (Phase 4 decision)
 
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 4 _(2026-03-20)_
+
+**Goal:** Migrate all live SQLite data to MySQL, validate integrity, run full regression.
+**Mode:** SEQUENTIAL
+**Dependency diagram:**
+[Phase 3] ✅ → [Phase 4] 🔨 → [Phase 5] ⏳
+
+**What Claude Code built (commit 4316bac):**
+- `MigrateFromSqlite` Artisan command — 11 tables, idempotent, two-pass for timesheets↔invoices circular FK
+- `ValidateMigration` — row counts + money checksums
+- `MigrateFiles` — copies invoice PDFs, XLSXs, W-9s
+- Migration run: 12/12 validation checks ✅, $6,840 billable matches, $5,380 cost matches
+
+**Schema mapping surprises resolved during migration:**
+- `consultant_onboarding_items.item` → `item_key` (MySQL renamed column)
+- `timesheet_daily_hours.day_index` (int 0-6) → `day_of_week` (string)
+- `invoice_sequence.current_number` → `next_number`
+- Invoice sent/paid dates stored as ISO 8601 in SQLite → normalized to DATE
+
+**Remaining for Cursor (phase-4-plan.md):**
+- Delete `smoke_debug.py` + `smoke_test.py`
+- Run full regression smoke checklist (manual)
+
+**Risks flagged:**
+- `clients.po_number` still exists alongside `placements.po_number` — deprecation deferred to post-Phase 5
+- W-9s dir didn't exist in Electron userData — no W-9 files to migrate (none uploaded yet)
+
+**Files planned:**
+- `web/app/Console/Commands/MigrateFromSqlite.php` ✅
+- `web/app/Console/Commands/ValidateMigration.php` ✅
+- `web/app/Console/Commands/MigrateFiles.php` ✅
+- `phase-4-plan.md` ✅
