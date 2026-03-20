@@ -805,3 +805,27 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **No individual page views changed** — all pages use `<x-slot name="header">` which feeds the same slot; moving the render location in the layout affects all pages at once.
 
+
+---
+
+### 🔨 [BUILD — Claude Code] — Phase 3 Step 7 Smoke _(2026-03-19)_
+
+**Smoke suite result: 12/12 PASS**
+
+| Result | Check |
+|--------|-------|
+| PASS | Employee: 3-card dashboard (placement, activity, today's report) |
+| PASS | Employee: 4-card Alpine dashboard NOT shown |
+| PASS | Employee: call report submits from dashboard |
+| PASS | Employee: /calls/report → 403 |
+| PASS | Admin: 4-card Alpine dashboard visible |
+| PASS | Admin: employee cards not shown |
+| PASS | Admin: /calls loads |
+| PASS | AM: /calls/report aggregate loads |
+| PASS | AM: /calls loads |
+| PASS | AM: /placements loads |
+
+**Bug caught and fixed:** `placement-manager.blade.php:120` — `@can..@else..@endcan` inside an HTML attribute with no whitespace before `@else`/`@endcan` caused Blade to skip compiling those tokens, leaving an unclosed PHP `if`. Every `/placements` request was hitting a 500. Fixed with a PHP expression (`{{ auth()->user()?->can('account_manager') ? 9 : 8 }}`).
+
+**Remaining:** Step 7 code changes (sidebar nav + dead stub removal), then Phase 3 is done.
+

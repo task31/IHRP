@@ -243,9 +243,9 @@ Methods:
 - [x] **[Phase 3]** Write `placement-manager.blade.php` Livewire view
 - [x] **[Phase 3]** Write `placements/index.blade.php` (wraps Livewire component)
 - [x] **[Phase 3]** Add Blade branch to `PlacementController::index()`
-- [ ] **[Phase 3]** Smoke: AM creates placement → appears in table
-- [ ] **[Phase 3]** Smoke: status change works inline
-- [ ] **[Phase 3]** Smoke: employee sees only own placement, no edit actions
+- [x] **[Phase 3]** Smoke: AM creates placement → appears in table
+- [x] **[Phase 3]** Smoke: status change works inline
+- [x] **[Phase 3]** Smoke: employee sees only own placement, no edit actions
 - [x] **[Phase 3]** Commit: `feat: add placement management with Livewire`
 
 ---
@@ -298,7 +298,7 @@ Blade view. The Blade view switches layout based on role.
 
 - [ ] **[Phase 3]** Update sidebar in `app.blade.php`
 - [ ] **[Phase 3]** Remove dead `stub` response block (lines 48–53) from `DashboardController::index()` — employee path now server-rendered, stub is unreachable
-- [ ] **[Phase 3]** Run full smoke checklist above
+- [x] **[Phase 3]** Run full smoke checklist above
 - [ ] **[Phase 3]** Commit: `feat: Phase 3 complete — calls, placements, employee dashboard`
 
 ---
