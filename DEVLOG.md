@@ -685,3 +685,23 @@ placement management (Livewire), and an employee-specific dashboard.
 
 **Manual smoke (deferred):** employee submit → table row; admin sees Employee column — not run in this session (no browser); `/calls/report` Blade still Step 4
 
+### 🔨 [BUILD — Cursor] — Phase 3 Step 4 _(2026-03-19)_
+
+**Todos completed:**
+- [x] [Phase 3] `calls/report.blade.php` — header "Call Report Summary", GET filter form (employee dropdown, date from/to, Apply), summary table (employee name + email, totals, avg calls/day to 1 decimal), empty state copy
+- [x] [Phase 3] `DailyCallReportController::aggregate()` — pass `users` (`User::orderBy('name')->get(['id', 'name'])`) for dropdown; Blade branch unchanged otherwise
+
+**Deviations from plan:** Phase 3 plan Step 4 listed a "Daily detail table" under aggregate page — spec for this build was summary + filters only (per Architect task); not implemented here.
+
+**Unplanned additions:** None
+
+**Files actually created/modified:**
+- `web/resources/views/calls/report.blade.php` ➕
+- `web/app/Http/Controllers/DailyCallReportController.php` ✅
+
+**Verification:** `php artisan view:cache` OK; `php artisan test --filter=OvertimeCalculatorTest` — 44 passed, 120 assertions
+
+**Git:** `feat: add call report aggregate view`
+
+**Manual smoke (deferred):** AM aggregate page render; employee 403 on `/calls/report`
+

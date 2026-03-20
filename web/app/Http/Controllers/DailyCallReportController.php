@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyCallReport;
+use App\Models\User;
 use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -165,6 +166,7 @@ class DailyCallReportController extends Controller
         return view('calls.report', [
             'summary' => $summary,
             'filters' => $filters,
+            'users' => User::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

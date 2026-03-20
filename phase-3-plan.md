@@ -195,11 +195,11 @@ Header: "Call Report Summary" | Access: account_manager + admin only (abort 403 
 **Daily detail table** (below summary, shows filtered rows):
 - Columns: Date | Employee | Calls | Contacts | Submittals | Interviews | Notes
 
-- [ ] **[Phase 3]** Write `calls/report.blade.php`
-- [ ] **[Phase 3]** Add Blade branch to `DailyCallReportController::aggregate()`
+- [x] **[Phase 3]** Write `calls/report.blade.php`
+- [x] **[Phase 3]** Add Blade branch to `DailyCallReportController::aggregate()`
 - [ ] **[Phase 3]** Smoke: AM sees aggregate summary
 - [ ] **[Phase 3]** Smoke: employee → 403 on `/calls/report`
-- [ ] **[Phase 3]** Commit: `feat: add call report aggregate view`
+- [x] **[Phase 3]** Commit: `feat: add call report aggregate view`
 
 ---
 
