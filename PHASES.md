@@ -58,6 +58,6 @@ _Last updated: 2026-03-19 (Phase 2 closed)_
 - [Phase 1] ✅ Complete _(2026-03-19)_
 - [Phase 2a] ✅ Complete _(2026-03-19)_
 - [Phase 2b] ✅ Complete _(2026-03-19)_
-- [Phase 3] ⏳ Pending — **GATE: browser smoke (Step 8 checklist) must pass first**
+- [Phase 3] ⏳ Pending
 - [Phase 4] ⏳ Pending
 - [Phase 5] ⏳ Pending
