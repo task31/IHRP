@@ -1,0 +1,5 @@
+# Claude Code local session files — never commit
+.claude/settings.local.json
+
+# MySQL local data directory
+mysql-data/
