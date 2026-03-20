@@ -544,5 +544,51 @@ The following Step 8 items require a live browser session and are carried forwar
 
 **Budget cell display note:** Budget column shows `$0` (spent) and `$10,000` (budget) in a `flex justify-between` 140px cell — correct design, not a bug.
 
-**MySQL setup note (one-time):** MySQL 8.4 installed via WinGet had no data directory. Initialized at `C:/Users/zobel/mysql-data/` with `mysqld --initialize-insecure`. Must start manually: `"C:/Program Files/MySQL/MySQL Server 8.4/bin/mysqld.exe" --defaults-file="C:/Users/zobel/mysql-data/my.ini"` — or register as a Windows service for persistence.
+**MySQL setup note (one-time):** MySQL 8.4 installed via WinGet had no data directory. Initialized at `C:/Users/zobel/mysql-data/` with `mysqld --initialize-insecure`. Must start manually: `"C:/Program Files/MySQL/MySQL Server 8.4/bin/mysqld.exe" --defaults-file="C:/Users/zobel/mysql-data/my.ini"` — desktop shortcut `Start IHRP.bat` created for convenience.
+
+---
+
+## Phase 3 | New Features
+_Opened: 2026-03-19 | Closed: —_
+_Mode: SEQUENTIAL_
+
+### 🏗️ [ARCHITECT — Claude Code]
+**Goal:** Add three net-new features that justify the multi-user web migration: employee call reporting,
+placement management (Livewire), and an employee-specific dashboard.
+**Mode:** SEQUENTIAL — migrations → models/controllers → calls pages → placements → employee dashboard → sidebar + smoke
+
+**Dependency diagram:**
+```
+[Phase 2] ✅ → [Phase 3] 🔨 → [Phase 4] ⏳
+```
+
+**Decisions made:**
+- Call reporting is plain Blade + Alpine (simple form + table — no reactive state needed)
+- Placement management uses Livewire (inline status changes + real-time filtering justify it — same pattern as TimesheetWizard)
+- Employee dashboard reuses existing `/dashboard` route — `DashboardController::page()` detects role and passes different data; Blade view has `@if(employee)` branch
+- Call report daily uniqueness enforced at DB level: `UNIQUE(user_id, report_date)` — controller does upsert (update if exists, insert if not)
+- Placement rates snapshotted at creation — not live-linked to consultant rates (same immutability principle as timesheets)
+- Employee→placement link goes through `users.consultant_id` FK (set by admin in user management) → `placements.consultant_id`
+
+**Risks flagged:**
+- `users.consultant_id` may not be set for employee users — dashboard must handle null gracefully
+- Livewire PlacementManager on same page as Alpine toast — existing layout already has `@livewireStyles`/`@livewireScripts`, no conflict expected
+- Call report duplicate: UNIQUE constraint will surface as SQL error if not caught — controller must check-then-upsert
+
+**Files planned:**
+- `web/database/migrations/2026_03_19_184101_create_daily_call_reports_table.php` (update stub)
+- `web/database/migrations/2026_03_19_184102_create_placements_table.php` (update stub)
+- `web/app/Models/DailyCallReport.php`
+- `web/app/Models/Placement.php`
+- `web/app/Http/Controllers/DailyCallReportController.php`
+- `web/app/Http/Controllers/PlacementController.php`
+- `web/app/Livewire/PlacementManager.php`
+- `web/resources/views/calls/index.blade.php`
+- `web/resources/views/calls/report.blade.php`
+- `web/resources/views/placements/index.blade.php`
+- `web/resources/views/livewire/placement-manager.blade.php`
+- `web/resources/views/dashboard.blade.php` (employee branch)
+- `web/app/Http/Controllers/DashboardController.php` (employee data)
+- `web/resources/views/layouts/app.blade.php` (Calls + Placements nav)
+- `web/routes/web.php` (new routes)
 

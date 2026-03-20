@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-19 (Phase 2 closed)_
+_Last updated: 2026-03-19 (Phase 3 planned)_
 
 ## Phase Map
 
@@ -24,10 +24,13 @@ _Last updated: 2026-03-19 (Phase 2 closed)_
        └─ Livewire TimesheetWizard → Reports PDF/CSV → Budget+Settings Blade
 
 [Phase 3] — New Features | SEQUENTIAL
-  └─ Employee call reporting (/calls)
-  └─ Call report aggregate view (/calls/report)
-  └─ Placement management (/placements) — Livewire
-  └─ Employee dashboard (own stats + placement)
+  └─ Step 1: DB migrations (daily_call_reports + placements full schema)
+  └─ Step 2: Models + DailyCallReportController + PlacementController
+  └─ Step 3: Call reporting page (/calls) — all roles submit; own history
+  └─ Step 4: Call aggregate (/calls/report) — AM + admin summary view
+  └─ Step 5: Placement management (/placements) — Livewire PlacementManager
+  └─ Step 6: Employee dashboard (placement card + call summary + quick-submit)
+  └─ Step 7: Sidebar updates + final smoke
 
 [Phase 4] — Data Migration + QA | SEQUENTIAL
   └─ PHP migration script (SQLite → MySQL)
@@ -58,6 +61,6 @@ _Last updated: 2026-03-19 (Phase 2 closed)_
 - [Phase 1] ✅ Complete _(2026-03-19)_
 - [Phase 2a] ✅ Complete _(2026-03-19)_
 - [Phase 2b] ✅ Complete _(2026-03-19)_
-- [Phase 3] ⏳ Pending
+- [Phase 3] 🔨 In Progress _(planned 2026-03-19)_
 - [Phase 4] ⏳ Pending
 - [Phase 5] ⏳ Pending
