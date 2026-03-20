@@ -81,13 +81,15 @@
                                         $today = Carbon::now()->startOfDay();
                                         $daysLeft = (int) floor(($end->timestamp - $today->timestamp) / 86400);
                                         $endClass =
-                                            $daysLeft < 0 || $daysLeft <= 7
-                                                ? 'text-red-600 font-semibold'
-                                                : ($daysLeft <= 14
-                                                    ? 'text-orange-500 font-semibold'
-                                                    : ($daysLeft <= 30
-                                                        ? 'text-yellow-600'
-                                                        : 'text-gray-700'));
+                                            $daysLeft < 0
+                                                ? 'text-gray-400'
+                                                : ($daysLeft <= 7
+                                                    ? 'text-red-600 font-semibold'
+                                                    : ($daysLeft <= 14
+                                                        ? 'text-orange-500 font-semibold'
+                                                        : ($daysLeft <= 30
+                                                            ? 'text-yellow-600'
+                                                            : 'text-gray-700')));
                                     @endphp
                                     <span class="{{ $endClass }}">{{ Carbon::parse($c->project_end_date)->format('m/d/Y') }}</span>
                                 @else
