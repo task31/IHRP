@@ -1174,3 +1174,34 @@ placement management (Livewire), and an employee-specific dashboard.
 - [ ] Raf: create hr.matchpointegroup.com subdomain with document root = web/public/
 - [ ] Raf: run AutoSSL for hr subdomain
 - [ ] Push d255873 to origin before configuring Bluehost Git pull
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 5 Deploy Session 2 _(2026-03-20)_
+
+**Status:** In progress — files deployed, blocked on Apache PHP handler
+
+**Completed today:**
+- Domain `hr.matchpointegroup.com` added to WordPress Plus cPanel (Bluehost support assisted)
+- MySQL DB created: `matchpo3_ihrp` / user `matchpo3_ihrp` on WordPress Plus server
+- Git Version Control cloned from GitHub (public repo) → `/home2/matchpo3/repositories/IHRP`
+- `.cpanel.yml` deployed — files copied to `/home2/matchpo3/public_html/hr/`
+- `.env` created in `public_html/hr/` with APP_KEY, DB credentials
+- PHP 8.3 set via MultiPHP Manager for `hr.matchpointegroup.com`
+- `AddHandler application/x-httpd-ea-php83 .php` added to `public//.htaccess`
+
+**Current blocker:**
+- Site shows Apache 404 — "Additionally, a 404 Not Found error was encountered while trying to use an ErrorDocument"
+- Likely cause: `AddHandler` directive conflicting with PHP-FPM setup, or mod_rewrite not firing
+- Next step: check `public_html/hr/public/error_log` for latest PHP errors after .env creation
+- May need to remove `AddHandler` line and let PHP-FPM handle PHP execution automatically
+
+**Key server facts:**
+- Server: `just2038.justhost.com`
+- cPanel username: `matchpo3`
+- Home dir: `/home2/matchpo3/`
+- Document root: `/home2/matchpo3/public_html/hr/public`
+- PHP 8.3 CLI: `/opt/cpanel/ea-php83/root/usr/bin/php`
+- DB: `matchpo3_ihrp` / user: `matchpo3_ihrp` / host: `localhost`
+- Git repo: `/home2/matchpo3/repositories/IHRP`
+- Deploy: cPanel Git Version Control → Pull or Deploy → Deploy HEAD Commit
