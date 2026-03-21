@@ -1,9 +1,8 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home2/matchpo3/public_html/hr
-    - /bin/mkdir -p $DEPLOYPATH
-    - /bin/cp -R web/. $DEPLOYPATH/
-    - /usr/local/bin/php $DEPLOYPATH/artisan config:cache
-    - /usr/local/bin/php $DEPLOYPATH/artisan route:cache
-    - /usr/local/bin/php $DEPLOYPATH/artisan view:cache
+    - "/bin/mkdir -p /home2/matchpo3/public_html/hr"
+    - "/bin/cp -R /home2/matchpo3/repositories/IHRP/web/. /home2/matchpo3/public_html/hr/"
+    - "/usr/local/bin/php /home2/matchpo3/public_html/hr/artisan config:cache"
+    - "/usr/local/bin/php /home2/matchpo3/public_html/hr/artisan route:cache"
+    - "/usr/local/bin/php /home2/matchpo3/public_html/hr/artisan view:cache"
