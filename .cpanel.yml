@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/matchpoi/public_html/hr
+    - export DEPLOYPATH=/home2/rbjwhhmy/public_html/hr
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -R web/. $DEPLOYPATH/
     - /usr/local/bin/php $DEPLOYPATH/artisan config:cache

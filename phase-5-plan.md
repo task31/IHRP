@@ -62,7 +62,7 @@ Bluehost gets an empty vendor dir and every request 500s. Both must be fixed bef
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/matchpoi/public_html/hr
+    - export DEPLOYPATH=/home2/rbjwhhmy/public_html/hr
     - /bin/mkdir -p $DEPLOYPATH
     - /bin/cp -R web/. $DEPLOYPATH/
     - /usr/local/bin/php $DEPLOYPATH/artisan config:cache
@@ -70,7 +70,7 @@ deployment:
     - /usr/local/bin/php $DEPLOYPATH/artisan view:cache
 ```
 
-> **Note:** `matchpoi` = Bluehost cPanel username. Raf to confirm exact username and update
+> **Note:** `rbjwhhmy` = Bluehost cPanel username. Raf to confirm exact username and update
 > before first deploy. Migrations are intentionally NOT in `.cpanel.yml` — run manually.
 
 #### `web/.env.production.example` spec (create in web/)
@@ -114,10 +114,10 @@ MAIL_FROM_NAME="IHRP"
 **Raf completes these steps in Bluehost cPanel. Claude provides instructions.**
 
 - [ ] [Phase 5] Log into Bluehost cPanel
-- [ ] [Phase 5] MySQL Databases wizard → create database (e.g. `matchpoi_ihrp`) + user
-  (e.g. `matchpoi_ihrp`) + strong password → grant all privileges
+- [ ] [Phase 5] MySQL Databases wizard → create database (e.g. `rbjwhhmy_ihrp`) + user
+  (e.g. `rbjwhhmy_ihrp`) + strong password → grant all privileges
 - [ ] [Phase 5] Subdomains → create `hr.matchpointegroup.com` → set Document Root to
-  `/home/matchpoi/public_html/hr/public` (the Laravel public/ dir)
+  `/home2/rbjwhhmy/public_html/hr/public` (the Laravel public/ dir)
   _(This is critical — pointing to `hr/` instead of `hr/public/` exposes the entire app)_
 - [ ] [Phase 5] SSL/TLS → AutoSSL → run for `hr.matchpointegroup.com`
   (may take a few minutes to provision)
@@ -127,14 +127,14 @@ MAIL_FROM_NAME="IHRP"
 ### Step 3 — Git Deploy Configuration (Raf + Claude)
 
 - [ ] [Phase 5] cPanel → Git Version Control → Create Repository
-  - Repository Path: `/home/matchpoi/repos/ihrp.git` (bare repo on server)
+  - Repository Path: `/home2/rbjwhhmy/repos/ihrp.git` (bare repo on server)
   - OR: clone from GitHub if Bluehost allows external clone
 - [ ] [Phase 5] Locally: add Bluehost SSH remote
   ```bash
-  git remote add bluehost ssh://matchpoi@matchpointegroup.com/home/matchpoi/repos/ihrp.git
+  git remote add bluehost ssh://rbjwhhmy@matchpointegroup.com/home2/rbjwhhmy/repos/ihrp.git
   ```
-- [ ] [Phase 5] Test SSH connection: `ssh matchpoi@matchpointegroup.com`
-- [ ] [Phase 5] Confirm cPanel Git deploy path is set to `/home/matchpoi/public_html/hr`
+- [ ] [Phase 5] Test SSH connection: `ssh rbjwhhmy@matchpointegroup.com`
+- [ ] [Phase 5] Confirm cPanel Git deploy path is set to `/home2/rbjwhhmy/public_html/hr`
   OR confirm `.cpanel.yml` copy task is correct
 
 ---
@@ -143,15 +143,15 @@ MAIL_FROM_NAME="IHRP"
 
 - [ ] [Phase 5] `git push bluehost master` — triggers `.cpanel.yml` deploy
 - [ ] [Phase 5] SSH into server → verify files landed:
-  `ls /home/matchpoi/public_html/hr/`
+  `ls /home2/rbjwhhmy/public_html/hr/`
 - [ ] [Phase 5] SSH: copy .env.production.example → .env and fill in all values:
   ```bash
-  cp /home/matchpoi/public_html/hr/.env.production.example \
-     /home/matchpoi/public_html/hr/.env
-  nano /home/matchpoi/public_html/hr/.env
+  cp /home2/rbjwhhmy/public_html/hr/.env.production.example \
+     /home2/rbjwhhmy/public_html/hr/.env
+  nano /home2/rbjwhhmy/public_html/hr/.env
   ```
 - [ ] [Phase 5] Generate fresh APP_KEY if needed:
-  `php /home/matchpoi/public_html/hr/artisan key:generate`
+  `php /home2/rbjwhhmy/public_html/hr/artisan key:generate`
 
 ---
 
@@ -168,7 +168,7 @@ Choose **Option A** (fresh production DB) or **Option B** (migrate real data).
 **Option B — Import local data**
 - [ ] [Phase 5] Local: `mysqldump -u root ihrp_local > ihrp_export.sql`
 - [ ] [Phase 5] Upload `ihrp_export.sql` to Bluehost via cPanel File Manager
-- [ ] [Phase 5] cPanel phpMyAdmin → select `matchpoi_ihrp` → Import → choose file
+- [ ] [Phase 5] cPanel phpMyAdmin → select `rbjwhhmy_ihrp` → Import → choose file
 
 > **Recommendation:** Use Option A for production launch. Raf enters real client, consultant,
 > and invoice data through the UI. This avoids importing local test data into production.
@@ -180,7 +180,7 @@ Choose **Option A** (fresh production DB) or **Option B** (migrate real data).
 - [ ] [Phase 5] `php artisan storage:link`
   (creates public/storage → storage/app/public symlink; required for W-9 + logo uploads)
 - [ ] [Phase 5] Verify caches already ran via `.cpanel.yml`:
-  `ls /home/matchpoi/public_html/hr/bootstrap/cache/`
+  `ls /home2/rbjwhhmy/public_html/hr/bootstrap/cache/`
   (should see `config.php`, `routes-v7.php`)
 - [ ] [Phase 5] If caches failed, run manually:
   ```bash
