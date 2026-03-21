@@ -1205,3 +1205,57 @@ placement management (Livewire), and an employee-specific dashboard.
 - DB: `matchpo3_ihrp` / user: `matchpo3_ihrp` / host: `localhost`
 - Git repo: `/home2/matchpo3/repositories/IHRP`
 - Deploy: cPanel Git Version Control → Pull or Deploy → Deploy HEAD Commit
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 5 Deploy Session 3 _(2026-03-21)_
+
+**Status:** Blocked on DNS — files correct, hosting platform decision made
+
+---
+
+#### DNS Investigation Findings
+
+The 404 was never a PHP/Apache issue. Root cause: DNS mismatch.
+
+| Domain | Files deployed at | DNS currently points to |
+|---|---|---|
+| `hr.matchpointegroup.com` | WordPress Plus cPanel (`23.236.62.147`) | `173.254.30.247` ❌ wrong server |
+| `matchpointegroup.com` | GoDaddy server (`173.254.30.247`) | `173.254.30.247` ✅ correct |
+
+- **WordPress Plus server IP:** `23.236.62.147` (just2038.justhost.com)
+- **DNS nameservers:** `ns1.justhost.com` / `ns2.justhost.com` (managed in Bluehost Zone Editor — WordPress Plus cPanel)
+- **matchpointegroup.com WordPress site:** hosted on GoDaddy at `173.254.30.247` — completely separate host, unrelated to Bluehost
+- **Domain registered at:** Bluehost (boss confirmed)
+- **DNS Zone Editor is in:** WordPress Plus cPanel (matchpo3) → Zone Editor
+
+#### Platform Decision
+
+WordPress Plus plan is **expired** ($215.88/year to renew). Files deployed there but DNS never pointed to it.
+
+**Decision: Move HR app to Business Hosting (already paid, 49 slots free)**
+
+Steps to complete:
+- [ ] Get Business Hosting server IP (check Business Hosting cPanel → Server Information)
+- [ ] Cancel WordPress Plus plan (safe — nothing live on it, Bluehost support confirmed)
+- [ ] Add `hr.matchpointegroup.com` as domain in Business Hosting cPanel (document root → `public/`)
+- [ ] Re-clone git repo in Business Hosting cPanel Git Version Control
+- [ ] Create MySQL DB in Business Hosting (new DB name / user / password)
+- [ ] Create `.env` in `public_html` with new DB credentials + Business Hosting APP_URL
+- [ ] Update `.cpanel.yml` paths from `matchpo3` → `rbjwhhmy` (Business Hosting username)
+- [ ] Go to WordPress Plus cPanel → Zone Editor → update A record for `hr` to Business Hosting IP
+- [ ] Wait for DNS propagation (1–4 hours)
+- [ ] Run `php artisan migrate --force` via cPanel Terminal
+- [ ] Run `php artisan storage:link`
+- [ ] Final smoke test
+
+#### Key Accounts / Credentials Reference
+- **Business Hosting cPanel:** `sh00858.bluehost.com`, username: `rbjwhhmy`
+- **WordPress Plus cPanel:** `just2038.justhost.com`, username: `matchpo3` (expired — Zone Editor still accessible)
+- **GoDaddy:** hosts WordPress site at `matchpointegroup.com` — do NOT touch, leave as-is
+
+#### Architecture Explanation (for boss conversation)
+DNS (Bluehost) = the "phone book" that says which server to go to.
+Web Hosting (GoDaddy) = where WordPress files actually live.
+These are two separate things — normal setup. We only need to add one line to the Bluehost DNS Zone Editor to make the HR app go live.
+
