@@ -151,6 +151,7 @@ class PayrollControllerTest extends TestCase
         $am = User::factory()->create(['role' => 'account_manager']);
         $file = $this->uploadedPayrollFile();
         $this->actingAs($admin)
+            ->withHeaders(['Accept' => 'application/json'])
             ->post(route('payroll.upload'), [
                 'file' => $file,
                 'user_id' => $am->id,
@@ -163,6 +164,7 @@ class PayrollControllerTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
         $file = $this->uploadedPayrollFile();
         $this->actingAs($admin)
+            ->withHeaders(['Accept' => 'application/json'])
             ->post(route('payroll.upload'), [
                 'file' => $file,
                 'stop_name' => 'Rafael',
@@ -189,6 +191,7 @@ class PayrollControllerTest extends TestCase
         $am = User::factory()->create(['role' => 'account_manager']);
         $pdf = UploadedFile::fake()->create('doc.pdf', 10, 'application/pdf');
         $this->actingAs($admin)
+            ->withHeaders(['Accept' => 'application/json'])
             ->post(route('payroll.upload'), [
                 'file' => $pdf,
                 'user_id' => $am->id,
@@ -203,6 +206,7 @@ class PayrollControllerTest extends TestCase
         $am = User::factory()->create(['role' => 'account_manager']);
         $huge = UploadedFile::fake()->create('big.xlsx', 51201, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         $this->actingAs($admin)
+            ->withHeaders(['Accept' => 'application/json'])
             ->post(route('payroll.upload'), [
                 'file' => $huge,
                 'user_id' => $am->id,
