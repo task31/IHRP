@@ -96,6 +96,11 @@
                             'bg-gray-800 font-medium text-white' => request()->routeIs('placements.*'),
                             'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('placements.*'),
                         ])>Placements</a>
+                        <a href="{{ route('payroll.index') }}" @class([
+                            'block rounded px-3 py-2',
+                            'bg-gray-800 font-medium text-white' => request()->routeIs('payroll.*'),
+                            'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('payroll.*'),
+                        ])>Payroll</a>
                     @endcan
 
                     @can('admin')

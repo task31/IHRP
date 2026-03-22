@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\LedgerController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PlacementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -58,6 +59,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('backups', [BackupController::class, 'store'])->name('backups.store');
     Route::get('backups/{backup}', [BackupController::class, 'show'])->name('backups.show');
+
+    Route::post('payroll/upload', [PayrollController::class, 'upload'])->name('payroll.upload');
+    Route::get('payroll/api/aggregate', [PayrollController::class, 'apiAggregate'])->name('payroll.api.aggregate');
+    Route::post('payroll/api/goal', [PayrollController::class, 'apiGoalSet'])->name('payroll.api.goal.set');
+    Route::get('payroll/api/mappings', [PayrollController::class, 'apiMappings'])->name('payroll.api.mappings');
+    Route::put('payroll/api/mappings', [PayrollController::class, 'apiMappingsUpdate'])->name('payroll.api.mappings.update');
 });
 
 Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
@@ -104,6 +111,10 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::get('budget/{year}', [BudgetController::class, 'show'])->name('budget.show');
     Route::put('budget/{year}', [BudgetController::class, 'update'])->name('budget.update');
     Route::post('budget/check-alerts', [BudgetController::class, 'alerts'])->name('budget.alerts');
+
+    Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+    Route::get('payroll/api/dashboard', [PayrollController::class, 'apiDashboard'])->name('payroll.api.dashboard');
+    Route::get('payroll/api/consultants', [PayrollController::class, 'apiConsultants'])->name('payroll.api.consultants');
 });
 
 require __DIR__.'/auth.php';

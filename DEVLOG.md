@@ -1259,3 +1259,116 @@ DNS (Bluehost) = the "phone book" that says which server to go to.
 Web Hosting (GoDaddy) = where WordPress files actually live.
 These are two separate things — normal setup. We only need to add one line to the Bluehost DNS Zone Editor to make the HR app go live.
 
+
+---
+
+### 🔍 [INFRASTRUCTURE DISCOVERY — Claude Code] — Hosting Audit _(2026-03-21)_
+
+**Context:** Bluehost Plus plan expired. Conducted full hosting audit to understand what is live, what is dead, and where to deploy IHRP.
+
+---
+
+#### Full Infrastructure Map (Confirmed)
+
+| What | Provider | IP | Status |
+|---|---|---|---|
+| **Domain registration** (`matchpointegroup.com`) | JustHost / Bluehost | — | Active — keep as-is |
+| **Email** (`@matchpointegroup.com`) | GoDaddy | — | Active — GoDaddy is email-only, not web hosting |
+| **matchpointegroup.com website** (WordPress) | **Google Cloud Platform** | `23.236.62.147` | ✅ Live |
+| **hr.matchpointegroup.com** (old deploy) | Bluehost WordPress Plus | `173.254.30.247` | ❌ Expired + unused |
+| **Bluehost WordPress Plus Hosting** | Bluehost (`just2038.justhost.com`) | `173.254.30.247` | ❌ Expired — safe to cancel |
+| **Bluehost Business Hosting** | Bluehost (`sh00858.bluehost.com`) | TBD | ✅ Active — deploy target |
+
+#### Key Corrections to Previous Notes
+- Previous notes said "matchpointegroup.com hosted on GoDaddy" — **WRONG**. GoDaddy = email only.
+- `23.236.62.147` = **Google Cloud** (`147.62.236.23.bc.googleusercontent.com`, ASN AS396982 Google LLC, Council Bluffs Iowa)
+- `173.254.30.247` = old Bluehost Plus server where hr.matchpointegroup.com was deployed but never pointed to
+
+#### Boss (Djaya) Confirmed
+- Used JustHost for **domain registration** only
+- Used GoDaddy for **emails only** (not website hosting)
+- WordPress site was migrated to **Google Cloud** at some point — he may not remember the details
+- Bluehost Plus WordPress files in `public_html` are an **old copy** — not live, not used
+
+#### Bluehost Plus Plan Status
+- **public_html** contains old WordPress install (wp-config.php DB: `matchpo3_wpdb`)
+- **hr.matchpointegroup.com** folder on server is **empty** (files already removed)
+- `matchpointegroup.com` live site confirmed loading while Plus plan is expired → proves files are dead
+- **Safe to cancel Plus plan** — nothing live depends on it
+- Optional: export `matchpo3_wpdb` from phpMyAdmin + compress `public_html` as archive before canceling
+
+#### DNS Nameserver Authority
+- Nameservers: `ns1.justhost.com` / `ns2.justhost.com` (managed in Bluehost Zone Editor)
+- All DNS A record changes must be made in: **WordPress Plus cPanel → Zone Editor**
+- Even after canceling Plus hosting, DNS zone may still be accessible — confirm before canceling
+
+#### Deployment Decision (Final)
+**Target: Bluehost Business Hosting** (`sh00858.bluehost.com`, user: `rbjwhhmy`)
+- Already paid, cPanel, PHP 8.3, MySQL — no extra cost
+- Steps unchanged from previous plan section above
+- Do NOT attempt to co-host on Google Cloud (no cPanel, more complex)
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 6 Payroll Integration _(2026-03-22)_
+
+**Goal:** Port MyPayroll Flask app into IHRP as a native Laravel module. Admin uploads `.xlsx` payroll files per AM; data stored in MySQL; AMs see own dashboard; admins see aggregate + per-AM comparison. Full spec in `payroll-integration-plan.md`.
+**Mode:** SEQUENTIAL
+**Dependency diagram:**
+```
+[Phase 4] ✅ → [Phase 6] ⏳
+[Phase 5] 🔨 (parallel — Phase 6 can be implemented locally while deploy is resolved)
+```
+
+**Decisions made:**
+
+1. **Phase 6 proceeds in parallel with Phase 5** — Payroll code is purely additive (new tables, new files). No existing controllers are modified. The only existing files touched are `routes/web.php` and `layouts/app.blade.php`. These changes don't break Phase 5 deploy and will be included in the next push.
+
+2. **5-table data model (multi-owner)** — Every payroll record is scoped to a `user_id` (the AM who owns the file). Composite UNIQUE constraints `(user_id, check_date)` on records and `(user_id, consultant_name, year)` on consultant entries prevent duplicates across AMs. New AMs with no data are fully supported via empty state rendering — no special-casing needed.
+
+3. **`PayrollParseService` is a pure function** — Takes `(UploadedFile $file, string $stopName)`, returns a DTO. No DB writes. Reason: each AM's payroll file stops at a different row (the row starting with that AM's name). A global config cannot hold per-AM stop names. Pure function = trivially testable.
+
+4. **Consolidated `/api/dashboard` endpoint** — Returns all initial render data (years, summary, monthly, annualTotals, goal, projection) in one JSON payload (~5-10 KB). Eliminates the 5-6 parallel API calls from the original Flask app. Consultant data stays separate (drawer-triggered only).
+
+5. **`getPerAmBreakdown` queries role, not a hard-coded list** — `User::where('role', 'account_manager')->orderBy('name')->get()` ensures future hires auto-appear and AMs whose role changes are excluded. AMs with zero payroll records still appear with $0 (left-join pattern).
+
+6. **Projection suppression at < 4 periods** — Linear extrapolation is unreliable early in the year. < 4 pay periods → return `{ projectionSuppressed: true, reason: 'too_early' }`. Zero records → `reason: 'no_data'`. Both cases render a text message, never a broken number.
+
+7. **Upsert-only uploads, no soft-delete** — A partial-year re-upload only touches records present in that file; earlier check_dates are preserved. Consultant entries for affected years are deleted and reinserted atomically inside `DB::transaction` — this is the only "replace" behavior.
+
+**Risks flagged:**
+
+- **PhpSpreadsheet date cell detection (HIGH):** `"Social Security "` has a trailing space in the source XLSX — must `trim()` during header detection. Date cells may be float serials — use `ExcelDate::isDateTime($cell)` + fallback to `DateTime::createFromFormat('m/d/Y', $value)`. Unit tests with real XLSX fixture (`MyPayroll/03.12.2026.xlsx`) are the safety net.
+- **Stop-name typo (MEDIUM):** Wrong stop_name → wrong record count. Surfaced in upload JSON response so admin can re-upload with correct name. `payroll_uploads.stop_name` stored per upload for audit.
+- **"Commission...Subtotal" typo (MEDIUM):** Source file contains `"Subttal"` in some sheets — both spellings must be detected. Covered by `test_commission_subtotal_typo_handled`.
+- **Memory on large XLSX (MEDIUM):** `ini_set('memory_limit', '256M')` at parse start; 50 MB hard limit at controller.
+- **AM payroll file format differences (MEDIUM):** Validate sheet structure before parsing; 422 with descriptive error if format doesn't match expected layout.
+
+**Files planned:**
+
+- `web/database/migrations/[5 new migration files]`
+- `web/app/Models/PayrollUpload.php`
+- `web/app/Models/PayrollRecord.php`
+- `web/app/Models/PayrollConsultantEntry.php`
+- `web/app/Models/PayrollConsultantMapping.php`
+- `web/app/Models/PayrollGoal.php`
+- `web/app/Services/PayrollParseService.php`
+- `web/app/Services/PayrollDataService.php`
+- `web/app/Http/Controllers/PayrollController.php`
+- `web/resources/views/payroll/index.blade.php`
+- `web/resources/views/payroll/mappings.blade.php`
+- `web/tests/Unit/PayrollParseServiceTest.php`
+- `web/tests/Unit/PayrollDataServiceTest.php`
+- `web/tests/Feature/PayrollControllerTest.php`
+- `web/routes/web.php` (edit — add 8 payroll routes)
+- `web/resources/views/layouts/app.blade.php` (edit — add Payroll nav link)
+
+### 🔨 [BUILD] — Phase 6 Payroll Integration _(Cursor / 2026-03-22)_
+
+- **Migrations (5):** `payroll_uploads`, `payroll_records` (UNIQUE `user_id`+`check_date`), `payroll_consultant_entries`, `payroll_consultant_mappings`, `payroll_goals` — money as `DECIMAL(12,4)`.
+- **Models (5):** `PayrollUpload`, `PayrollRecord`, `PayrollConsultantEntry`, `PayrollConsultantMapping`, `PayrollGoal` — each with `belongsTo` where applicable and `scopeForOwner`. **`User::isAdmin()`** added for payroll scoping.
+- **Services:** `PayrollParseResult` DTO; `PayrollParseService` (summary + consultant sheets, trimmed headers, `Social Security ` trailing space, `Subttal` typo, per-upload `stop_name`, PhpSpreadsheet 5 `Coordinate::stringFromColumnIndex` cell access, `getSheetYear` supports native date, Excel serial, and `m/d/Y` / `Y-m-d` strings); `PayrollDataService` (years, summary, monthly, annual totals, consultants, projection with `<4` / `no_data` suppression, aggregate + per-AM breakdown via `User::where('role','account_manager')`, bcmath).
+- **HTTP:** `PayrollController` — `index`, `upload` (admin, mapping resolution, transaction, audit log), `apiDashboard` / `apiConsultants` (consolidated + drawer; admin requires `user_id`), `apiAggregate`, `apiGoalSet`, `apiMappings`, `apiMappingsUpdate`. **8 routes** in `web.php`; **Payroll** nav link after Placements under `@can('account_manager')`.
+- **UI:** `payroll/index.blade.php` (Chart.js 4.4.3, KPIs, bar/donut/YoY/trend/table, consultant drawer, admin upload modal, AM comparison, `@include` `payroll/mappings.blade.php`).
+- **Tests:** `PayrollParseServiceTest` (8), `PayrollDataServiceTest` (8), `PayrollControllerTest` (feature coverage for auth, upload validation, scoping, goals, mappings, auto-resolve). **OvertimeCalculatorTest** unchanged: 44 tests, 120 assertions.
+- **Verify:** `php artisan route:list --path=payroll` shows 8 routes. Full `php artisan test` requires a DB PDO driver matching `phpunit.xml` (typically `pdo_sqlite` for in-memory tests) or adjusted test DB config.
