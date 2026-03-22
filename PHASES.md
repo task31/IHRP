@@ -45,6 +45,18 @@ _Last updated: 2026-03-20 (Phase 5 in progress)_
   └─ Run migration on production
   └─ Smoke test all features
 
+[Phase 6] — Payroll Integration | SEQUENTIAL
+  └─ Step 1: 5 migrations (payroll_uploads, payroll_records, payroll_consultant_entries, payroll_consultant_mappings, payroll_goals)
+  └─ Step 2: 5 Eloquent models (PayrollUpload, PayrollRecord, PayrollConsultantEntry, PayrollConsultantMapping, PayrollGoal)
+  └─ Step 3: PayrollParseService (XLSX extraction) + PayrollParseServiceTest (8 tests)
+  └─ Step 4: PayrollDataService (aggregation + projections) + PayrollDataServiceTest (8 tests)
+  └─ Step 5: PayrollController (index, upload, apiDashboard, apiConsultants, apiAggregate, apiGoalSet, apiMappings, apiMappingsUpdate)
+  └─ Step 6: Routes (8 payroll routes in web.php)
+  └─ Step 7: Blade views (payroll/index.blade.php + payroll/mappings.blade.php)
+  └─ Step 8: Sidebar nav link (layouts/app.blade.php)
+  └─ Step 9: PayrollControllerTest (feature tests)
+  └─ Step 10: Manual smoke test (upload 3 AM files, verify AM #4 empty state, verify all charts + scoping)
+
 ## Dependency Rules
 
 - [Phase 1] requires [Phase 0] complete (auth + DB must exist)
@@ -54,6 +66,7 @@ _Last updated: 2026-03-20 (Phase 5 in progress)_
 - [Phase 3] requires [Phase 0] complete (auth/roles needed; can run alongside Phase 2 if needed)
 - [Phase 4] requires [Phase 1] + [Phase 2] complete (full feature parity before migration)
 - [Phase 5] requires [Phase 4] complete (QA gate before production deploy)
+- [Phase 6] requires [Phase 4] complete (roles + consultants table must exist); can be implemented locally while Phase 5 is in-progress
 
 ## Status
 
@@ -64,3 +77,4 @@ _Last updated: 2026-03-20 (Phase 5 in progress)_
 - [Phase 3] ✅ Complete _(2026-03-19)_
 - [Phase 4] ✅ Complete _(2026-03-20)_
 - [Phase 5] 🔨 In Progress
+- [Phase 6] ⏳ Pending

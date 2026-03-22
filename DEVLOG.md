@@ -1372,3 +1372,54 @@ These are two separate things — normal setup. We only need to add one line to 
 - **UI:** `payroll/index.blade.php` (Chart.js 4.4.3, KPIs, bar/donut/YoY/trend/table, consultant drawer, admin upload modal, AM comparison, `@include` `payroll/mappings.blade.php`).
 - **Tests:** `PayrollParseServiceTest` (8), `PayrollDataServiceTest` (8), `PayrollControllerTest` (feature coverage for auth, upload validation, scoping, goals, mappings, auto-resolve). **OvertimeCalculatorTest** unchanged: 44 tests, 120 assertions.
 - **Verify:** `php artisan route:list --path=payroll` shows 8 routes. Full `php artisan test` requires a DB PDO driver matching `phpunit.xml` (typically `pdo_sqlite` for in-memory tests) or adjusted test DB config.
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 6 Payroll Integration _(2026-03-22)_
+
+**Reviewed:** d1c9449 — feat: add payroll module — 5 tables, parse/data services, dashboard, admin upload
+
+**Verified:**
+- 5 migrations: all DECIMAL(12,4) money fields, all UNIQUE constraints present (`user_id+check_date`, `user_id+consultant_name+year`, `raw_name+user_id`, `user_id+year`) ✅
+- 5 models: all have `scopeForOwner`, correct `belongsTo` relationships ✅
+- `PayrollParseResult` DTO created (Cursor addition, not in plan) — correct, cleaner than returning raw array ✅
+- `PayrollParseService` — all 5 critical porting notes addressed:
+  - `"Social Security "` trailing space → `trim()` applied at header build time ✅
+  - `"Subttal"` typo → `str_contains($col, 'Subttal')` ✅
+  - `stop_name` per-parse-call (not global config) ✅
+  - `ini_set('memory_limit', '256M')` at parse start ✅
+  - `ExcelDate::isDateTime()` + `m/d/Y` string fallback ✅
+- `PayrollDataService` — bcmath throughout, SQLite/MySQL dual-path for year extraction, projection `too_early` / `no_data` logic, AM list via `User::where('role','account_manager')` query (never hard-coded), division-by-zero guard on pct calculations ✅
+- `PayrollController` — all 8 methods, all 8 auth guards in place, upload 8-step flow including `DB::transaction`, `AppService::auditLog` called with all required fields ✅
+- 8 routes confirmed via `php artisan route:list --path=payroll` ✅
+- Sidebar Payroll nav link inside `@can('account_manager')` block ✅
+- `INITIAL_AM_ID` pre-selects first AM on page load — admin always has `amId` set, making strict `getOwnerId` 422 safe ✅
+- Chart.js 4.4.3 CDN (pinned version, matches plan) ✅
+
+**Test results:**
+- `PayrollParseServiceTest` — **8 tests, 13 assertions, PASS** ✅ (run: `php vendor/bin/phpunit tests/Unit/PayrollParseServiceTest.php --no-configuration`)
+- `OvertimeCalculatorTest` — **44 tests, 120 assertions, PASS** ✅ (no regression)
+- `PayrollDataServiceTest` — **8 errors** ❌ (`could not find driver` — `pdo_sqlite` not installed on this machine)
+- `PayrollControllerTest` — **all errors** ❌ (same root cause)
+
+**Root cause of test errors:** `phpunit.xml` sets `DB_CONNECTION=sqlite` + `DB_DATABASE=:memory:`, but `pdo_sqlite` is not in PHP CLI extensions on this machine (`php -m | grep sqlite` returns nothing). This is a pre-existing environment issue — identical error affects all existing feature tests (not a Phase 6 regression). Code in both test files is correct and follows the test plan exactly.
+
+**Deviations from plan:**
+- `getOwnerId()` — Plan allowed admin to omit `user_id` (would fall through to `Auth::id()`). Cursor made it strict: admin without `user_id` → 422. This is ✅ correct — admins have no payroll data, so falling through to their own ID would always return empty results. The strict path is safer and the UI always sends a user_id (INITIAL_AM_ID pre-selected). Marking ✅.
+- `PayrollParseResult` DTO class created (`app/Services/PayrollParseResult.php`) — unplanned addition, but correct: typed DTO is better than raw array for a complex return type. ✅
+- `PayrollDataService::getPerAmBreakdown` — SQLite and MySQL branches have identical query logic (the sqlite/mysql split was retained but both branches execute the same code). Minor: SQLite branch is redundant since `YEAR()` isn't used there. Not a bug. ⚠️
+
+**Security spot-check:**
+- All 8 controller methods have explicit `$this->authorize()` guards ✅
+- `getOwnerId` validates that admin-specified `user_id` must be `account_manager` role ✅
+- Consultant mapping update also validates `user_id` is AM ✅
+- Goal set validates `user_id` is AM ✅
+- File upload: MIME type validated twice (controller validation rule + service-level MIME check) ✅
+
+**PHASES.md updated:** ✅ Phase 6 added (⏳ Pending, pending manual smoke test + pdo_sqlite fix)
+
+**Carry-forwards into Phase 6 closure:**
+- [ ] Fix `pdo_sqlite`: enable extension in `php.ini` (`extension=pdo_sqlite`) and re-run `php artisan test` — target: all 107+ tests pass
+- [ ] Run `php artisan migrate` on local MySQL to create the 5 new tables
+- [ ] Manual smoke test (phase-6-plan.md Step 10): upload 3 AM payroll files, verify AM #4 empty state, verify all 4 chart types, verify AM scoping, verify admin aggregate, verify unresolved consultant name flow
+- [ ] Include 5 new migrations in next Phase 5 production deploy push
