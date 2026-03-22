@@ -80,6 +80,7 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::get('consultants/{consultant}/w9', [ConsultantController::class, 'w9Path'])->name('consultants.w9.show');
     Route::delete('consultants/{consultant}/w9', [ConsultantController::class, 'w9Delete'])->name('consultants.w9.destroy');
     Route::post('consultants/{consultant}/deactivate', [ConsultantController::class, 'deactivate'])->name('consultants.deactivate');
+    Route::patch('consultants/{consultant}/field', [ConsultantController::class, 'patchField'])->name('consultants.patch-field');
     Route::resource('consultants', ConsultantController::class)->except(['create', 'edit']);
 
     Route::post('timesheets/upload', [TimesheetController::class, 'upload'])->name('timesheets.upload');

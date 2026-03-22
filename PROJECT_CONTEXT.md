@@ -87,3 +87,41 @@ browser without being on that machine.
 
 _Generated: 2026-03-19_
 _Stack decisions made with: Claude (claude.ai) — manager confirmed PHP/Bluehost_
+
+---
+
+<!-- handoff:start -->
+## SESSION HANDOFF — 2026-03-22 (~11:00)
+
+**Phase:** 6 — Payroll Integration (smoke test in progress)
+**Branch:** master
+
+**Last commit:** dddb059 — fix: make remove_employee_role migration SQLite-compatible
+
+**What was built this session (not yet committed):**
+1. Fixed dual Alpine instance bug — `@livewireScriptConfig` in app.blade.php
+2. Fixed double-reload race condition — `$watch` post-init + `isLoading` guard
+3. Goal tracker UI on payroll dashboard (admin only)
+4. `401k Contribution` made optional in parser
+5. Payroll upload now auto-creates Consultant records from payroll sheet names
+6. `gross_margin_per_hour` feature: migration + parser + upload controller + edit modal
+7. `pay_rate`, `bill_rate`, `state`, `client_id` made nullable on consultants (3 migrations)
+8. Inline cell editing on Consultants page: click any field to edit in-place
+
+**To resume:**
+- Read last `[REVIEW]` block in DEVLOG.md (Phase 6 Smoke Session 1)
+- Run `php artisan migrate` (already done locally — 3 migrations applied)
+- Continue smoke test: upload remaining AMs, verify GMPH on consultants, test re-upload
+- After smoke passes → Phase 6 sign-off → update PHASES.md
+
+**Key files changed:**
+- `web/resources/views/layouts/app.blade.php` — @livewireScriptConfig fix
+- `web/resources/views/payroll/index.blade.php` — goal tracker, $watch pattern
+- `web/app/Services/PayrollParseService.php` — optional 401k, hours tracking, GMPH
+- `web/app/Http/Controllers/PayrollController.php` — auto-create consultants, GMPH write
+- `web/app/Models/Consultant.php` — gross_margin_per_hour in fillable/casts
+- `web/resources/views/consultants/index.blade.php` — inline cell editing
+- `web/app/Http/Controllers/ConsultantController.php` — patchField() method
+- `web/routes/web.php` — PATCH consultants/{id}/field route
+- `web/database/migrations/2026_03_22_*` — 3 new migrations
+<!-- handoff:end -->

@@ -171,7 +171,7 @@
             </template>
         </div>
 
-        @livewireScripts
+        @livewireScriptConfig
 
         <script>
             function toastManager() {

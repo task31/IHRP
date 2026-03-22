@@ -186,6 +186,51 @@ class ConsultantController extends Controller
         return response()->json($consultant->fresh());
     }
 
+    public function patchField(Request $request, string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        $data = $request->validate([
+            'field' => ['required', 'string', 'in:pay_rate,bill_rate,state,client_id,project_start_date,project_end_date'],
+            'value' => ['nullable'],
+        ]);
+
+        $field = $data['field'];
+        $value = ($data['value'] === '' || $data['value'] === null) ? null : $data['value'];
+
+        $old = [$field => $consultant->$field];
+        $consultant->update([$field => $value]);
+        $new = [$field => $consultant->fresh()->$field];
+
+        $action = in_array($field, ['pay_rate', 'bill_rate'], true) ? 'RATE_CHANGE' : 'UPDATE';
+        AppService::auditLog('consultants', (int) $consultant->id, $action, $old, $new);
+
+        // Sync onboarding flags
+        DB::transaction(function () use ($consultant, $field, $value, $old) {
+            if ($field === 'client_id' && ! empty($value) && empty($old['client_id'])) {
+                $this->setOnboardingItem((int) $consultant->id, 'client_assigned', true);
+            }
+            if ($field === 'project_start_date' && ! empty($value) && empty($old['project_start_date'])) {
+                $this->setOnboardingItem((int) $consultant->id, 'start_date_set', true);
+            }
+            if ($field === 'project_end_date' && ! empty($value) && empty($old['project_end_date'])) {
+                $this->setOnboardingItem((int) $consultant->id, 'end_date_set', true);
+            }
+            if ($field === 'pay_rate' && ! empty($value)) {
+                $this->setOnboardingItem((int) $consultant->id, 'pay_rate_confirmed', true);
+            }
+            if ($field === 'bill_rate' && ! empty($value)) {
+                $this->setOnboardingItem((int) $consultant->id, 'bill_rate_confirmed', true);
+            }
+        });
+
+        return response()->json(['success' => true]);
+    }
+
     public function destroy(string $id): JsonResponse
     {
         return $this->deactivate($id);

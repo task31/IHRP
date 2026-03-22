@@ -65,36 +65,176 @@
                                     <span class="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">No W-9</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2 text-gray-600">{{ $c->client_name ?? 'Unassigned' }}</td>
-                            <td class="px-3 py-2">
-                                <span class="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium">{{ $c->state }}</span>
+                            {{-- Client --}}
+                            <td
+                                class="px-3 py-2"
+                                x-data="inlineCell({{ (int) $c->id }}, 'client_id', {{ $c->client_id !== null ? (int) $c->client_id : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-600 cursor-pointer hover:text-indigo-500'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <select
+                                            x-model="inputVal"
+                                            @change="save()"
+                                            @keydown.escape="cancel()"
+                                            class="rounded border border-indigo-400 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 max-w-[140px]"
+                                        >
+                                            <option value="">— Select —</option>
+                                            @foreach ($clients as $cl)
+                                                <option value="{{ $cl->id }}">{{ $cl->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
                             </td>
-                            <td class="px-3 py-2 text-gray-700">${{ number_format((float) $c->pay_rate, 2) }}/hr</td>
-                            <td class="px-3 py-2 text-gray-700">${{ number_format((float) $c->bill_rate, 2) }}/hr</td>
-                            <td class="px-3 py-2 text-gray-600">
-                                {{ $c->project_start_date ? Carbon::parse($c->project_start_date)->format('m/d/Y') : '—' }}
+                            {{-- State --}}
+                            <td
+                                class="px-3 py-2"
+                                x-data="inlineCell({{ (int) $c->id }}, 'state', {{ $c->state !== null ? Js::from($c->state) : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'rounded bg-gray-100 px-2 py-0.5 text-xs font-medium cursor-pointer hover:bg-indigo-100'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <select
+                                            x-model="inputVal"
+                                            @change="save()"
+                                            @keydown.escape="cancel()"
+                                            class="rounded border border-indigo-400 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-16"
+                                        >
+                                            <option value="">—</option>
+                                            @foreach ($usStates as $st)
+                                                <option value="{{ $st }}">{{ $st }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
                             </td>
-                            <td class="px-3 py-2 font-medium {{ $c->project_end_date ? '' : 'text-gray-400' }}">
-                                @if ($c->project_end_date)
-                                    @php
-                                        $end = Carbon::parse($c->project_end_date)->startOfDay();
-                                        $today = Carbon::now()->startOfDay();
-                                        $daysLeft = (int) floor(($end->timestamp - $today->timestamp) / 86400);
-                                        $endClass =
-                                            $daysLeft < 0
-                                                ? 'text-gray-400'
-                                                : ($daysLeft <= 7
-                                                    ? 'text-red-600 font-semibold'
-                                                    : ($daysLeft <= 14
-                                                        ? 'text-orange-500 font-semibold'
-                                                        : ($daysLeft <= 30
-                                                            ? 'text-yellow-600'
-                                                            : 'text-gray-700')));
-                                    @endphp
-                                    <span class="{{ $endClass }}">{{ Carbon::parse($c->project_end_date)->format('m/d/Y') }}</span>
-                                @else
-                                    —
-                                @endif
+                            {{-- Pay Rate --}}
+                            <td
+                                class="px-3 py-2"
+                                x-data="inlineCell({{ (int) $c->id }}, 'pay_rate', {{ $c->pay_rate !== null ? (float) $c->pay_rate : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-700 cursor-pointer hover:text-indigo-500'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <input
+                                            type="number" step="0.01" min="0"
+                                            x-model="inputVal"
+                                            @blur="save()"
+                                            @keydown.enter="save()"
+                                            @keydown.escape="cancel()"
+                                            class="w-20 rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                        />
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
+                            </td>
+                            {{-- Bill Rate --}}
+                            <td
+                                class="px-3 py-2"
+                                x-data="inlineCell({{ (int) $c->id }}, 'bill_rate', {{ $c->bill_rate !== null ? (float) $c->bill_rate : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-700 cursor-pointer hover:text-indigo-500'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <input
+                                            type="number" step="0.01" min="0"
+                                            x-model="inputVal"
+                                            @blur="save()"
+                                            @keydown.enter="save()"
+                                            @keydown.escape="cancel()"
+                                            class="w-20 rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                        />
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
+                            </td>
+                            {{-- Start Date --}}
+                            <td
+                                class="px-3 py-2 text-gray-600"
+                                x-data="inlineCell({{ (int) $c->id }}, 'project_start_date', {{ $c->project_start_date ? Js::from(substr((string) $c->project_start_date, 0, 10)) : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'cursor-pointer hover:text-indigo-500'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <input
+                                            type="date"
+                                            x-model="inputVal"
+                                            @blur="save()"
+                                            @keydown.enter="save()"
+                                            @keydown.escape="cancel()"
+                                            class="rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                        />
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
+                            </td>
+                            {{-- End Date --}}
+                            @php
+                                $endClass = 'text-gray-400';
+                                if ($c->project_end_date) {
+                                    $end = Carbon::parse((string) $c->project_end_date)->startOfDay();
+                                    $today = Carbon::now()->startOfDay();
+                                    $daysLeft = (int) floor(($end->timestamp - $today->timestamp) / 86400);
+                                    $endClass = $daysLeft < 0 ? 'text-gray-400' : ($daysLeft <= 7 ? 'text-red-600 font-semibold' : ($daysLeft <= 14 ? 'text-orange-500 font-semibold' : ($daysLeft <= 30 ? 'text-yellow-600' : 'text-gray-700')));
+                                }
+                            @endphp
+                            <td
+                                class="px-3 py-2 font-medium"
+                                x-data="inlineCell({{ (int) $c->id }}, 'project_end_date', {{ $c->project_end_date ? Js::from(substr((string) $c->project_end_date, 0, 10)) : 'null' }})"
+                            >
+                                <template x-if="!editing">
+                                    <span
+                                        @click="startEdit()"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'cursor-pointer hover:text-indigo-500 {{ $endClass }}'"
+                                        x-text="displayVal()"
+                                    ></span>
+                                </template>
+                                <template x-if="editing">
+                                    <div class="flex items-center gap-1">
+                                        <input
+                                            type="date"
+                                            x-model="inputVal"
+                                            @blur="save()"
+                                            @keydown.enter="save()"
+                                            @keydown.escape="cancel()"
+                                            class="rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                        />
+                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                    </div>
+                                </template>
                             </td>
                             <td class="px-3 py-2">
                                 @php
@@ -157,12 +297,16 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-gray-600">Pay Rate *</label>
-                            <input type="number" step="0.01" x-model="form.pay_rate" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                            <input type="number" step="0.01" x-model="form.pay_rate" @input="autoBillRate()" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600">Bill Rate *</label>
                             <input type="number" step="0.01" x-model="form.bill_rate" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
                         </div>
+                    </div>
+                    <div x-show="form.gross_margin_per_hour !== null && form.gross_margin_per_hour !== ''" class="rounded bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                        Gross margin/hr from payroll: <span class="font-mono font-semibold" x-text="'$' + parseFloat(form.gross_margin_per_hour || 0).toFixed(2)"></span>
+                        — bill rate auto-updates when you change pay rate.
                     </div>
                     <p class="text-sm text-gray-600">Margin: <span class="font-mono font-medium text-gray-900" x-text="marginPct()"></span></p>
                     <div>
@@ -278,6 +422,74 @@
     </div>
 
     <script>
+        const PAGE_CLIENTS = @json($clients);
+        const PAGE_STATES = @json($usStates);
+
+        function inlineCell(consultantId, field, initialValue) {
+            return {
+                editing: false,
+                currentVal: initialValue !== null && initialValue !== undefined ? initialValue : null,
+                inputVal: '',
+                saving: false,
+
+                isMissing() {
+                    if (this.currentVal === null || this.currentVal === '') return true;
+                    if (field === 'pay_rate' || field === 'bill_rate') return !parseFloat(this.currentVal);
+                    return false;
+                },
+
+                displayVal() {
+                    if (field === 'pay_rate' || field === 'bill_rate') {
+                        const v = parseFloat(this.currentVal);
+                        return v > 0 ? '$' + v.toFixed(2) + '/hr' : '+ Add rate';
+                    }
+                    if (field === 'client_id') {
+                        const cl = PAGE_CLIENTS.find(c => String(c.id) === String(this.currentVal));
+                        return cl ? cl.name : '+ Assign client';
+                    }
+                    if (field === 'state') {
+                        return this.currentVal || '+ Add state';
+                    }
+                    if (field === 'project_start_date' || field === 'project_end_date') {
+                        if (!this.currentVal) return '+ Add date';
+                        const d = new Date(this.currentVal);
+                        return (d.getMonth() + 1).toString().padStart(2, '0') + '/' + d.getDate().toString().padStart(2, '0') + '/' + d.getFullYear();
+                    }
+                    return this.currentVal || '—';
+                },
+
+                startEdit() {
+                    this.inputVal = this.currentVal !== null && this.currentVal !== undefined ? String(this.currentVal) : '';
+                    this.editing = true;
+                    this.$nextTick(() => {
+                        const el = this.$el.querySelector('input,select');
+                        if (el) el.focus();
+                    });
+                },
+
+                async save() {
+                    if (this.saving) return;
+                    this.editing = false;
+                    this.saving = true;
+                    const res = await apiFetch(`/consultants/${consultantId}/field`, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ field: field, value: this.inputVal || null }),
+                    });
+                    this.saving = false;
+                    if (res.ok) {
+                        this.currentVal = this.inputVal || null;
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Saved' } }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Could not save', type: 'error' } }));
+                    }
+                },
+
+                cancel() {
+                    this.editing = false;
+                },
+            };
+        }
+
         function consultantsPage(clientList) {
             const labels = @json($onboardingLabels);
 
@@ -301,9 +513,19 @@
                     industry_type: 'other',
                     pay_rate: '',
                     bill_rate: '',
+                    gross_margin_per_hour: null,
                     client_id: '',
                     project_start_date: '',
                     project_end_date: '',
+                },
+                autoBillRate() {
+                    const gmph = parseFloat(this.form.gross_margin_per_hour);
+                    if (!isNaN(gmph) && gmph > 0) {
+                        const pay = parseFloat(this.form.pay_rate);
+                        if (!isNaN(pay)) {
+                            this.form.bill_rate = (pay + gmph).toFixed(4);
+                        }
+                    }
                 },
                 marginPct() {
                     const p = parseFloat(this.form.pay_rate) || 0;
@@ -328,6 +550,7 @@
                         industry_type: 'other',
                         pay_rate: '',
                         bill_rate: '',
+                        gross_margin_per_hour: null,
                         client_id: '',
                         project_start_date: '',
                         project_end_date: '',
@@ -343,6 +566,7 @@
                         industry_type: r.industry_type || 'other',
                         pay_rate: r.pay_rate != null ? String(r.pay_rate) : '',
                         bill_rate: r.bill_rate != null ? String(r.bill_rate) : '',
+                        gross_margin_per_hour: r.gross_margin_per_hour != null ? String(r.gross_margin_per_hour) : null,
                         client_id: r.client_id != null ? String(r.client_id) : '',
                         project_start_date: r.project_start_date ? String(r.project_start_date).slice(0, 10) : '',
                         project_end_date: r.project_end_date ? String(r.project_end_date).slice(0, 10) : '',

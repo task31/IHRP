@@ -19,7 +19,23 @@ final class PayrollParseService
 
     private const HEADER_SEARCH_MAX_ROW = 20;
 
-    /** @var list<string> */
+    /** @var list<string> Required columns — upload fails if any are absent */
+    private const SUMMARY_REQUIRED_HEADERS = [
+        'Sub-Total Gross Income',
+        'Federal Tax',
+        'Social Security',
+        'Medicare',
+        'State Tax',
+        'Disability',
+        'Check Amount',
+    ];
+
+    /** @var list<string> Optional columns — default $0 if absent */
+    private const SUMMARY_OPTIONAL_HEADERS = [
+        '401k Contribution',
+    ];
+
+    /** @var list<string> All numeric headers (required + optional) */
     private const SUMMARY_NUMERIC_HEADERS = [
         'Sub-Total Gross Income',
         'Federal Tax',
@@ -95,7 +111,7 @@ final class PayrollParseService
             throw new \InvalidArgumentException('Spreadsheet must have a Check Date column in the first 20 rows of the first sheet.');
         }
 
-        foreach (self::SUMMARY_NUMERIC_HEADERS as $h) {
+        foreach (self::SUMMARY_REQUIRED_HEADERS as $h) {
             if (! isset($colMap[$h])) {
                 throw new \InvalidArgumentException('Missing required column: '.$h);
             }
@@ -124,6 +140,9 @@ final class PayrollParseService
             }
 
             foreach (self::SUMMARY_NUMERIC_HEADERS as $header) {
+                if (! isset($colMap[$header])) {
+                    continue; // optional column absent in this file — stays $0
+                }
                 $col = $colMap[$header];
                 $val = $this->decimalFromCell($sheet->getCell($this->cell($col, $r)));
                 $key = $this->summaryHeaderToKey($header);
@@ -146,7 +165,7 @@ final class PayrollParseService
      */
     private function parseConsultantSheets(Spreadsheet $wb, string $stopName): array
     {
-        /** @var array<int, array<string, string>> $byYear */
+        /** @var array<int, array<string, array{gross: string, hours: string}>> $byYear */
         $byYear = [];
 
         foreach ($wb->getWorksheetIterator() as $ws) {
@@ -161,24 +180,30 @@ final class PayrollParseService
             $parsed = $this->parsePayCalc($ws, $stopName);
             foreach ($parsed as $row) {
                 $name = $row['name'];
-                $gross = $row['gross'];
                 if (! isset($byYear[$year][$name])) {
-                    $byYear[$year][$name] = '0.0000';
+                    $byYear[$year][$name] = ['gross' => '0.0000', 'hours' => '0.0000'];
                 }
-                $byYear[$year][$name] = $this->bcAdd($byYear[$year][$name], $gross);
+                $byYear[$year][$name]['gross'] = $this->bcAdd($byYear[$year][$name]['gross'], $row['gross']);
+                $byYear[$year][$name]['hours'] = $this->bcAdd($byYear[$year][$name]['hours'], $row['hours']);
             }
         }
 
         $out = [];
         foreach ($byYear as $year => $names) {
             $grand = '0.0000';
-            foreach ($names as $gross) {
-                $grand = $this->bcAdd($grand, $gross);
+            foreach ($names as $entry) {
+                $grand = $this->bcAdd($grand, $entry['gross']);
             }
-            foreach ($names as $name => $gross) {
+            foreach ($names as $name => $entry) {
+                $gross = $entry['gross'];
+                $hours = $entry['hours'];
                 $pct = '0.0000';
                 if (bccomp($grand, '0', 4) > 0) {
                     $pct = bcmul(bcdiv($gross, $grand, 8), '100', 4);
+                }
+                $grossMarginPerHour = '0.0000';
+                if (bccomp($hours, '0', 4) > 0) {
+                    $grossMarginPerHour = bcdiv($gross, $hours, 4);
                 }
                 $out[] = [
                     'year' => $year,
@@ -187,6 +212,8 @@ final class PayrollParseService
                     'cost' => '0.0000',
                     'margin' => $gross,
                     'pct_of_total' => $pct,
+                    'hours' => $hours,
+                    'gross_margin_per_hour' => $grossMarginPerHour,
                 ];
             }
         }

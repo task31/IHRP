@@ -14,7 +14,7 @@
         <div class="flex flex-wrap items-end gap-4">
             <div>
                 <label class="block text-xs font-medium text-gray-600">Year</label>
-                <select x-model.number="year" @change="reload()" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
+                <select x-model.number="year" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
                     <template x-for="y in yearsList" :key="y">
                         <option :value="y" x-text="y"></option>
                     </template>
@@ -23,7 +23,7 @@
             <template x-if="IS_ADMIN">
                 <div>
                     <label class="block text-xs font-medium text-gray-600">Account manager</label>
-                    <select x-model.number="amId" @change="reload()" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
+                    <select x-model.number="amId" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
                         @foreach ($accountManagers as $am)
                             <option value="{{ $am->id }}">{{ $am->name }}</option>
                         @endforeach
@@ -95,6 +95,13 @@
                             (<span x-text="fmtMoney(summary?.totals?.ytd_net)"></span> / <span x-text="fmtMoney(goalAmount)"></span>)
                         </p>
                     </div>
+                </template>
+                <template x-if="IS_ADMIN">
+                    <form class="mt-3 flex items-center gap-2" @submit.prevent="saveGoal">
+                        <span class="text-xs text-gray-500">Set goal:</span>
+                        <input type="number" min="0" step="0.01" x-model="goalInput" placeholder="e.g. 80000" class="w-32 rounded-md border-gray-300 text-sm shadow-sm" />
+                        <button type="submit" class="rounded-md bg-gray-900 px-3 py-1 text-xs font-medium text-white hover:bg-gray-800">Save</button>
+                    </form>
                 </template>
             </div>
         </div>
@@ -251,6 +258,7 @@
                 projection: null,
                 goalAmount: '0',
                 barMode: 'biweekly',
+                isLoading: false,
                 drawerOpen: false,
                 consultants: [],
                 uploadOpen: false,
@@ -263,6 +271,7 @@
                 yoyInst: null,
                 trendInst: null,
                 goalPct: 0,
+                goalInput: '',
                 fmtMoney(v) {
                     if (v === null || v === undefined || v === '') return '—';
                     const n = Number(v);
@@ -271,6 +280,8 @@
                 },
                 async init() {
                     await this.reload();
+                    this.$watch('year', () => this.reload());
+                    if (IS_ADMIN) this.$watch('amId', () => this.reload());
                     if (IS_ADMIN) {
                         await this.loadAggregate();
                         await this.loadMappingsTable();
@@ -282,8 +293,10 @@
                     return '/payroll/api/dashboard?' + p.toString();
                 },
                 async reload() {
+                    if (this.isLoading) return;
+                    this.isLoading = true;
                     const res = await fetch(this.dashboardUrl(), { headers: { Accept: 'application/json' } });
-                    if (!res.ok) return;
+                    if (!res.ok) { this.isLoading = false; return; }
                     const data = await res.json();
                     this.summary = data.summary;
                     this.monthly = data.monthly;
@@ -294,6 +307,7 @@
                     if (!this.yearsList.includes(this.year)) this.yearsList.push(this.year);
                     this.yearsList.sort((a,b) => b - a);
                     this.updateGoalPct();
+                    this.isLoading = false;
                     this.$nextTick(() => this.renderCharts());
                     if (IS_ADMIN) this.loadAggregate();
                 },
@@ -477,6 +491,18 @@
                         });
                     });
                 },
+                async saveGoal() {
+                    const amount = parseFloat(this.goalInput);
+                    if (!this.amId || isNaN(amount) || amount < 0) return;
+                    const res = await apiFetch('/payroll/api/goal', {
+                        method: 'POST',
+                        body: JSON.stringify({ user_id: this.amId, year: this.year, goal_amount: amount }),
+                    });
+                    if (res.ok) {
+                        this.goalInput = '';
+                        await this.reload();
+                    }
+                },
                 async submitUpload() {
                     this.uploadMessage = '';
                     const f = this.$refs.payrollFile.files[0];
@@ -493,12 +519,11 @@
                         return;
                     }
                     let msg = `Imported ${data.recordCount} periods. Years: ${(data.yearsAffected || []).join(', ')}.`;
-                    if ((data.unresolvedNames || []).length) {
-                        msg += ' Unresolved: ' + data.unresolvedNames.join(', ') + '.';
-                        this.mappingsOpen = true;
-                        await this.loadMappingsTable();
+                    if ((data.newConsultants || []).length) {
+                        msg += ` Auto-created ${data.newConsultants.length} new consultant(s): ` + data.newConsultants.join(', ') + '.';
                     }
                     this.uploadMessage = msg;
+                    this.uploadOpen = false;
                     await this.reload();
                 },
             };

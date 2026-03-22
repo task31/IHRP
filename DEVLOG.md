@@ -1423,3 +1423,43 @@ These are two separate things — normal setup. We only need to add one line to 
 - [ ] Run `php artisan migrate` on local MySQL to create the 5 new tables
 - [ ] Manual smoke test (phase-6-plan.md Step 10): upload 3 AM payroll files, verify AM #4 empty state, verify all 4 chart types, verify AM scoping, verify admin aggregate, verify unresolved consultant name flow
 - [ ] Include 5 new migrations in next Phase 5 production deploy push
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 6 Smoke Session 1 _(2026-03-22)_
+
+**Reviewed:** In-session fixes + new features (not yet committed as single commit — see below)
+
+**Work completed this session:**
+
+**Bug fixes (smoke test carry-forwards):**
+- ✅ `@livewireScripts` → `@livewireScriptConfig` in `layouts/app.blade.php` — fixed dual Alpine instance that caused blank charts and flash-then-disappear on payroll dashboard
+- ✅ `@change="reload()"` removed from year/AM selects → post-init `$watch` + `isLoading` guard — fixed double-reload reactive cascade
+- ✅ Goal tracker UI added (admin only) with `saveGoal()` — `goalInput` field wired to `POST /payroll/api/goal`
+- ✅ `401k Contribution` made optional in `PayrollParseService` — Putra's file was failing "Missing required column" 
+
+**Consultant mapping redesign:**
+- ✅ Upload auto-creates `Consultant` records from payroll names (case-insensitive dedup) instead of requiring pre-existing consultants
+- ✅ `newConsultants[]` returned in upload response; audit log and warnings updated
+- ✅ `pay_rate`, `bill_rate`, `state` made nullable (migration) — allows name-only auto-create
+- ✅ `client_id` made nullable (migration) — found during live upload test (SQL error)
+
+**`gross_margin_per_hour` feature (4 steps):**
+- ✅ Migration: `gross_margin_per_hour DECIMAL(12,4) NULL` added to `consultants`
+- ✅ `PayrollParseService`: tracks `hours` + `gross` per consultant per year; computes GMPH in `consultantRows`
+- ✅ `PayrollController::upload()`: computes weighted-avg GMPH across all years, writes to Consultant record
+- ✅ Consultant edit modal: shows GMPH as read-only info banner; auto-fills `bill_rate = pay_rate + GMPH` on pay_rate input
+
+**Inline cell editing on Consultants page:**
+- ✅ `PATCH /consultants/{id}/field` route + `patchField()` method (validates field name, updates, audit logs, syncs onboarding flags)
+- ✅ `inlineCell(id, field, value)` Alpine component per `<td>` — click to edit, blur/Enter to save, ✕/Escape to cancel
+- ✅ Client (select), State (select), Pay Rate, Bill Rate (number), Start Date, End Date (date) all inline-editable
+- ✅ Missing values show blue "+" prompt; populated values show normal text but still clickable
+
+**Tests:** 107 passed, 259 assertions — no regression
+
+**Carry-forwards:**
+- [ ] Complete smoke test: upload remaining AM files, verify GMPH populates on consultants, test re-upload idempotency
+- [ ] Assign clients/rates to auto-created consultants using new inline editing
+- [ ] End-date color logic on consultants table now computed server-side in `@php` block — verify end-date colors still correct after inline edits (requires page reload)
+- [ ] Include 3 new migrations in production deploy: `make_consultant_rate_fields_nullable`, `add_gross_margin_per_hour_to_consultants`, `make_client_id_nullable_on_consultants`

@@ -68,7 +68,19 @@ class PayrollController extends Controller
             'local'
         );
 
-        $unresolvedNames = [];
+        // Compute weighted-average gross_margin_per_hour per consultant name across all years.
+        /** @var array<string, array{gross: string, hours: string}> $gmphByName */
+        $gmphByName = [];
+        foreach ($result->consultantRows as $row) {
+            $n = $row['name'];
+            if (! isset($gmphByName[$n])) {
+                $gmphByName[$n] = ['gross' => '0.0000', 'hours' => '0.0000'];
+            }
+            $gmphByName[$n]['gross'] = bcadd($gmphByName[$n]['gross'], $row['margin'], 4);
+            $gmphByName[$n]['hours'] = bcadd($gmphByName[$n]['hours'], $row['hours'], 4);
+        }
+
+        $newConsultants = [];
         foreach ($result->consultantRows as $row) {
             $name = $row['name'];
             $mapping = PayrollConsultantMapping::query()->firstOrNew([
@@ -82,23 +94,35 @@ class PayrollController extends Controller
                 $consultant = Consultant::query()
                     ->whereRaw('LOWER(full_name) = ?', [mb_strtolower($name)])
                     ->first();
-                if ($consultant) {
-                    $mapping->consultant_id = $consultant->id;
+                if (! $consultant) {
+                    $consultant = Consultant::query()->create([
+                        'full_name' => $name,
+                        'active' => true,
+                    ]);
+                    $newConsultants[] = $name;
+                }
+                $mapping->consultant_id = $consultant->id;
+            }
+            // Update gross_margin_per_hour on the consultant (weighted avg across all years in this file).
+            if ($mapping->consultant_id !== null) {
+                $entry = $gmphByName[$name] ?? null;
+                if ($entry && bccomp($entry['hours'], '0', 4) > 0) {
+                    $gmph = bcdiv($entry['gross'], $entry['hours'], 4);
+                    Consultant::query()
+                        ->where('id', $mapping->consultant_id)
+                        ->update(['gross_margin_per_hour' => $gmph]);
                 }
             }
             $mapping->save();
-            if ($mapping->consultant_id === null) {
-                $unresolvedNames[] = $name;
-            }
         }
-        $unresolvedNames = array_values(array_unique($unresolvedNames));
+        $newConsultants = array_values(array_unique($newConsultants));
 
         $affectedYears = array_values(array_unique(array_map(
             fn (array $r) => (int) $r['year'],
             $result->consultantRows
         )));
 
-        DB::transaction(function () use ($result, $targetUser, $storedPath, $file, $stopName, $affectedYears, $unresolvedNames) {
+        DB::transaction(function () use ($result, $targetUser, $storedPath, $file, $stopName, $affectedYears, $newConsultants) {
             foreach ($result->records as $rec) {
                 PayrollRecord::query()->updateOrCreate(
                     [
@@ -151,7 +175,7 @@ class PayrollController extends Controller
                 'stored_path' => $storedPath,
                 'stop_name' => $stopName,
                 'record_count' => count($result->records),
-                'warnings' => array_merge($result->warnings, array_map(fn ($n) => 'Unresolved consultant name: '.$n, $unresolvedNames)),
+                'warnings' => array_merge($result->warnings, array_map(fn ($n) => 'Auto-created consultant: '.$n, $newConsultants)),
             ]);
         });
 
@@ -161,7 +185,7 @@ class PayrollController extends Controller
             'stop_name' => $stopName,
             'record_count' => count($result->records),
             'years_affected' => $affectedYears,
-            'unresolved_names' => $unresolvedNames,
+            'new_consultants' => $newConsultants,
             'warnings' => $result->warnings,
         ]);
 
@@ -169,8 +193,8 @@ class PayrollController extends Controller
             'success' => true,
             'recordCount' => count($result->records),
             'yearsAffected' => $affectedYears,
-            'unresolvedNames' => $unresolvedNames,
-            'warnings' => array_merge($result->warnings, $unresolvedNames),
+            'newConsultants' => $newConsultants,
+            'warnings' => $result->warnings,
         ]);
     }
 
