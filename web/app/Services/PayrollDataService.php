@@ -242,7 +242,7 @@ final class PayrollDataService
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return array{consultants: list<array<string, mixed>>, total_periods: int, total_paid_out: string, top_earner: string}
      */
     public function getConsultants(int $userId, int $year): array
     {
@@ -252,20 +252,44 @@ final class PayrollDataService
             ->orderByDesc('revenue')
             ->get();
 
-        $out = [];
+        $periodCount = PayrollRecord::query()
+            ->forOwner($userId)
+            ->whereYear('check_date', $year)
+            ->count();
+
+        $grandTotal = '0.0000';
         foreach ($rows as $row) {
-            $out[] = [
-                'name' => $row->consultant_name,
-                'consultant_id' => $row->consultant_id,
-                'total_gross' => $this->money($row->revenue),
-                'total_hours' => null,
-                'periods_active' => null,
-                'tier' => null,
-                'pct_of_total' => round((float) $row->pct_of_total, 1),
+            $grandTotal = $this->bcAdd($grandTotal, (string) $row->revenue);
+        }
+
+        $topEarner = $rows->first()?->consultant_name ?? '';
+
+        $consultants = [];
+        foreach ($rows as $row) {
+            $pct = round((float) $row->pct_of_total, 1);
+            $tier = match (true) {
+                $pct >= 25.0 => '50%',
+                $pct >= 15.0 => '35%',
+                $pct >= 10.0 => '20%',
+                default      => '10%',
+            };
+            $consultants[] = [
+                'name'           => $row->consultant_name,
+                'consultant_id'  => $row->consultant_id,
+                'total_gross'    => $this->money($row->revenue),
+                'total_hours'    => null,
+                'periods_active' => $periodCount,
+                'tier'           => $tier,
+                'pct_of_total'   => $pct,
             ];
         }
 
-        return $out;
+        return [
+            'consultants'    => $consultants,
+            'total_periods'  => $periodCount,
+            'total_paid_out' => $this->bcAdd($grandTotal, '0'),
+            'top_earner'     => $topEarner,
+        ];
     }
 
     /**

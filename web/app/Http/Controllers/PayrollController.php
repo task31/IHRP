@@ -228,9 +228,7 @@ class PayrollController extends Controller
         }
         $ownerId = $this->getOwnerId($request);
 
-        return response()->json([
-            'consultants' => $data->getConsultants($ownerId, $year),
-        ]);
+        return response()->json($data->getConsultants($ownerId, $year));
     }
 
     public function apiAggregate(Request $request, PayrollDataService $data): JsonResponse
