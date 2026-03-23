@@ -1566,3 +1566,44 @@ These are two separate things — normal setup. We only need to add one line to 
 **Hosting decision deferred.** Phase 5 plan currently assumes Bluehost Business Hosting. This decision has been deferred — final hosting platform will be confirmed tomorrow before any deploy steps begin. Phase 5 Steps 2–7 are on hold until then.
 
 **Orphaned payroll_records cleaned up (local DB).** The 4 corrupt rows for Dimarumba (user_id=7) with bad Excel serial-date check_dates (years 0019, 0209, 2002, 2010) — IDs 376–379 — have been deleted from the local `ihrp_local` database. Audit log entry written to `audit_log`. This cleanup will also need to be run on the production DB after it is provisioned.
+
+---
+
+### ✅ [BUILD] — Payroll UI Enhancements _(2026-03-23)_
+
+**Scope:** Ported three features from the standalone `MyPayroll` Flask/vanilla-JS app into IHRP's `/payroll` page. All 5 plan todos completed across 3 files.
+
+**1. Consultant Breakdown Drawer — full redesign**
+
+- `PayrollDataService::getConsultants()` enriched: `tier` derived from `pct_of_total` ranges (≥25%→`50%`, ≥15%→`35%`, ≥10%→`20%`, <10%→`10%`); `periods_active` populated as count of `payroll_records` for user+year; top-level summary keys added (`total_paid_out`, `top_earner`, `total_periods`).
+- `PayrollController::apiConsultants()` updated to return full object (was wrapping in `{consultants:[...]}`).
+- Drawer UI rewritten to dark theme (`#0f172a`) matching MyPayroll — full viewport height, 600px max-width.
+- KPI strip: Active Consultants count / Total Paid Out / Top Earner (first name).
+- Table columns: CONSULTANT | TIER (colored badge: teal/blue/purple/amber) | GROSS EARNED | % OF TOTAL (inline progress bar) | PERIODS.
+- New Alpine state: `consultantMeta`, helper `tierColor(tier)`.
+
+**2. Federal Tax Bracket Card**
+
+- New card inserted between the Goal Tracker row and Multi-year Trend card.
+- 2026 Single Filer brackets hardcoded in JS (`BRACKETS_2026`, `BRACKET_DISPLAY_CAP = 260000`).
+- Horizontal colored segmented bar; marker pin at YTD gross position (clamped 3–97%).
+- Two rate cards: Marginal Rate (colored by bracket) + Effective Federal Rate (`federal / ytd_gross * 100`).
+- Insight sentence with live numbers.
+- Built via `buildBracketCard()` called from `renderCharts()` into `div#bracketCardWrap`.
+
+**3. Pay Period Detail Table — full tax columns**
+
+- Old 4-column table (Date / Gross / Net / Cumulative Net) replaced with 9-column table: Check Date | Gross | Federal | Soc Sec | Medicare | State | Disability | 401k | Net.
+- Shows 5 most recent periods by default (reversed from API order); toggle to show all.
+- Clickable rows expand inline deduction breakdown (amount + % of gross per line item, Total Deductions footer).
+- YTD Total footer row using `summary.totals`.
+- `$0.00` cells muted; 401k cells with value highlighted green.
+- New Alpine state: `showAllPeriods`, `expandedPeriod`.
+- Built via `renderPeriodTable()` called from `renderCharts()` into `div#periodTableWrap`.
+
+**Files modified:**
+- `web/app/Services/PayrollDataService.php`
+- `web/app/Http/Controllers/PayrollController.php`
+- `web/resources/views/payroll/index.blade.php`
+
+**Commit:** `f005fff`
