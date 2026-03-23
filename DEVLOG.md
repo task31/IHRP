@@ -1789,3 +1789,28 @@ These are two separate things — normal setup. We only need to add one line to 
 - `web/app/Http/Controllers/PayrollController.php`
 
 **107 tests, 259 assertions, 0 failures.**
+
+---
+
+### 🏗️ [REVIEW — Claude Code] — Pre-Deployment Audit _(2026-03-23)_
+
+**Reviewed:** Full codebase audit (3 parallel explore agents) + hardening commit `7d767ec`
+
+**Audit findings — all clear:**
+- 107 tests, 259 assertions, 0 failures
+- All routes auth-gated; no debug artifacts; bcmath throughout; audit logging on all writes
+- Payroll parser fixes verified: year-range guard (2015–2030), Unicode normalization, `updateOrCreate` idempotency
+- All 3 AM Excel files upload cleanly post-fix (Harsono 45, Sibug 101, Dimarumba 86)
+- Orphaned row concern resolved — year-range guard prevents bad serial dates; fresh production DB has no pre-existing data
+
+**Hardening applied (commit 7d767ec):**
+- `.env.production.example`: SESSION_DRIVER/CACHE_STORE → `file`; added `SESSION_ENCRYPT=true` + `SESSION_SECURE_COOKIE=true`
+- `.env.example`: SESSION_DRIVER/CACHE_STORE → `file`
+- `DatabaseSeeder`: `changeme123` → `env('ADMIN_PASSWORD', Str::random(24))`
+
+**Carry-forwards into Phase 5 (deploy):**
+- [ ] Set `ADMIN_PASSWORD` in production `.env` before `php artisan db:seed`
+- [ ] Run `php artisan key:generate` on production server (never copy dev APP_KEY)
+- [ ] Run `php artisan storage:link` on production server
+- [ ] Post-deploy: upload 3 AM Excel files + enter bill_rates + run Recompute Margins
+- [ ] Post-deploy smoke test: all roles, all features
