@@ -1,8 +1,8 @@
 ---
 deployment:
   tasks:
-    - "/bin/mkdir -p /home2/matchpo3/public_html/hr"
-    - "/bin/cp -R /home2/matchpo3/repositories/IHRP/web/. /home2/matchpo3/public_html/hr/"
-    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/matchpo3/public_html/hr/artisan config:cache"
-    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/matchpo3/public_html/hr/artisan route:cache"
-    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/matchpo3/public_html/hr/artisan view:cache"
+    - "/bin/mkdir -p /home2/rbjwhhmy/public_html/hr"
+    - "/bin/cp -R /home2/rbjwhhmy/repositories/IHRP/web/. /home2/rbjwhhmy/public_html/hr/"
+    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan config:cache"
+    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan route:cache"
+    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan view:cache"
