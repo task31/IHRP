@@ -126,6 +126,28 @@
                 @endforelse
             </tbody>
         </table>
+        {{-- Pagination --}}
+        @if($totalPlacements > $perPage)
+        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white">
+            <div class="text-sm text-gray-600">
+                Showing {{ (($page - 1) * $perPage) + 1 }}–{{ min($page * $perPage, $totalPlacements) }} of {{ $totalPlacements }}
+            </div>
+            <div class="flex gap-2">
+                @if($page > 1)
+                    <button wire:click="prevPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                        ← Prev
+                    </button>
+                @endif
+                @if(($page * $perPage) < $totalPlacements)
+                    <button wire:click="nextPage"
+                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                        Next →
+                    </button>
+                @endif
+            </div>
+        </div>
+        @endif
     </div>
 
     @if ($showForm)

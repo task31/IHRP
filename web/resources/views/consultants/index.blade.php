@@ -469,10 +469,10 @@
                 startEdit() {
                     this.inputVal = this.currentVal !== null && this.currentVal !== undefined ? String(this.currentVal) : '';
                     this.editing = true;
-                    this.$nextTick(() => {
+                    setTimeout(() => {
                         const el = this.$el.querySelector('input,select');
-                        if (el) el.focus();
-                    });
+                        if (el) { el.focus(); el.select?.(); }
+                    }, 10);
                 },
 
                 async save() {

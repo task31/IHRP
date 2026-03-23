@@ -242,7 +242,7 @@ final class PayrollDataService
     }
 
     /**
-     * @return array{consultants: list<array<string, mixed>>, total_periods: int, total_paid_out: string, top_earner: string}
+     * @return array{consultants: list<array<string, mixed>>, total_periods: int, total_revenue: string, total_margin: string, top_earner: string}
      */
     public function getConsultants(int $userId, int $year): array
     {
@@ -257,9 +257,11 @@ final class PayrollDataService
             ->whereYear('check_date', $year)
             ->count();
 
-        $grandTotal = '0.0000';
+        $grandRevenue = '0.0000';
+        $grandMargin  = '0.0000';
         foreach ($rows as $row) {
-            $grandTotal = $this->bcAdd($grandTotal, (string) $row->revenue);
+            $grandRevenue = $this->bcAdd($grandRevenue, (string) $row->revenue);
+            $grandMargin  = $this->bcAdd($grandMargin,  (string) $row->margin);
         }
 
         $topEarner = $rows->first()?->consultant_name ?? '';
@@ -273,11 +275,16 @@ final class PayrollDataService
                 $pct >= 10.0 => '20%',
                 default      => '10%',
             };
+            $hasRates = bccomp((string) $row->hours, '0', 4) > 0;
+            $hasAmEarnings = bccomp((string) $row->am_earnings, '0', 4) > 0;
             $consultants[] = [
                 'name'           => $row->consultant_name,
                 'consultant_id'  => $row->consultant_id,
-                'total_gross'    => $this->money($row->revenue),
-                'total_hours'    => null,
+                'revenue'        => $this->money($row->revenue),
+                'am_earnings'    => $hasAmEarnings ? $this->money($row->am_earnings) : null,
+                'cost'           => $this->money($row->cost),
+                'margin'         => $hasRates ? $this->money($row->margin) : null,
+                'hours'          => $this->money($row->hours),
                 'periods_active' => $periodCount,
                 'tier'           => $tier,
                 'pct_of_total'   => $pct,
@@ -287,7 +294,8 @@ final class PayrollDataService
         return [
             'consultants'    => $consultants,
             'total_periods'  => $periodCount,
-            'total_paid_out' => $this->bcAdd($grandTotal, '0'),
+            'total_revenue'  => $this->bcAdd($grandRevenue, '0'),
+            'total_margin'   => $this->bcAdd($grandMargin, '0'),
             'top_earner'     => $topEarner,
         ];
     }

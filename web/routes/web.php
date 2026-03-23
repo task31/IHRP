@@ -61,6 +61,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('backups/{backup}', [BackupController::class, 'show'])->name('backups.show');
 
     Route::post('payroll/upload', [PayrollController::class, 'upload'])->name('payroll.upload');
+    Route::post('payroll/recompute-margins', [PayrollController::class, 'recomputeMargins'])->name('payroll.recompute.margins');
     Route::get('payroll/api/aggregate', [PayrollController::class, 'apiAggregate'])->name('payroll.api.aggregate');
     Route::post('payroll/api/goal', [PayrollController::class, 'apiGoalSet'])->name('payroll.api.goal.set');
     Route::get('payroll/api/mappings', [PayrollController::class, 'apiMappings'])->name('payroll.api.mappings');

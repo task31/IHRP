@@ -36,11 +36,13 @@ class ConsultantController extends Controller
 
         $rows = DB::select('
             SELECT c.*, cl.name AS client_name,
-                   (SELECT COUNT(*) FROM consultant_onboarding_items WHERE consultant_id = c.id AND completed = 1) AS onboarding_complete,
-                   (SELECT COUNT(*) FROM consultant_onboarding_items WHERE consultant_id = c.id) AS onboarding_total
+                   SUM(CASE WHEN oi.completed = 1 THEN 1 ELSE 0 END) AS onboarding_complete,
+                   COUNT(oi.id) AS onboarding_total
             FROM consultants c
             LEFT JOIN clients cl ON cl.id = c.client_id
+            LEFT JOIN consultant_onboarding_items oi ON oi.consultant_id = c.id
             WHERE c.active = 1
+            GROUP BY c.id
             ORDER BY c.full_name
         ');
 

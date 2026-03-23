@@ -1569,6 +1569,60 @@ These are two separate things — normal setup. We only need to add one line to 
 
 ---
 
+### ✅ [BUILD] — Performance + Payroll Margin Overhaul _(2026-03-23)_
+
+**Scope:** Phase 7 (performance foundations) + Phase 7b (true margin in payroll breakdown) + follow-on UI/UX fixes. No new features — fixes, indexes, and correct business logic.
+
+**Phase 7 — Performance Foundations**
+
+- Added `2026_03_23_000000_add_performance_indexes.php` — 9 indexes across 6 tables: `consultants(active)`, `consultants(project_end_date)`, `placements(status)`, `placements(start_date)`, `timesheets(invoice_status)`, `invoices(status)`, `invoices(invoice_date)`, `payroll_records(check_date)`, `payroll_consultant_entries(year)`.
+- `ConsultantController::index()` — replaced 2 correlated subqueries per row with a single JOIN + `SUM(CASE WHEN)` aggregate. N+2 → N=1 query regardless of consultant count.
+- `PlacementManager.php` — switched `->get()` to `->paginate(50)` with `nextPage()`/`prevPage()` methods; `placement-manager.blade.php` updated with prev/next controls.
+- `PayrollController::apiDashboard()` and `apiAggregate()` — wrapped in `Cache::remember(3600)` per user+year; cache busted on upload and goal-set.
+- `.env` — `SESSION_DRIVER` and `CACHE_STORE` changed from `database` to `file` (eliminates DB read/write on every request).
+
+**Phase 7b — True Margin in Payroll Consultant Breakdown**
+
+- Added `2026_03_23_100000_add_hours_to_payroll_consultant_entries.php` — `hours DECIMAL(12,4) DEFAULT 0`.
+- Added `2026_03_23_060326_add_am_earnings_to_payroll_consultant_entries.php` — `am_earnings DECIMAL(12,4) DEFAULT 0`.
+- `PayrollConsultantEntry` model: `hours` and `am_earnings` added to `$fillable` and `$casts`.
+- `PayrollController::upload()` — now loads `bill_rate` per mapped consultant; computes `agency_revenue = hours × bill_rate`, `am_earnings = payroll column D` (what Excel shows as AM commission per consultant), `agency_gross_profit = revenue − am_earnings`; falls back to `revenue = am_earnings` when no bill_rate or hours. Stores `hours` and `am_earnings` on every create.
+- `PayrollController::recomputeMargins()` (new method) — recalculates `revenue`, `margin`, `pct_of_total` for all existing entries for a given AM using current bill_rates. Never modifies `am_earnings` (must come from Excel re-upload). Busts cache. Exposed as `POST /payroll/recompute-margins` (admin only). Button added to upload modal.
+- `PayrollDataService::getConsultants()` — returns `revenue`, `am_earnings` (null if 0), `margin` (null if hours=0), `hours`; computes `total_revenue` and `total_margin`; dropped `total_paid_out`.
+- **Business model clarified:** Agency Gross Profit = (hours × bill_rate) − AM Earnings. AM Earnings is a cost to the agency (their commission from the payroll Excel), NOT hours × pay_rate. Consultant wages are separate from this calculation.
+- Drawer table: `Agency Revenue | AM Earnings | Agency Gross Profit` — Consultant Cost and % of Total columns removed.
+- KPI cards: `Total Agency Revenue | Total Agency Gross Profit | Top Earner` (4-card grid).
+
+**UI/UX Fixes**
+
+- Consultants inline cell editing: `$nextTick` → `setTimeout(10ms)` so first click opens AND focuses the input; added `el.select?.()` to auto-select existing value on edit.
+- `web/.env`: `SESSION_DRIVER=file`, `CACHE_STORE=file` (performance).
+
+**Tests:** 107 passed, 259 assertions, 0 failures throughout all changes.
+
+**Files created:**
+- `phase-7-plan.md`, `phase-7b-plan.md`
+- `web/database/migrations/2026_03_23_000000_add_performance_indexes.php`
+- `web/database/migrations/2026_03_23_100000_add_hours_to_payroll_consultant_entries.php`
+- `web/database/migrations/2026_03_23_060326_add_am_earnings_to_payroll_consultant_entries.php`
+
+**Files modified:**
+- `web/app/Http/Controllers/ConsultantController.php`
+- `web/app/Http/Controllers/PayrollController.php`
+- `web/app/Livewire/PlacementManager.php`
+- `web/app/Models/PayrollConsultantEntry.php`
+- `web/app/Services/PayrollDataService.php`
+- `web/resources/views/consultants/index.blade.php`
+- `web/resources/views/livewire/placement-manager.blade.php`
+- `web/resources/views/payroll/index.blade.php`
+- `web/routes/web.php`
+- `web/tests/Unit/PayrollDataServiceTest.php`
+- `web/.env`
+
+**Known carry-forward:** Existing `payroll_consultant_entries` have corrupted `am_earnings` (= revenue, not Excel column D) because recompute rescued the wrong value before the business model was clarified. Re-uploading the 3 AM Excel files will fix all rows with correct am_earnings values. Recompute Margins alone cannot fix am_earnings.
+
+---
+
 ### ✅ [BUILD] — Payroll UI Enhancements _(2026-03-23)_
 
 **Scope:** Ported three features from the standalone `MyPayroll` Flask/vanilla-JS app into IHRP's `/payroll` page. All 5 plan todos completed across 3 files.

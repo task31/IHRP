@@ -61,6 +61,23 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ---
 
+### Phase 7 — Performance + Payroll Margin Overhaul ✅ _(closed 2026-03-23)_
+
+- **9 DB indexes** across 6 tables (`consultants`, `placements`, `timesheets`, `invoices`, `payroll_records`, `payroll_consultant_entries`) via single migration
+- **Consultant query fix** — correlated subqueries replaced with single JOIN aggregate (N+2 → 1 query)
+- **Placements pagination** — `PlacementManager` paginated at 50/page with prev/next controls
+- **Payroll cache** — `apiDashboard` + `apiAggregate` cached per user+year (1hr TTL), busted on upload/goal-set
+- **Session + cache drivers** changed from `database` to `file` in `.env`
+- **`hours` + `am_earnings` columns** added to `payroll_consultant_entries`
+- **Correct margin formula:** Agency Gross Profit = (hours × bill_rate) − AM Earnings. AM Earnings = payroll Excel column D (AM commission per consultant — a cost to the agency). Not hours × pay_rate.
+- **`recomputeMargins()` endpoint** — `POST /payroll/recompute-margins` (admin) recomputes revenue/margin/pct for all entries using current bill_rates; never modifies `am_earnings`
+- **Drawer table:** Agency Revenue | AM Earnings | Agency Gross Profit (Consultant Cost + % of Total removed)
+- **Consultants inline editing** — first click now opens AND focuses the field (setTimeout fix)
+- **107 tests, 259 assertions, 0 failures**
+- **Carry-forward:** Existing `am_earnings` values are corrupted (= revenue); re-uploading the 3 AM Excel files will fix them
+
+---
+
 ### Phase 6 — Payroll Integration ✅ _(closed 2026-03-22)_
 
 - **5 migrations:** `payroll_uploads`, `payroll_records` (UNIQUE `user_id+check_date`), `payroll_consultant_entries`, `payroll_consultant_mappings`, `payroll_goals` — all money `DECIMAL(12,4)`

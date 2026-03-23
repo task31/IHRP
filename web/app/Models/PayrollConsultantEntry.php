@@ -12,6 +12,8 @@ class PayrollConsultantEntry extends Model
         'user_id',
         'consultant_name',
         'year',
+        'hours',
+        'am_earnings',
         'revenue',
         'cost',
         'margin',
@@ -26,6 +28,8 @@ class PayrollConsultantEntry extends Model
     {
         return [
             'year' => 'integer',
+            'hours' => 'decimal:4',
+            'am_earnings' => 'decimal:4',
             'revenue' => 'decimal:4',
             'cost' => 'decimal:4',
             'margin' => 'decimal:4',

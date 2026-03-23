@@ -33,6 +33,10 @@ class PlacementManager extends Component
         'status' => '',
     ];
 
+    public int $page = 1;
+    public int $perPage = 50;
+    public int $totalPlacements = 0;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -100,12 +104,15 @@ class PlacementManager extends Component
             $query->where('status', (string) $this->filters['status']);
         }
 
-        $this->placements = $query->get();
+        $result = $query->paginate($this->perPage, ['*'], 'page', $this->page);
+        $this->placements = $result->items();
+        $this->totalPlacements = $result->total();
     }
 
     public function updated($name): void
     {
         if (is_string($name) && str_starts_with($name, 'filters.')) {
+            $this->page = 1;
             $this->loadPlacements();
         }
     }
@@ -283,6 +290,22 @@ class PlacementManager extends Component
         $this->notes = '';
         $this->status = 'active';
         $this->resetValidation();
+    }
+
+    public function nextPage(): void
+    {
+        if (($this->page * $this->perPage) < $this->totalPlacements) {
+            $this->page++;
+            $this->loadPlacements();
+        }
+    }
+
+    public function prevPage(): void
+    {
+        if ($this->page > 1) {
+            $this->page--;
+            $this->loadPlacements();
+        }
     }
 
     public function render()

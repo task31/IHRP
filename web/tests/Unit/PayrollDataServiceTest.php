@@ -183,7 +183,7 @@ class PayrollDataServiceTest extends TestCase
             'consultant_id' => null,
         ]);
         $list = $this->svc()->getConsultants($u->id, 2026);
-        $sum = array_sum(array_map(fn ($c) => (float) $c['pct_of_total'], $list));
+        $sum = array_sum(array_map(fn ($c) => (float) $c['pct_of_total'], $list['consultants']));
         $this->assertEqualsWithDelta(100.0, $sum, 0.01);
     }
 }

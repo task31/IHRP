@@ -15,6 +15,7 @@ use App\Services\PayrollParseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
@@ -122,7 +123,60 @@ class PayrollController extends Controller
             $result->consultantRows
         )));
 
-        DB::transaction(function () use ($result, $targetUser, $storedPath, $file, $stopName, $affectedYears, $newConsultants) {
+        // Load bill_rate for all mapped consultants in this upload
+        $consultantBillRates = [];
+        foreach ($result->consultantRows as $row) {
+            $mapping = PayrollConsultantMapping::query()
+                ->where('raw_name', $row['name'])
+                ->where('user_id', $targetUser->id)
+                ->first();
+            if ($mapping && $mapping->consultant_id) {
+                $c = Consultant::query()->find($mapping->consultant_id);
+                if ($c && $c->bill_rate !== null) {
+                    $consultantBillRates[$row['name']] = (string) $c->bill_rate;
+                }
+            }
+        }
+
+        // Compute revenue / am_earnings / margin per row
+        // Agency Gross Profit = (hours × bill_rate) − AM Earnings (payroll column D)
+        $rowsByYear = [];
+        foreach ($result->consultantRows as $row) {
+            $hours      = $row['hours'] ?? '0.0000';
+            $amEarnings = $row['revenue']; // parse stores AM commission (payroll col D) as 'revenue'
+            $billRate   = $consultantBillRates[$row['name']] ?? null;
+
+            if ($billRate !== null && bccomp($hours, '0', 4) > 0) {
+                $revenue = bcmul($hours, $billRate, 4);
+                $margin  = bcsub($revenue, $amEarnings, 4);
+            } else {
+                $revenue = $amEarnings;
+                $margin  = '0.0000';
+            }
+
+            $rowsByYear[(int) $row['year']][] = array_merge($row, [
+                'hours'       => $hours,
+                'am_earnings' => $amEarnings,
+                'revenue'     => $revenue,
+                'cost'        => $amEarnings, // keep for DB compatibility; cost = am_earnings in this model
+                'margin'      => $margin,
+            ]);
+        }
+
+        // Recompute pct_of_total per year based on new revenue
+        $computedRows = [];
+        foreach ($rowsByYear as $yr => $rows) {
+            $grandRevenue = array_reduce($rows, fn ($c, $r) => bcadd($c, $r['revenue'], 4), '0.0000');
+            foreach ($rows as $r) {
+                $pct = '0.0000';
+                if (bccomp($grandRevenue, '0', 4) > 0) {
+                    $pct = bcmul(bcdiv($r['revenue'], $grandRevenue, 8), '100', 4);
+                }
+                $computedRows[] = array_merge($r, ['pct_of_total' => $pct]);
+            }
+        }
+
+        DB::transaction(function () use ($result, $computedRows, $targetUser, $storedPath, $file, $stopName, $affectedYears, $newConsultants) {
             foreach ($result->records as $rec) {
                 PayrollRecord::query()->updateOrCreate(
                     [
@@ -152,20 +206,22 @@ class PayrollController extends Controller
                     ->delete();
             }
 
-            foreach ($result->consultantRows as $row) {
+            foreach ($computedRows as $row) {
                 $mapping = PayrollConsultantMapping::query()
                     ->where('raw_name', $row['name'])
                     ->where('user_id', $targetUser->id)
                     ->first();
                 PayrollConsultantEntry::query()->create([
-                    'user_id' => $targetUser->id,
+                    'user_id'         => $targetUser->id,
                     'consultant_name' => $row['name'],
-                    'year' => $row['year'],
-                    'revenue' => $row['revenue'],
-                    'cost' => $row['cost'],
-                    'margin' => $row['margin'],
-                    'pct_of_total' => $row['pct_of_total'],
-                    'consultant_id' => $mapping?->consultant_id,
+                    'year'            => $row['year'],
+                    'hours'           => $row['hours'],
+                    'am_earnings'     => $row['am_earnings'],
+                    'revenue'         => $row['revenue'],
+                    'cost'            => $row['cost'],
+                    'margin'          => $row['margin'],
+                    'pct_of_total'    => $row['pct_of_total'],
+                    'consultant_id'   => $mapping?->consultant_id,
                 ]);
             }
 
@@ -189,6 +245,12 @@ class PayrollController extends Controller
             'warnings' => $result->warnings,
         ]);
 
+        $ownerId = $targetUser->id;
+        foreach ($affectedYears as $yr) {
+            Cache::forget("payroll_dashboard_{$ownerId}_{$yr}");
+            Cache::forget("payroll_aggregate_{$yr}");
+        }
+
         return response()->json([
             'success' => true,
             'recordCount' => count($result->records),
@@ -204,19 +266,23 @@ class PayrollController extends Controller
         $year = $request->integer('year', (int) now()->format('Y'));
         $ownerId = $this->getOwnerId($request);
 
-        $goal = PayrollGoal::query()->forOwner($ownerId)->where('year', $year)->first();
+        $cacheKey = "payroll_dashboard_{$ownerId}_{$year}";
+        $payload = Cache::remember($cacheKey, 3600, function () use ($data, $ownerId, $year) {
+            $goal = PayrollGoal::query()->forOwner($ownerId)->where('year', $year)->first();
+            return [
+                'years'       => $data->getYears($ownerId),
+                'summary'     => $data->getSummary($ownerId, $year),
+                'monthly'     => $data->getMonthly($ownerId, $year),
+                'annualTotals'=> $data->getAnnualTotals($ownerId),
+                'goal'        => [
+                    'year'   => $year,
+                    'amount' => $goal ? (string) $goal->goal_amount : '0.0000',
+                ],
+                'projection'  => $data->getProjection($ownerId, $year),
+            ];
+        });
 
-        return response()->json([
-            'years' => $data->getYears($ownerId),
-            'summary' => $data->getSummary($ownerId, $year),
-            'monthly' => $data->getMonthly($ownerId, $year),
-            'annualTotals' => $data->getAnnualTotals($ownerId),
-            'goal' => [
-                'year' => $year,
-                'amount' => $goal ? (string) $goal->goal_amount : '0.0000',
-            ],
-            'projection' => $data->getProjection($ownerId, $year),
-        ]);
+        return response()->json($payload);
     }
 
     public function apiConsultants(Request $request, PayrollDataService $data): JsonResponse
@@ -236,11 +302,16 @@ class PayrollController extends Controller
         $this->authorize('admin');
         $year = $request->integer('year', (int) now()->format('Y'));
 
-        return response()->json([
-            'year' => $year,
-            'aggregate' => $data->getAggregateSummary($year),
-            'perAm' => $data->getPerAmBreakdown($year),
-        ]);
+        $cacheKey = "payroll_aggregate_{$year}";
+        $payload = Cache::remember($cacheKey, 3600, function () use ($data, $year) {
+            return [
+                'year'      => $year,
+                'aggregate' => $data->getAggregateSummary($year),
+                'perAm'     => $data->getPerAmBreakdown($year),
+            ];
+        });
+
+        return response()->json($payload);
     }
 
     public function apiGoalSet(Request $request): JsonResponse
@@ -266,6 +337,10 @@ class PayrollController extends Controller
                 'goal_amount' => bcadd((string) $payload['goal_amount'], '0', 4),
             ]
         );
+
+        $ownerId = $target->id;
+        $year = $payload['year'];
+        Cache::forget("payroll_dashboard_{$ownerId}_{$year}");
 
         return response()->json([
             'success' => true,
@@ -321,6 +396,97 @@ class PayrollController extends Controller
         );
 
         return response()->json(['success' => true]);
+    }
+
+    public function recomputeMargins(Request $request): JsonResponse
+    {
+        $this->authorize('admin');
+
+        $data = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $target = User::query()->findOrFail($data['user_id']);
+        if ($target->role !== 'account_manager') {
+            return response()->json(['message' => 'Target user must be an account manager'], 422);
+        }
+
+        $entries = PayrollConsultantEntry::query()
+            ->where('user_id', $target->id)
+            ->get();
+
+        // Load bill_rate map: consultant_id → bill_rate
+        $billRatesById = [];
+        $consultantIds = $entries->pluck('consultant_id')->filter()->unique()->values();
+        if ($consultantIds->isNotEmpty()) {
+            Consultant::query()
+                ->whereIn('id', $consultantIds)
+                ->whereNotNull('bill_rate')
+                ->get(['id', 'bill_rate'])
+                ->each(function ($c) use (&$billRatesById) {
+                    $billRatesById[$c->id] = (string) $c->bill_rate;
+                });
+        }
+
+        // Group entries by year to recompute pct_of_total
+        $byYear = [];
+        foreach ($entries as $entry) {
+            $byYear[$entry->year][] = $entry;
+        }
+
+        $updated = 0;
+        DB::transaction(function () use ($byYear, $billRatesById, &$updated) {
+            foreach ($byYear as $yr => $yearEntries) {
+                $computed = [];
+                foreach ($yearEntries as $entry) {
+                    $hours      = (string) $entry->hours;
+                    $amEarnings = (string) $entry->am_earnings; // never modified — comes from Excel upload only
+                    $billRate   = isset($entry->consultant_id) ? ($billRatesById[$entry->consultant_id] ?? null) : null;
+
+                    // Agency Gross Profit = (hours × bill_rate) − AM Earnings
+                    if ($billRate !== null && bccomp($hours, '0', 4) > 0) {
+                        $revenue = bcmul($hours, $billRate, 4);
+                        $margin  = bccomp($amEarnings, '0', 4) > 0
+                            ? bcsub($revenue, $amEarnings, 4)
+                            : '0.0000';
+                    } else {
+                        $revenue = $amEarnings;
+                        $margin  = '0.0000';
+                    }
+
+                    $computed[] = ['entry' => $entry, 'revenue' => $revenue, 'margin' => $margin];
+                }
+
+                // Recompute pct_of_total based on new revenues
+                $grandRevenue = array_reduce($computed, fn ($c, $r) => bcadd($c, $r['revenue'], 4), '0.0000');
+                foreach ($computed as $item) {
+                    $pct = '0.0000';
+                    if (bccomp($grandRevenue, '0', 4) > 0) {
+                        $pct = bcmul(bcdiv($item['revenue'], $grandRevenue, 8), '100', 4);
+                    }
+                    $item['entry']->update([
+                        'revenue'      => $item['revenue'],
+                        'margin'       => $item['margin'],
+                        'pct_of_total' => $pct,
+                    ]);
+                    $updated++;
+                }
+            }
+        });
+
+        // Bust dashboard cache for all years this AM has data
+        $years = $entries->pluck('year')->unique()->values();
+        foreach ($years as $yr) {
+            Cache::forget("payroll_dashboard_{$target->id}_{$yr}");
+            Cache::forget("payroll_aggregate_{$yr}");
+        }
+
+        AppService::auditLog('payroll_consultant_entries', 0, 'RECOMPUTE_MARGINS', [], [
+            'target_am_id' => $target->id,
+            'entries_updated' => $updated,
+        ]);
+
+        return response()->json(['success' => true, 'updated' => $updated]);
     }
 
     private function getOwnerId(Request $request): int
