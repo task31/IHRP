@@ -69,18 +69,6 @@ class PayrollController extends Controller
             'local'
         );
 
-        // Compute weighted-average gross_margin_per_hour per consultant name across all years.
-        /** @var array<string, array{gross: string, hours: string}> $gmphByName */
-        $gmphByName = [];
-        foreach ($result->consultantRows as $row) {
-            $n = $row['name'];
-            if (! isset($gmphByName[$n])) {
-                $gmphByName[$n] = ['gross' => '0.0000', 'hours' => '0.0000'];
-            }
-            $gmphByName[$n]['gross'] = bcadd($gmphByName[$n]['gross'], $row['margin'], 4);
-            $gmphByName[$n]['hours'] = bcadd($gmphByName[$n]['hours'], $row['hours'], 4);
-        }
-
         $newConsultants = [];
         foreach ($result->consultantRows as $row) {
             $name = $row['name'];
@@ -103,16 +91,6 @@ class PayrollController extends Controller
                     $newConsultants[] = $name;
                 }
                 $mapping->consultant_id = $consultant->id;
-            }
-            // Update gross_margin_per_hour on the consultant (weighted avg across all years in this file).
-            if ($mapping->consultant_id !== null) {
-                $entry = $gmphByName[$name] ?? null;
-                if ($entry && bccomp($entry['hours'], '0', 4) > 0) {
-                    $gmph = bcdiv($entry['gross'], $entry['hours'], 4);
-                    Consultant::query()
-                        ->where('id', $mapping->consultant_id)
-                        ->update(['gross_margin_per_hour' => $gmph]);
-                }
             }
             $mapping->save();
         }
@@ -138,18 +116,37 @@ class PayrollController extends Controller
             }
         }
 
-        // Compute revenue / am_earnings / margin per row
-        // Agency Gross Profit = (hours × bill_rate) − AM Earnings (payroll column D)
+        // Agency Revenue       = hours × bill_rate
+        // AM Earnings          = hours × spread × commission%  (parsed directly from Excel)
+        // Agency Gross Profit  = Revenue − AM Earnings
+        // Pay Rate             = Bill Rate − spread_per_hour  (derived from Excel col C)
         $rowsByYear = [];
         foreach ($result->consultantRows as $row) {
-            $hours      = $row['hours'] ?? '0.0000';
-            $amEarnings = $row['revenue']; // parse stores AM commission (payroll col D) as 'revenue'
-            $billRate   = $consultantBillRates[$row['name']] ?? null;
+            $hours          = $row['hours'] ?? '0.0000';
+            $amEarnings     = $row['am_earnings'];
+            $spreadPerHour  = $row['spread_per_hour'] ?? '0.0000';
+            $billRate       = $consultantBillRates[$row['name']] ?? null;
 
             if ($billRate !== null && bccomp($hours, '0', 4) > 0) {
                 $revenue = bcmul($hours, $billRate, 4);
                 $margin  = bcsub($revenue, $amEarnings, 4);
+
+                // Auto-derive pay_rate and update consultant record
+                if (bccomp($spreadPerHour, '0', 4) > 0) {
+                    $payRate = bcsub($billRate, $spreadPerHour, 4);
+                    $mapping = PayrollConsultantMapping::query()
+                        ->where('raw_name', $row['name'])
+                        ->where('user_id', $targetUser->id)
+                        ->first();
+                    if ($mapping?->consultant_id) {
+                        Consultant::query()
+                            ->where('id', $mapping->consultant_id)
+                            ->whereNull('pay_rate') // only set if not already manually entered
+                            ->update(['pay_rate' => $payRate]);
+                    }
+                }
             } else {
+                // No bill_rate on file — revenue unknown; store am_earnings as placeholder
                 $revenue = $amEarnings;
                 $margin  = '0.0000';
             }
@@ -158,7 +155,7 @@ class PayrollController extends Controller
                 'hours'       => $hours,
                 'am_earnings' => $amEarnings,
                 'revenue'     => $revenue,
-                'cost'        => $amEarnings, // keep for DB compatibility; cost = am_earnings in this model
+                'cost'        => $amEarnings,
                 'margin'      => $margin,
             ]);
         }
@@ -216,6 +213,8 @@ class PayrollController extends Controller
                     'consultant_name' => $row['name'],
                     'year'            => $row['year'],
                     'hours'           => $row['hours'],
+                    'spread_per_hour' => $row['spread_per_hour'] ?? '0.0000',
+                    'commission_pct'  => $row['commission_pct'] ?? '0.00000000',
                     'am_earnings'     => $row['am_earnings'],
                     'revenue'         => $row['revenue'],
                     'cost'            => $row['cost'],
@@ -439,16 +438,27 @@ class PayrollController extends Controller
             foreach ($byYear as $yr => $yearEntries) {
                 $computed = [];
                 foreach ($yearEntries as $entry) {
-                    $hours      = (string) $entry->hours;
-                    $amEarnings = (string) $entry->am_earnings; // never modified — comes from Excel upload only
-                    $billRate   = isset($entry->consultant_id) ? ($billRatesById[$entry->consultant_id] ?? null) : null;
+                    $hours          = (string) $entry->hours;
+                    $amEarnings     = (string) $entry->am_earnings; // never modified — comes from Excel upload only
+                    $spreadPerHour  = (string) $entry->spread_per_hour;
+                    $billRate       = isset($entry->consultant_id) ? ($billRatesById[$entry->consultant_id] ?? null) : null;
 
                     // Agency Gross Profit = (hours × bill_rate) − AM Earnings
+                    // Pay Rate            = Bill Rate − spread_per_hour
                     if ($billRate !== null && bccomp($hours, '0', 4) > 0) {
                         $revenue = bcmul($hours, $billRate, 4);
                         $margin  = bccomp($amEarnings, '0', 4) > 0
                             ? bcsub($revenue, $amEarnings, 4)
                             : '0.0000';
+
+                        // Derive and persist pay_rate on consultant if not manually set
+                        if (bccomp($spreadPerHour, '0', 4) > 0 && $entry->consultant_id) {
+                            $payRate = bcsub($billRate, $spreadPerHour, 4);
+                            Consultant::query()
+                                ->where('id', $entry->consultant_id)
+                                ->whereNull('pay_rate')
+                                ->update(['pay_rate' => $payRate]);
+                        }
                     } else {
                         $revenue = $amEarnings;
                         $margin  = '0.0000';

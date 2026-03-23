@@ -1661,3 +1661,49 @@ These are two separate things — normal setup. We only need to add one line to 
 - `web/resources/views/payroll/index.blade.php`
 
 **Commit:** `f005fff`
+
+---
+
+### ✅ [BUILD] — Business Model Alignment + Correct Payroll Calculations _(2026-03-23)_
+
+**Scope:** Established the MPG business model as SSOT and corrected all payroll calculations to conform to it. Previous code was treating Excel column D (hours × spread) as the AM's earnings directly — the commission % was captured from the subtotal rows but never applied.
+
+**1. Business Model SSOT**
+
+- Created `BUSINESS_MODEL.md` — permanent reference for all calculation rules:
+  - AM Earnings = hours × (bill_rate − pay_rate) × commission%
+  - Agency Gross Profit = (hours × bill_rate) − AM Earnings
+  - AM Earnings is a cost to MPG, not revenue
+  - Commission % varies per consultant from the Excel file
+- `CLAUDE.md` updated: mandatory read notice + SSOT table entry pointing to `BUSINESS_MODEL.md`
+
+**2. Parser fix — correct am_earnings calculation**
+
+- `PayrollParseService::parsePayCalc`: reads col C (spread per hour), col D (hours × spread = total spread). Previously stored col D as "gross" and never applied the commission %. Now applies `am_earnings = col D × commission_pct`. Commission % parsed from "Commission X% Subtotal" tier rows via new `tierToPct()` helper.
+- `PayrollParseService::parseConsultantSheets`: accumulates `am_earnings`, `hours`, `spread_per_hour`, `commission_pct` per consultant per year. Removed GMPH calculation (dropped per user request).
+- Parse result rows now output: `year`, `name`, `am_earnings`, `hours`, `spread_per_hour`, `commission_pct`.
+
+**3. Controller + DB changes**
+
+- `PayrollController::upload`: uses `$row['am_earnings']` directly (no more alias via `$row['revenue']`). Removed GMPH update block. Added auto-derive of `pay_rate = bill_rate − spread_per_hour` on consultant record (only when `pay_rate IS NULL` — never overwrites manual entries).
+- `PayrollController::recomputeMargins`: also derives and persists `pay_rate` using `spread_per_hour` stored on entry.
+- New migration: `add_spread_to_payroll_consultant_entries` — adds `spread_per_hour DECIMAL(12,4)` and `commission_pct DECIMAL(8,8)` to `payroll_consultant_entries` so both values survive recomputes without re-parsing Excel.
+- `PayrollConsultantEntry` model: `spread_per_hour` + `commission_pct` added to fillable and casts.
+
+**4. Tests**
+
+- Two `PayrollParseServiceTest` assertions updated to reflect correct values: col D = 400, tier 50% → `am_earnings = 200` (was asserting `revenue = 400`). Aggregation: `am_earnings = 300` for two periods (was `600`).
+- 38 tests, 78 assertions, 0 failures.
+
+**Files created:**
+- `BUSINESS_MODEL.md`
+- `web/database/migrations/2026_03_23_093156_add_spread_to_payroll_consultant_entries.php`
+
+**Files modified:**
+- `CLAUDE.md`
+- `web/app/Services/PayrollParseService.php`
+- `web/app/Http/Controllers/PayrollController.php`
+- `web/app/Models/PayrollConsultantEntry.php`
+- `web/tests/Unit/PayrollParseServiceTest.php`
+
+**Known carry-forward:** All existing `payroll_consultant_entries` still have corrupted `am_earnings` (= raw column D, not column D × commission%). Re-uploading the 3 AM Excel files will fix them. `spread_per_hour` and `commission_pct` will also be populated correctly on re-upload.

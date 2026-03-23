@@ -13,6 +13,8 @@ class PayrollConsultantEntry extends Model
         'consultant_name',
         'year',
         'hours',
+        'spread_per_hour',
+        'commission_pct',
         'am_earnings',
         'revenue',
         'cost',
@@ -27,13 +29,15 @@ class PayrollConsultantEntry extends Model
     protected function casts(): array
     {
         return [
-            'year' => 'integer',
-            'hours' => 'decimal:4',
-            'am_earnings' => 'decimal:4',
-            'revenue' => 'decimal:4',
-            'cost' => 'decimal:4',
-            'margin' => 'decimal:4',
-            'pct_of_total' => 'decimal:4',
+            'year'            => 'integer',
+            'hours'           => 'decimal:4',
+            'spread_per_hour' => 'decimal:4',
+            'commission_pct'  => 'decimal:8',
+            'am_earnings'     => 'decimal:4',
+            'revenue'         => 'decimal:4',
+            'cost'            => 'decimal:4',
+            'margin'          => 'decimal:4',
+            'pct_of_total'    => 'decimal:4',
         ];
     }
 

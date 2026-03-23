@@ -159,24 +159,26 @@ class PayrollParseServiceTest extends TestCase
 
     public function test_commission_subtotal_typo_handled(): void
     {
+        // col D = 400 (hours × spread), tier = 50% → am_earnings = 400 × 0.50 = 200
         $spreadsheet = $this->baseSpreadsheet();
         $this->addPeriodSheet($spreadsheet, '01.01_01.15_2024', 400);
         $parser = new PayrollParseService;
         $result = $parser->parse($this->makeUploadedFile($spreadsheet), 'Rafael');
         $alice = collect($result->consultantRows)->firstWhere('name', 'Alice Adams');
         $this->assertNotNull($alice);
-        $this->assertSame('400.0000', $alice['revenue']);
+        $this->assertSame('200.0000', $alice['am_earnings']);
     }
 
     public function test_consultant_data_aggregates_by_year(): void
     {
+        // Two periods: col D = 400 + 200 = 600 total spread, tier = 50% → am_earnings = 300
         $spreadsheet = $this->baseSpreadsheet();
         $this->addPeriodSheet($spreadsheet, '01.01_01.15_2024', 400);
         $this->addPeriodSheet($spreadsheet, '02.01_02.15_2024', 200);
         $parser = new PayrollParseService;
         $result = $parser->parse($this->makeUploadedFile($spreadsheet), 'Rafael');
         $alice = collect($result->consultantRows)->firstWhere('name', 'Alice Adams');
-        $this->assertSame('600.0000', $alice['revenue']);
+        $this->assertSame('300.0000', $alice['am_earnings']);
         $this->assertSame(2024, $alice['year']);
     }
 

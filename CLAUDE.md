@@ -3,6 +3,7 @@
 > Lean summary of completed phases. Append-only — phases are never removed.
 > Full decision + build history lives in DEVLOG.md.
 > Read this at the start of every session to understand project state.
+> **MANDATORY: Also read `BUSINESS_MODEL.md` before writing any code that touches earnings, margins, payroll, or commissions.**
 
 ---
 
@@ -155,6 +156,7 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 | Info type | Lives in |
 |---|---|
 | What we're building | `PROJECT_CONTEXT.md` |
+| **MPG business model + calculation rules** | **`BUSINESS_MODEL.md`** |
 | Full decision + build history | `DEVLOG.md` |
 | Phase summaries (completed) | This file (`CLAUDE.md`) |
 | Current phase plan | `phase-N-plan.md` |

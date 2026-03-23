@@ -165,7 +165,7 @@ final class PayrollParseService
      */
     private function parseConsultantSheets(Spreadsheet $wb, string $stopName): array
     {
-        /** @var array<int, array<string, array{gross: string, hours: string}>> $byYear */
+        /** @var array<int, array<string, array{am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}>> $byYear */
         $byYear = [];
 
         foreach ($wb->getWorksheetIterator() as $ws) {
@@ -181,39 +181,35 @@ final class PayrollParseService
             foreach ($parsed as $row) {
                 $name = $row['name'];
                 if (! isset($byYear[$year][$name])) {
-                    $byYear[$year][$name] = ['gross' => '0.0000', 'hours' => '0.0000'];
+                    $byYear[$year][$name] = [
+                        'am_earnings'     => '0.0000',
+                        'hours'           => '0.0000',
+                        'spread_per_hour' => '0.0000',
+                        'commission_pct'  => '0.00000000',
+                    ];
                 }
-                $byYear[$year][$name]['gross'] = $this->bcAdd($byYear[$year][$name]['gross'], $row['gross']);
+                $byYear[$year][$name]['am_earnings'] = $this->bcAdd($byYear[$year][$name]['am_earnings'], $row['am_earnings']);
                 $byYear[$year][$name]['hours'] = $this->bcAdd($byYear[$year][$name]['hours'], $row['hours']);
+                // spread_per_hour and commission_pct are stable per consultant — keep last non-zero value
+                if (bccomp($row['spread_per_hour'], '0', 4) > 0) {
+                    $byYear[$year][$name]['spread_per_hour'] = $row['spread_per_hour'];
+                }
+                if (bccomp($row['commission_pct'], '0', 8) > 0) {
+                    $byYear[$year][$name]['commission_pct'] = $row['commission_pct'];
+                }
             }
         }
 
         $out = [];
         foreach ($byYear as $year => $names) {
-            $grand = '0.0000';
-            foreach ($names as $entry) {
-                $grand = $this->bcAdd($grand, $entry['gross']);
-            }
             foreach ($names as $name => $entry) {
-                $gross = $entry['gross'];
-                $hours = $entry['hours'];
-                $pct = '0.0000';
-                if (bccomp($grand, '0', 4) > 0) {
-                    $pct = bcmul(bcdiv($gross, $grand, 8), '100', 4);
-                }
-                $grossMarginPerHour = '0.0000';
-                if (bccomp($hours, '0', 4) > 0) {
-                    $grossMarginPerHour = bcdiv($gross, $hours, 4);
-                }
                 $out[] = [
-                    'year' => $year,
-                    'name' => $name,
-                    'revenue' => $gross,
-                    'cost' => '0.0000',
-                    'margin' => $gross,
-                    'pct_of_total' => $pct,
-                    'hours' => $hours,
-                    'gross_margin_per_hour' => $grossMarginPerHour,
+                    'year'            => $year,
+                    'name'            => $name,
+                    'am_earnings'     => $entry['am_earnings'],
+                    'hours'           => $entry['hours'],
+                    'spread_per_hour' => $entry['spread_per_hour'],
+                    'commission_pct'  => $entry['commission_pct'],
                 ];
             }
         }
@@ -264,14 +260,14 @@ final class PayrollParseService
     }
 
     /**
-     * @return list<array{name: string, gross: string, hours: string}>
+     * @return list<array{name: string, am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}>
      */
     private function parsePayCalc(Worksheet $ws, string $stopName): array
     {
         $inPayCalc = false;
-        /** @var list<array{name: string, gross: string, hours: string, tier: ?string}> $buffer */
+        /** @var list<array{name: string, spread_total: string, hours: string, spread_per_hour: string}> $buffer */
         $buffer = [];
-        /** @var list<array{name: string, gross: string, hours: string, tier?: string}> $results */
+        /** @var list<array{name: string, am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}> $results */
         $results = [];
 
         $maxRow = (int) $ws->getHighestDataRow();
@@ -300,13 +296,16 @@ final class PayrollParseService
                 str_contains($colAStripped, 'Subtotal') || str_contains($colAStripped, 'Subttal')
             )) {
                 $parts = preg_split('/\s+/', $colAStripped) ?: [];
-                $tier = $parts[1] ?? 'Unknown';
+                $tierStr = $parts[1] ?? '0%';
+                // commission% applied to (hours × spread) gives the AM's actual earnings
+                $commissionPct = $this->tierToPct($tierStr);
                 foreach ($buffer as $entry) {
                     $results[] = [
-                        'name' => $entry['name'],
-                        'gross' => $entry['gross'],
-                        'hours' => $entry['hours'],
-                        'tier' => $tier,
+                        'name'             => $entry['name'],
+                        'am_earnings'      => bcmul($entry['spread_total'], $commissionPct, 4),
+                        'hours'            => $entry['hours'],
+                        'spread_per_hour'  => $entry['spread_per_hour'],
+                        'commission_pct'   => $commissionPct,
                     ];
                 }
                 $buffer = [];
@@ -319,21 +318,37 @@ final class PayrollParseService
             }
 
             $colB = $ws->getCell($this->cell(2, $r))->getCalculatedValue();
+            $colC = $ws->getCell($this->cell(3, $r))->getCalculatedValue();
             $colD = $ws->getCell($this->cell(4, $r))->getCalculatedValue();
 
-            $hours = is_numeric($colB) ? $this->formatMoney((string) $colB) : '0.0000';
-            $grossVal = is_numeric($colD) ? (float) $colD : 0.0;
-            if ($grossVal > 0) {
+            $hours          = is_numeric($colB) ? $this->formatMoney((string) $colB) : '0.0000';
+            $spreadPerHour  = is_numeric($colC) ? $this->formatMoney((string) $colC) : '0.0000';
+            // col D = hours × spread (total spread for this consultant this period)
+            $spreadTotal = is_numeric($colD) ? (float) $colD : 0.0;
+            if ($spreadTotal > 0) {
                 $buffer[] = [
-                    'name' => $colAStripped,
-                    'gross' => $this->formatMoney((string) $grossVal),
-                    'hours' => $hours,
-                    'tier' => null,
+                    'name'            => $colAStripped,
+                    'spread_total'    => $this->formatMoney((string) $spreadTotal),
+                    'hours'           => $hours,
+                    'spread_per_hour' => $spreadPerHour,
                 ];
             }
         }
 
         return $results;
+    }
+
+    /**
+     * Convert a tier label like "50%", "35%", "20%", "10%" to a bcmath-safe decimal fraction.
+     */
+    private function tierToPct(string $tier): string
+    {
+        $cleaned = rtrim(trim($tier), '%');
+        if (is_numeric($cleaned) && (float) $cleaned > 0) {
+            return bcdiv($cleaned, '100', 8);
+        }
+
+        return '0.00000000';
     }
 
     private function parseDateCell(Cell $cell): ?string
