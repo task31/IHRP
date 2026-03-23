@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payroll_consultant_entries', function (Blueprint $table) {
-            $table->decimal('am_earnings', 12, 4)->default(0)->after('hours');
+            $table->decimal('am_earnings', 12, 4)->default(0);
         });
     }
 

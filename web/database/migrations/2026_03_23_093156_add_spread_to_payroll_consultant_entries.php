@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payroll_consultant_entries', function (Blueprint $table) {
-            $table->decimal('spread_per_hour', 12, 4)->default(0)->after('hours');
-            $table->decimal('commission_pct', 8, 8)->default(0)->after('spread_per_hour');
+            $table->decimal('spread_per_hour', 12, 4)->default(0);
+            $table->decimal('commission_pct', 8, 8)->default(0);
         });
     }
 
