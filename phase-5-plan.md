@@ -20,9 +20,13 @@ Unlocks: App is live at hr.matchpointegroup.com. Project complete.
 
 ## Pre-Deploy Facts (read before starting)
 
+> ⚠️ **Hosting TBD** — Final hosting platform not yet confirmed (as of 2026-03-22). The Bluehost
+> details below are from the original plan but are subject to change. Confirm hosting before
+> beginning Steps 2–7.
+
 | Item | Value |
 |---|---|
-| Hosting | Bluehost Business Hosting |
+| Hosting | **TBD** _(was: Bluehost Business Hosting — confirm before deploy)_ |
 | Server IP | 50.6.53.175 |
 | Target URL | https://hr.matchpointegroup.com |
 | DNS | A record `hr → 50.6.53.175` in WordPress Plus cPanel |

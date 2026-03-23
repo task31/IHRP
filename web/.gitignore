@@ -21,3 +21,24 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Dev-only vendor packages — installed locally for tests, not for production
+# Production vendor (--no-dev) is committed; these are added by plain `composer install`
+/vendor/bin/phpunit
+/vendor/bin/phpunit.bat
+/vendor/bin/pint
+/vendor/bin/pint.bat
+/vendor/fakerphp/
+/vendor/filp/
+/vendor/hamcrest/
+/vendor/laravel/breeze/
+/vendor/laravel/pail/
+/vendor/laravel/pint/
+/vendor/mockery/
+/vendor/myclabs/
+/vendor/nunomaduro/collision/
+/vendor/phar-io/
+/vendor/phpunit/
+/vendor/sebastian/
+/vendor/staabm/
+/vendor/theseer/

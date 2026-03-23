@@ -1558,3 +1558,11 @@ These are two separate things — normal setup. We only need to add one line to 
 
 **Commit:** `8616a39`
 **Pushed to origin/master:** `e2b2fa7..8616a39` (3 commits total)
+
+---
+
+### 📝 [NOTE] — Hosting TBD + Orphaned Rows Cleanup _(2026-03-22)_
+
+**Hosting decision deferred.** Phase 5 plan currently assumes Bluehost Business Hosting. This decision has been deferred — final hosting platform will be confirmed tomorrow before any deploy steps begin. Phase 5 Steps 2–7 are on hold until then.
+
+**Orphaned payroll_records cleaned up (local DB).** The 4 corrupt rows for Dimarumba (user_id=7) with bad Excel serial-date check_dates (years 0019, 0209, 2002, 2010) — IDs 376–379 — have been deleted from the local `ihrp_local` database. Audit log entry written to `audit_log`. This cleanup will also need to be run on the production DB after it is provisioned.
