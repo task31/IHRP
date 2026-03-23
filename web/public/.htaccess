@@ -1,3 +1,10 @@
+# Force HTTPS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 AddHandler application/x-httpd-php83 .php
 
 <IfModule mod_rewrite.c>
