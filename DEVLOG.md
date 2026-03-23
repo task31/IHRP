@@ -1515,3 +1515,46 @@ These are two separate things — normal setup. We only need to add one line to 
 **Smoke test script:** `smoke_test_phase6.py` retained in project root for regression use.
 
 **Phase 6 status: CLOSED ✅**
+
+---
+
+### ✅ [BUILD] — Polish: Category B — UX / Usability _(2026-03-22)_
+
+**Scope:** Three targeted UX improvements applied while awaiting Phase 5 hosting decision.
+
+**1. Payroll upload modal — stop-name auto-fill**
+- `resources/views/payroll/index.blade.php` — exposed `AM_NAMES` map (`@json($accountManagers->pluck('name', 'id'))`) to Alpine; `uploadStopName` now initialises from the selected AM and updates via `$watch('uploadAmId', …)`. Placeholder + help text updated to reflect auto-fill behaviour.
+
+**2. Calls page — monthly stats strip**
+- `app/Http/Controllers/DailyCallReportController.php` — `index()` now computes `$monthlyStats` (SUM of calls_made, contacts_reached, submittals, interviews_scheduled for current user, current month) and passes it to the view.
+- `resources/views/calls/index.blade.php` — 4-card strip added above the submission form showing month-to-date totals for Calls, Contacts, Submittals, Interviews.
+
+**3. Consultants table — GMPH column**
+- `resources/views/consultants/index.blade.php` — read-only `GMPH` column inserted between Bill Rate and Start Date; displays `$X.XX/hr` or `—`.
+
+**Commit:** `e28a277`
+
+---
+
+### ✅ [BUILD] — Polish: Category C — Production Hardening _(2026-03-22)_
+
+**Scope:** Four production-readiness items verified or implemented.
+
+**1. Custom error pages** (`resources/views/errors/`)
+- `403.blade.php` — "Access Denied"; shows exception message if provided.
+- `404.blade.php` — "Page Not Found"; shows exception message if provided.
+- `500.blade.php` — "Something Went Wrong"; **pure HTML only** — no PHP or Blade expressions, safe when app bootstrap is broken.
+- All three: standalone HTML + Tailwind CDN, no layout inheritance, single "← Back to login" CTA.
+
+**2. HTTPS enforcement (two layers)**
+- `app/Providers/AppServiceProvider.php` — `URL::forceScheme('https')` added in `boot()`, gated on `environment('production')`. Portable to any host; handles URLs generated behind a proxy.
+- `public/.htaccess` — 301 redirect block prepended at top (`RewriteCond %{HTTPS} off → https://…`). Apache fallback for Bluehost.
+
+**3. Login rate limiting — verified active**
+- `app/Http/Requests/Auth/LoginRequest.php` — `ensureIsNotRateLimited()` enforces 5 attempts per IP+email combo using Laravel `RateLimiter`. No action needed.
+
+**4. APP_DEBUG — verified correct**
+- `.env.production.example` already has `APP_ENV=production` and `APP_DEBUG=false`. No action needed.
+
+**Commit:** `8616a39`
+**Pushed to origin/master:** `e2b2fa7..8616a39` (3 commits total)
