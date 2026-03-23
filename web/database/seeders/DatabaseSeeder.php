@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,7 +21,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@matchpointegroup.com',
         ], [
             'name' => 'Admin',
-            'password' => Hash::make('changeme123'),
+            'password' => Hash::make(env('ADMIN_PASSWORD', Str::random(24))),
             'role' => 'admin',
             'active' => true,
         ]);
