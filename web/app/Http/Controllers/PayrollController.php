@@ -116,10 +116,13 @@ class PayrollController extends Controller
             }
         }
 
-        // Agency Revenue       = hours × bill_rate
-        // AM Earnings          = hours × spread × commission%  (parsed directly from Excel)
-        // Agency Gross Profit  = Revenue − AM Earnings
-        // Pay Rate             = Bill Rate − spread_per_hour  (derived from Excel col C)
+        // Col C = spread per hour (bill_rate − pay_rate = markup per hour)
+        // Col D = hours × spread = total markup
+        // AM Earnings         = col D × commission%  (this AM's cut of the spread)
+        // Agency Revenue      = hours × bill_rate (requires bill_rate on consultant record)
+        // Agency Gross Profit = Revenue − AM Earnings
+        //
+        // pay_rate can be derived: bill_rate − spread_per_hour (requires bill_rate manually entered)
         $rowsByYear = [];
         foreach ($result->consultantRows as $row) {
             $hours          = $row['hours'] ?? '0.0000';
@@ -131,7 +134,7 @@ class PayrollController extends Controller
                 $revenue = bcmul($hours, $billRate, 4);
                 $margin  = bcsub($revenue, $amEarnings, 4);
 
-                // Auto-derive pay_rate and update consultant record
+                // Derive pay_rate = bill_rate − spread when both are known
                 if (bccomp($spreadPerHour, '0', 4) > 0) {
                     $payRate = bcsub($billRate, $spreadPerHour, 4);
                     $mapping = PayrollConsultantMapping::query()
@@ -141,12 +144,11 @@ class PayrollController extends Controller
                     if ($mapping?->consultant_id) {
                         Consultant::query()
                             ->where('id', $mapping->consultant_id)
-                            ->whereNull('pay_rate') // only set if not already manually entered
+                            ->whereNull('pay_rate')
                             ->update(['pay_rate' => $payRate]);
                     }
                 }
             } else {
-                // No bill_rate on file — revenue unknown; store am_earnings as placeholder
                 $revenue = $amEarnings;
                 $margin  = '0.0000';
             }
@@ -451,7 +453,7 @@ class PayrollController extends Controller
                             ? bcsub($revenue, $amEarnings, 4)
                             : '0.0000';
 
-                        // Derive and persist pay_rate on consultant if not manually set
+                        // Derive pay_rate = bill_rate − spread when both are known
                         if (bccomp($spreadPerHour, '0', 4) > 0 && $entry->consultant_id) {
                             $payRate = bcsub($billRate, $spreadPerHour, 4);
                             Consultant::query()

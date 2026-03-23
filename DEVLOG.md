@@ -1707,3 +1707,35 @@ These are two separate things — normal setup. We only need to add one line to 
 - `web/tests/Unit/PayrollParseServiceTest.php`
 
 **Known carry-forward:** All existing `payroll_consultant_entries` still have corrupted `am_earnings` (= raw column D, not column D × commission%). Re-uploading the 3 AM Excel files will fix them. `spread_per_hour` and `commission_pct` will also be populated correctly on re-upload.
+
+---
+
+### ✅ [BUILD] — Business Model Corrections: Recruiter Role + Col C = Spread _(2026-03-23)_
+
+**Scope:** Two business model corrections from Raf, plus full data wipe for fresh start.
+
+**1. Recruiter role clarified**
+
+- An AM (e.g., Sibug) can also be a **Recruiter** for other AMs' placements.
+- The payroll sheet contains BOTH the AM's own placements AND consultants recruited for other AMs.
+- Higher tiers (50%) = own placements. Lower tiers (10%, 20%, 35%) = recruited for another AM.
+- The spread splits 3 ways: MPG's cut + placing AM's cut + recruiter's cut = 100%.
+- `BUSINESS_MODEL.md` updated with Recruiter Role section, corrected Payroll Excel Structure section with accurate column definitions.
+
+**2. Col C = spread per hour (NOT pay_rate)**
+
+- Col C in the pay calc section = `bill_rate − pay_rate` = markup/spread per hour.
+- Col D = hours × col C = total spread.
+- `pay_rate` is NOT directly in the Excel. It can only be derived as `bill_rate − spread` when `bill_rate` is manually entered on the consultant.
+- Reverted the incorrect auto-population of `pay_rate` from col C. Now correctly derives `pay_rate = bill_rate − spread_per_hour` only when `bill_rate` is known.
+
+**3. Full data wipe**
+
+- Cleared all payroll data (entries, records, uploads, mappings, goals) and all consultants.
+- App is fresh for clean re-upload of all 3 AM files.
+
+**Files modified:**
+- `BUSINESS_MODEL.md`
+- `web/app/Http/Controllers/PayrollController.php`
+
+**38 tests, 78 assertions, 0 failures.**

@@ -22,9 +22,11 @@
 1. A consultant works at a client site.
 2. The **client pays MPG** at the **Bill Rate** (per hour).
 3. **MPG pays the consultant** at the **Pay Rate** (per hour).
-4. **Spread** = Bill Rate − Pay Rate. This is MPG's gross revenue on that consultant.
-5. The **AM who placed that consultant earns a % of the Spread** as their commission.
-6. MPG keeps what remains of the Spread after paying the AM.
+4. **Spread** = Bill Rate − Pay Rate. This is MPG's total markup on that consultant.
+5. The Spread is **split 3 ways**: MPG's cut + AM's cut + Recruiter's cut = 100% of Spread.
+6. The placing AM earns their % of the Spread.
+7. If a recruiter sourced the candidate for that AM, the recruiter earns their % of the Spread.
+8. MPG keeps what remains.
 
 ---
 
@@ -57,15 +59,31 @@ Spread = Bill Rate − Pay Rate
 - It **varies per consultant** and comes from the AM's payroll Excel file.
 - Consultants are grouped in the Excel by commission % tier (e.g., 10%, 20%, 35%, 50% sections).
 - Each section has a subtotal. The sheet ends with the AM's total Gross Pay.
+- The tier % represents **this person's cut** of the total spread — NOT the total AM commission.
+
+### Recruiter Role
+
+- An AM can also be a **Recruiter** for other AMs' placements.
+- Their payroll sheet includes BOTH their own placements AND consultants they recruited for other AMs.
+- Higher tiers (e.g., 50%) = typically their own placements (they are the AM).
+- Lower tiers (e.g., 10%, 20%, 35%) = they recruited the candidate for another AM.
+- Example: Total spread = $10/hr. MPG keeps 50%, placing AM gets 35%, recruiter (Sibug) gets 15%.
+- Each person's sheet only shows THEIR cut — the tier % in their sheet is their personal commission rate.
 
 ---
 
 ## Payroll Excel Structure
 
 - Each AM has **one payroll sheet**.
-- Rows = consultants the AM placed, grouped by commission % tier.
-- Columns include: consultant name, hours, gross pay (to the AM), check date.
-- AM Earnings for a consultant = the value in column D (AM commission per consultant row).
+- Rows = consultants the AM earned on (own placements + recruited for others), grouped by commission % tier.
+- Pay calc section columns:
+  - **Col A** = Consultant name
+  - **Col B** = Hours worked
+  - **Col C** = Spread per hour (bill_rate − pay_rate = markup per hour)
+  - **Col D** = Total spread (hours × spread_per_hour)
+  - "Commission X% Subtotal" rows define the tier for the preceding consultant rows
+- AM Earnings for a consultant = col D × tier% (their cut of the total spread).
+- `pay_rate` is NOT in the Excel. It can be derived: `pay_rate = bill_rate − col C` (requires bill_rate entered manually).
 - All AM payroll sheets follow the same structure.
 
 ---
@@ -87,7 +105,7 @@ Spread = Bill Rate − Pay Rate
 | MPG pays consultant | `pay_rate` | — |
 | Spread | derived | `bill_rate − pay_rate` |
 | AM commission % | `commission_pct` on `payroll_consultant_entries` | varies per consultant |
-| AM Earnings (cost) | `am_earnings` on `payroll_consultant_entries` | `hours × (bill_rate − pay_rate) × commission_pct` |
+| AM Earnings (cost) | `am_earnings` on `payroll_consultant_entries` | `col D × commission_pct` = `hours × spread × commission_pct` |
 | Agency Gross Profit | `gross_margin` on `payroll_consultant_entries` | `(hours × bill_rate) − am_earnings` |
 | Agency Revenue | `revenue` on `payroll_consultant_entries` | `hours × bill_rate` |
 
