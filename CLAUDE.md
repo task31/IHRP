@@ -61,6 +61,21 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 
 ---
 
+### Phase 6 — Payroll Integration ✅ _(closed 2026-03-22)_
+
+- **5 migrations:** `payroll_uploads`, `payroll_records` (UNIQUE `user_id+check_date`), `payroll_consultant_entries`, `payroll_consultant_mappings`, `payroll_goals` — all money `DECIMAL(12,4)`
+- **5 models:** `PayrollUpload`, `PayrollRecord`, `PayrollConsultantEntry`, `PayrollConsultantMapping`, `PayrollGoal` — all with `scopeForOwner` and `belongsTo`
+- **Services:** `PayrollParseResult` DTO; `PayrollParseService` (sheet[0] summary parse: Check Date col, trailing-space SS header, `Subttal` typo, stop-name row exclusion, 401k optional); `PayrollDataService` (bcmath throughout, projection with `too_early`/`no_data` suppression, per-AM breakdown via live DB query)
+- **HTTP:** `PayrollController` — 8 methods, 8 auth guards, `getOwnerId()` helper (admin requires AM `user_id`, strict 422), upload uses `DB::transaction` + `AppService::auditLog`
+- **8 routes** in `web.php`; Payroll nav link inside `@can('account_manager')`
+- **UI:** `payroll/index.blade.php` (Chart.js 4.4.3, KPIs, bar/donut/YoY/trend/table, consultant drawer, admin upload modal, AM comparison, goal tracker); `payroll/mappings.blade.php`
+- **Extras added during smoke:** `@livewireScripts→@livewireScriptConfig` fix (dual Alpine); double-reload guard via `$watch`+`isLoading`; goal tracker UI; `401k` optional; upload auto-creates Consultants; `gross_margin_per_hour DECIMAL(12,4)` on consultants; inline cell editing on Consultants page (`PATCH /consultants/{id}/field`); 3 additional migrations for nullable rate fields + GMPH + nullable `client_id`
+- **Tests:** `PayrollParseServiceTest` (8), `PayrollDataServiceTest` (8), `PayrollControllerTest` (22) — **107 total, 259 assertions, 0 failures**
+- **Smoke:** 3 AM files uploaded (Harsono 2018–2026, Sibug 2018–2026, Dimarumba 2019–2024); admin aggregate verified across all years; empty-state AM shows $0 correctly; 19/19 Playwright checks pass
+- **Known carry-forward:** Dimarumba has orphaned `payroll_records` rows with dates in years 19/209/2002/2010 (bad Excel serial date parse from initial upload) — delete via `WHERE YEAR(check_date) < 2015 AND user_id=7` before production deploy
+
+---
+
 ### Phase 4 — Data Migration + QA ✅ _(closed 2026-03-20)_
 
 - SQLite → MySQL migration script (`migrate:run`) + validation command (`migrate:validate`) — 12 tables, row-count + money checksum

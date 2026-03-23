@@ -1463,3 +1463,55 @@ These are two separate things — normal setup. We only need to add one line to 
 - [ ] Assign clients/rates to auto-created consultants using new inline editing
 - [ ] End-date color logic on consultants table now computed server-side in `@php` block — verify end-date colors still correct after inline edits (requires page reload)
 - [ ] Include 3 new migrations in production deploy: `make_consultant_rate_fields_nullable`, `add_gross_margin_per_hour_to_consultants`, `make_client_id_nullable_on_consultants`
+
+---
+
+### ✅ [REVIEW — Architect] — Phase 6 Smoke Session 2 _(2026-03-22)_
+
+**Scope:** Completed all Phase 6 smoke test carry-forwards. Uploaded 3 AM payroll files via Playwright automation, verified data integrity, confirmed admin aggregate, validated end-date color logic and migration files.
+
+**MySQL startup:** MySQL was not running. Started Laragon mysqld (`mysql-8.4.3-winx64`) using `my.ini` defaults (`datadir=C:/laragon/data/mysql-8.4`, port 3306). Confirmed listening on 3306 before proceeding.
+
+**Automated smoke test (19/19 PASS):**
+- Admin login + routing ✅
+- Payroll page loads, heading visible ✅
+- All 4 KPI cards (YTD Net, YTD Gross, Taxes Paid, Projected Annual) ✅
+- 4 chart canvases rendered (bar, doughnut, line, trend) ✅
+- Admin-only controls: AM selector + Upload button visible ✅
+- Dashboard + Aggregate API endpoints respond 200 ✅
+- AM users list populated in `/admin/users` ✅
+- Admin passing own `user_id` → 422 blocked ✅
+- Admin fetching AM dashboard → 200 ✅
+- End-date colors in Consultants table: past=gray, 0–7d=red, 8–14d=orange, 15–30d=yellow ✅
+- No JS console errors on fresh payroll page load ✅
+
+**File uploads (3 AM files):**
+
+| AM | File | Status | Data verified |
+|---|---|---|---|
+| Putra Harsono | Harsono 02.26.2026.xlsx | ✅ Uploaded this session | 5 periods in 2026, 27 in 2025; 2018–2026 all present |
+| Rafael Sibug | Sibug 03.12.2026.xlsx | ✅ Uploaded prior session | 5 periods in 2026, 28 in 2025; 2018–2026 all present |
+| Leonardo Dimarumba | Dimarumba 06.06.2024.xlsx | ✅ Uploaded prior session | 11 periods in 2024, 26 in 2023; 2019–2024 (file ends June 2024) |
+
+**Payroll format confirmed:** Files are internal "Consultant Hourly Tracking" workbooks. Payroll Summary is sheet[0]; Check Date at column L; all required headers present (`Sub-Total Gross Income`, `Federal Tax`, `Social Security ` (trailing space handled), `Medicare`, `State Tax`, `Disability`, `Check Amount`). Stop name is each AM's name from cell A2 — stop condition never triggers in practice (AM name does not appear in col A data rows).
+
+**Admin aggregate verified:**
+- 2026: $12,953 total net (Harsono $5,531 + Sibug $7,421; Dimarumba correctly $0 — file ends June 2024) ✅
+- 2024: $167,090 total (all 3 AMs contributing) ✅
+- 2023: $211,397 total ✅
+- Test AMs with no data: all show $0 — empty state correct ✅
+
+**End-date color logic:** Verified via code inspection and live page. `startOfDay()` + `floor(timestamp diff / 86400)` math is correct for all boundary cases. No bug. ✅
+
+**3 new migrations verified:**
+- `make_consultant_rate_fields_nullable` — `pay_rate`, `bill_rate`, `state` nullable, `down()` correct ✅
+- `add_gross_margin_per_hour_to_consultants` — `DECIMAL(12,4) NULL after bill_rate`, `down()` drops column ✅
+- `make_client_id_nullable_on_consultants` — `client_id` nullable, `down()` reverts ✅
+
+**PHPUnit:** 107 tests, 259 assertions, 0 failures ✅
+
+**Known issue (non-blocking):** Dimarumba has corrupted `payroll_records` rows with dates in years 19, 209, 2002, and 2010 — likely from a previous upload where some numeric cell values were misinterpreted as Excel serial dates for ancient years. These orphaned rows do not affect the dashboard display when viewing valid years (2019–2024). Carry-forward: delete rows where `YEAR(check_date) < 2015` for `user_id=7` via direct SQL before production deploy.
+
+**Smoke test script:** `smoke_test_phase6.py` retained in project root for regression use.
+
+**Phase 6 status: CLOSED ✅**
