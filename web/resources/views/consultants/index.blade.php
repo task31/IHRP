@@ -48,6 +48,7 @@
                         <th class="px-3 py-3">State</th>
                         <th class="px-3 py-3">Pay Rate</th>
                         <th class="px-3 py-3">Bill Rate</th>
+                        <th class="px-3 py-3">GMPH</th>
                         <th class="px-3 py-3">Start</th>
                         <th class="px-3 py-3">End</th>
                         <th class="px-3 py-3">Onboarding</th>
@@ -174,6 +175,13 @@
                                         <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
                                     </div>
                                 </template>
+                            </td>
+                            <td class="px-3 py-2 text-sm text-gray-700">
+                                @if($c->gross_margin_per_hour && $c->gross_margin_per_hour > 0)
+                                    ${{ number_format((float) $c->gross_margin_per_hour, 2) }}/hr
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
                             </td>
                             {{-- Start Date --}}
                             <td

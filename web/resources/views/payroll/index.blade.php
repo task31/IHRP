@@ -229,8 +229,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600">Stop reading at row starting with…</label>
-                        <input type="text" x-model="uploadStopName" class="mt-1 w-full rounded-md border-gray-300 text-sm" placeholder="e.g. Rafael Zobel" required />
-                        <p class="mt-1 text-xs text-gray-500">This is the AM&apos;s full name as it appears in the payroll file. Rows at and after this name are excluded.</p>
+                        <input type="text" x-model="uploadStopName" class="mt-1 w-full rounded-md border-gray-300 text-sm" placeholder="AM's full name" required />
+                        <p class="mt-1 text-xs text-gray-500">Auto-filled from the selected AM — override only if the name differs in the file.</p>
                     </div>
                     <div x-show="uploadMessage" class="rounded-md bg-amber-50 p-3 text-sm text-amber-900" x-text="uploadMessage"></div>
                     <div class="flex justify-end gap-2">
@@ -245,6 +245,7 @@
     <script>
         const IS_ADMIN = @json(auth()->user()->role === 'admin');
         const INITIAL_AM_ID = @json($accountManagers->first()->id ?? null);
+        const AM_NAMES = @json($accountManagers->pluck('name', 'id'));
 
         function payrollDashboard() {
             return {
@@ -263,7 +264,7 @@
                 consultants: [],
                 uploadOpen: false,
                 uploadAmId: INITIAL_AM_ID,
-                uploadStopName: '',
+                uploadStopName: AM_NAMES[INITIAL_AM_ID] || '',
                 uploadMessage: '',
                 mappingsOpen: false,
                 barInst: null,
@@ -281,6 +282,7 @@
                 async init() {
                     await this.reload();
                     this.$watch('year', () => this.reload());
+                    this.$watch('uploadAmId', val => { this.uploadStopName = AM_NAMES[val] || ''; });
                     if (IS_ADMIN) this.$watch('amId', () => this.reload());
                     if (IS_ADMIN) {
                         await this.loadAggregate();

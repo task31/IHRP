@@ -38,6 +38,24 @@
                 : null
         ))"
     >
+        {{-- Monthly stats strip --}}
+        <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            @php
+                $statMonth = now()->format('F');
+            @endphp
+            @foreach ([
+                ['label' => 'Calls — ' . $statMonth, 'value' => $monthlyStats?->calls_made ?? 0],
+                ['label' => 'Contacts — ' . $statMonth, 'value' => $monthlyStats?->contacts_reached ?? 0],
+                ['label' => 'Submittals — ' . $statMonth, 'value' => $monthlyStats?->submittals ?? 0],
+                ['label' => 'Interviews — ' . $statMonth, 'value' => $monthlyStats?->interviews_scheduled ?? 0],
+            ] as $stat)
+                <div class="rounded-lg bg-white px-4 py-3 shadow-sm">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ $stat['label'] }}</p>
+                    <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $stat['value'] }}</p>
+                </div>
+            @endforeach
+        </div>
+
         <div class="rounded-lg bg-white p-5 shadow-sm">
             <h3 class="mb-4 text-sm font-semibold text-gray-700">Submit or update your report</h3>
             <form method="POST" action="{{ route('calls.store') }}" class="space-y-4">

@@ -54,11 +54,24 @@ class DailyCallReportController extends Controller
             ],
         )->all();
 
+        $monthlyStats = DailyCallReport::query()
+            ->where('user_id', Auth::id())
+            ->whereYear('report_date', now()->year)
+            ->whereMonth('report_date', now()->month)
+            ->selectRaw('
+                COALESCE(SUM(calls_made), 0) as calls_made,
+                COALESCE(SUM(contacts_reached), 0) as contacts_reached,
+                COALESCE(SUM(submittals), 0) as submittals,
+                COALESCE(SUM(interviews_scheduled), 0) as interviews_scheduled
+            ')
+            ->first();
+
         return view('calls.index', [
             'reports' => $reports,
             'myReportsByDate' => $myReportsPayload,
             'todayDate' => now()->toDateString(),
             'showEmployeeColumn' => true,
+            'monthlyStats' => $monthlyStats,
         ]);
     }
 
