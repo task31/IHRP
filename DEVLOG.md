@@ -1814,3 +1814,13 @@ These are two separate things — normal setup. We only need to add one line to 
 - [ ] Run `php artisan storage:link` on production server
 - [ ] Post-deploy: upload 3 AM Excel files + enter bill_rates + run Recompute Margins
 - [ ] Post-deploy smoke test: all roles, all features
+
+---
+
+### 📝 [POST-DEPLOY NOTES — Claude Code] _(2026-03-23)_
+
+**Future fixes backlog (v2):**
+- [ ] `audit_log.description` is NULL on all PAYROLL_UPLOAD and RECOMPUTE_MARGINS entries — populate with AM name + filename + period count so the audit trail is human-readable
+- [ ] `AddHandler application/x-httpd-php83 .php` in `public/.htaccess` was incorrect for Bluehost EasyApache — removed entirely (server handles PHP via MultiPHP Manager). Update `.htaccess` template to not include this line.
+- [ ] `->after('hours')` in migrations `060326` and `093156` caused fresh-install failures — fixed in commit `f2f0de0`. Root cause: migration timestamps were out of order relative to the column they reference.
+- [ ] `.cpanel.yml` auto-deploy hook not yet wired to `~/repositories/IHRP` — future git pushes won't auto-deploy until this is tested end-to-end
