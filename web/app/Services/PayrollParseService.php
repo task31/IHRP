@@ -49,7 +49,7 @@ final class PayrollParseService
 
     public function parse(UploadedFile $file, string $stopName): PayrollParseResult
     {
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M');
 
         $path = $file->getRealPath();
         if ($path === false) {
@@ -228,30 +228,61 @@ final class PayrollParseService
 
     private function getSheetYear(Worksheet $ws): ?int
     {
-        $highestCol = $ws->getHighestDataColumn(3);
+        // Primary: scan row 3 (works for newer-format sheets with dates in the header row)
+        $year = $this->extractYearFromRow($ws, 3);
+        if ($year !== null) {
+            return $year;
+        }
+
+        // Fallback: scan the first 50 rows (all columns) for any valid Excel date.
+        // Needed for older-format sheets (Harsono, Dimarumba, Sibug pre-2023) where row 3 is empty
+        // and dates appear mid-sheet in the timesheet grid (rows 20-35 typically).
+        $maxRow = min((int) $ws->getHighestDataRow(), 50);
+        for ($r = 1; $r <= $maxRow; $r++) {
+            $year = $this->extractYearFromRow($ws, $r);
+            if ($year !== null) {
+                return $year;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractYearFromRow(Worksheet $ws, int $row): ?int
+    {
+        $highestCol = $ws->getHighestDataColumn($row);
         $hi = Coordinate::columnIndexFromString($highestCol);
         for ($c = 1; $c <= $hi; $c++) {
-            $cell = $ws->getCell($this->cell($c, 3));
+            $cell = $ws->getCell($this->cell($c, $row));
             $val = $cell->getValue();
             if ($val instanceof \DateTimeInterface) {
-                return (int) $val->format('Y');
+                $y = (int) $val->format('Y');
+
+                return $y >= 2015 && $y <= 2030 ? $y : null;
             }
             if (is_numeric($val) && ExcelDate::isDateTime($cell)) {
                 try {
-                    return (int) ExcelDate::excelToDateTimeObject((float) $val)->format('Y');
+                    $y = (int) ExcelDate::excelToDateTimeObject((float) $val)->format('Y');
+                    if ($y >= 2015 && $y <= 2030) {
+                        return $y;
+                    }
                 } catch (\Throwable) {
-                    // continue scanning row 3
+                    // not a valid date serial — skip
                 }
             }
             if (is_string($val) && trim($val) !== '') {
                 $t = trim($val);
                 $dt = \DateTime::createFromFormat('Y-m-d', $t);
                 if ($dt instanceof \DateTime) {
-                    return (int) $dt->format('Y');
+                    $y = (int) $dt->format('Y');
+
+                    return $y >= 2015 && $y <= 2030 ? $y : null;
                 }
                 $dt2 = \DateTime::createFromFormat('m/d/Y', $t);
                 if ($dt2 instanceof \DateTime) {
-                    return (int) $dt2->format('Y');
+                    $y = (int) $dt2->format('Y');
+
+                    return $y >= 2015 && $y <= 2030 ? $y : null;
                 }
             }
         }
@@ -286,19 +317,33 @@ final class PayrollParseService
                 continue;
             }
 
-            $colAStripped = trim($colA);
+            // Normalize: collapse all Unicode whitespace (incl. non-breaking spaces) to single ASCII space.
+            // This prevents duplicate-key errors when MySQL utf8mb4_unicode_ci treats e.g. "Randall Beck\u{00A0}"
+            // and "Randall Beck" as the same string but PHP array keys see them as different.
+            $colAStripped = trim(preg_replace('/[\s\p{Z}]+/u', ' ', $colA) ?? trim($colA));
 
+            // Stop-name or "Total" row signals end of this pay-calc section.
+            // Use reset (not break) so multi-period sheets (e.g. Harsono with two bi-weekly
+            // sections per tab) are fully captured — the next OT trigger re-enters pay-calc mode.
             if (str_starts_with($colAStripped, 'Total') || str_starts_with($colAStripped, $stopName)) {
-                break;
+                $inPayCalc = false;
+                $buffer = [];
+
+                continue;
             }
 
-            if (str_starts_with($colAStripped, 'Commission') && (
-                str_contains($colAStripped, 'Subtotal') || str_contains($colAStripped, 'Subttal')
-            )) {
-                $parts = preg_split('/\s+/', $colAStripped) ?: [];
-                $tierStr = $parts[1] ?? '0%';
-                // commission% applied to (hours × spread) gives the AM's actual earnings
-                $commissionPct = $this->tierToPct($tierStr);
+            // Tier subtotal row — flush the buffer with the commission % extracted from the label.
+            // Handles all known formats:
+            //   "Commission 40% Subtotal"  (Sibug 2025+)
+            //   "Commission Subttal 40%"   (typo variant)
+            //   "50% Commission Subtotal"  (Dimarumba)
+            //   "SubTotal 40%"             (Harsono, Sibug pre-2023)
+            $lowerA = strtolower($colAStripped);
+            $isTierRow = (str_contains($colAStripped, 'Commission') && (str_contains($lowerA, 'subtotal') || str_contains($lowerA, 'subttal')))
+                || (str_starts_with($lowerA, 'subtotal') && preg_match('/\d+\s*%/i', $colAStripped));
+            if ($isTierRow) {
+                preg_match('/(\d+(?:\.\d+)?)\s*%/i', $colAStripped, $m);
+                $commissionPct = isset($m[1]) ? bcdiv($m[1], '100', 8) : '0.00000000';
                 foreach ($buffer as $entry) {
                     $results[] = [
                         'name'             => $entry['name'],

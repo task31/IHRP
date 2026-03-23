@@ -210,20 +210,24 @@ class PayrollController extends Controller
                     ->where('raw_name', $row['name'])
                     ->where('user_id', $targetUser->id)
                     ->first();
-                PayrollConsultantEntry::query()->create([
-                    'user_id'         => $targetUser->id,
-                    'consultant_name' => $row['name'],
-                    'year'            => $row['year'],
-                    'hours'           => $row['hours'],
-                    'spread_per_hour' => $row['spread_per_hour'] ?? '0.0000',
-                    'commission_pct'  => $row['commission_pct'] ?? '0.00000000',
-                    'am_earnings'     => $row['am_earnings'],
-                    'revenue'         => $row['revenue'],
-                    'cost'            => $row['cost'],
-                    'margin'          => $row['margin'],
-                    'pct_of_total'    => $row['pct_of_total'],
-                    'consultant_id'   => $mapping?->consultant_id,
-                ]);
+                PayrollConsultantEntry::query()->updateOrCreate(
+                    [
+                        'user_id'         => $targetUser->id,
+                        'consultant_name' => $row['name'],
+                        'year'            => $row['year'],
+                    ],
+                    [
+                        'hours'           => $row['hours'],
+                        'spread_per_hour' => $row['spread_per_hour'] ?? '0.0000',
+                        'commission_pct'  => $row['commission_pct'] ?? '0.00000000',
+                        'am_earnings'     => $row['am_earnings'],
+                        'revenue'         => $row['revenue'],
+                        'cost'            => $row['cost'],
+                        'margin'          => $row['margin'],
+                        'pct_of_total'    => $row['pct_of_total'],
+                        'consultant_id'   => $mapping?->consultant_id,
+                    ]
+                );
             }
 
             PayrollUpload::query()->create([

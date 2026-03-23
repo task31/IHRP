@@ -1739,3 +1739,53 @@ These are two separate things — normal setup. We only need to add one line to 
 - `web/app/Http/Controllers/PayrollController.php`
 
 **38 tests, 78 assertions, 0 failures.**
+
+---
+
+### ✅ [BUILD] — Payroll Parser: Multi-Format Support for All 3 AMs _(2026-03-23)_
+
+**Scope:** `PayrollParseService.php` had three bugs that prevented Harsono and Dimarumba from producing consultant-level entries. Sibug's pre-2023 data was also silently skipped.
+
+**Root cause investigation:**
+- Opened and inspected all 3 Excel files via PhpSpreadsheet to compare sheet structures
+- Harsono: 95 period sheets, all with OT at row 4 (timesheet header), row 3 empty, "SubTotal 40%" tier labels, two pay-calc sections per sheet
+- Dimarumba: 180+ sheets, OT at rows 37-40, row 3 empty (except one special sheet), "50% Commission Subtotal" tier label (word order reversed from Sibug)
+- Sibug 2023+: OT at rows 23-30, row 3 has dates → worked already; Sibug pre-2023: same old format as Harsono → silently skipped
+
+**Bug 1 — Year detection (`getSheetYear`):**
+- Only scanned row 3. Harsono/Dimarumba/Sibug pre-2023 all have row 3 empty.
+- Fix: extract to `extractYearFromRow()` helper, add fallback that scans all cells of rows 1-50 for any Excel date in range 2015–2030.
+
+**Bug 2 — Tier label extraction (`parsePayCalc`):**
+- Only matched `"Commission N% Subtotal"` (Sibug format). Used `$parts[1]` to get the % token.
+- Didn't match `"50% Commission Subtotal"` (Dimarumba) — `$parts[1]` = "Commission", not a %.
+- Didn't match `"SubTotal 40%"` (Harsono/Sibug pre-2023) — no "Commission" keyword at all.
+- Fix: unified `$isTierRow` check covers all three label orderings. Replaced `$parts[1]` with `preg_match('/(\d+(?:\.\d+)?)\s*%/i', ...)` to extract the numeric % from anywhere in the label.
+
+**Bug 3 — Stop condition for multi-period sheets:**
+- `break` on stop_name exited the loop entirely, missing Harsono's second bi-weekly section in each sheet.
+- Fix: changed to `$inPayCalc = false; continue` — resets pay-calc mode and keeps scanning so the next OT trigger re-enters it for the second section.
+
+**Bonus: Unicode name normalization:**
+- Harsono's "Randall Beck" appeared in two sections with a non-breaking space in one occurrence.
+- MySQL `utf8mb4_unicode_ci` treated both as identical → UNIQUE constraint violation on insert.
+- Fix: `preg_replace('/[\s\p{Z}]+/u', ' ', ...)` normalizes all Unicode whitespace to single ASCII space before using names as array keys.
+- Also changed `PayrollConsultantEntry::query()->create(...)` → `updateOrCreate(...)` as a defensive safety net.
+
+**Also:** Memory limit raised from 256M → 512M in `parse()` for Dimarumba's large file.
+
+**Result after fix + re-upload of all 3 Excel files:**
+
+| AM | Entries | Years covered | Payroll records |
+|---|---|---|---|
+| Harsono | 45 | 2023–2025 | 184 |
+| Sibug | 101 | 2022–2026 | 192 |
+| Dimarumba | 86 | 2022–2026 | 195 |
+
+`revenue = am_earnings` (expected fallback — bill_rates not yet set on consultants; run Recompute Margins after entering bill_rates).
+
+**Files modified:**
+- `web/app/Services/PayrollParseService.php`
+- `web/app/Http/Controllers/PayrollController.php`
+
+**107 tests, 259 assertions, 0 failures.**
