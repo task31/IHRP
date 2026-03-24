@@ -151,7 +151,7 @@
     </div>
 
     @if ($showForm)
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" wire:click.self>
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" wire:click.self="cancelForm">
             <div
                 class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
                 @click.stop

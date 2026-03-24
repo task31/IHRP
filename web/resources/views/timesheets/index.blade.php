@@ -15,7 +15,7 @@
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">
+    <div x-data="{ importOpen: false, viewOpen: false, viewData: null, viewLoading: false }" class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl font-semibold text-gray-800">Timesheets</h2>
             <div class="flex flex-wrap items-center gap-2">
@@ -24,16 +24,13 @@
                     Download template
                 </a>
                 @can('admin')
-                    <button type="button" @click="importOpen = true"
+                    <button type="button" x-on:click="importOpen = true"
                         class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
                         Import timesheet
                     </button>
                 @endcan
             </div>
         </div>
-    </x-slot>
-
-    <div x-data="{ importOpen: false, viewOpen: false, viewData: null, viewLoading: false }" class="space-y-6">
         @can('admin')
             <div class="rounded-lg bg-white p-5 shadow-sm" x-data="manualTimesheet(@js($consultantMeta))">
                 <h3 class="font-semibold text-gray-800">Manual entry</h3>
