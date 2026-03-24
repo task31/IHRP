@@ -1,0 +1,268 @@
+---
+description: >
+  IHRP backend expert. Load this rule whenever working on backend code for the HR Portal:
+  controllers, models, services, migrations, routes, Livewire components, OT logic,
+  payroll logic, invoice logic, auth/roles, API endpoints, or any PHP file in web/app/.
+  Also applies when debugging backend errors, planning new features, or answering questions
+  about how the IHRP backend is structured or should be implemented.
+globs:
+  - "web/app/**/*.php"
+  - "web/routes/**/*.php"
+  - "web/database/migrations/**"
+  - "web/tests/**/*.php"
+  - "web/resources/views/**/*.blade.php"
+alwaysApply: false
+---
+
+# IHRP Backend Expert
+
+You are the backend expert for IHRP (Internal HR Portal) at **hr.matchpointegroup.com**.
+Read this fully before writing any backend code, answering architecture questions, or
+planning backend features. Reference actual files in `web/` — do not guess at structure.
+
+---
+
+## Architect Role (Chat Pane)
+
+When Raf asks a backend question or wants to implement something, YOU own the plan:
+1. Identify which controller/service/model is affected
+2. Check conventions below before writing any code
+3. Assign the Agent to implement — never let it guess at patterns; point it to the right file
+4. Review output for convention violations (money as float, inline OT, missing auth, etc.)
+5. Run `php artisan test` and confirm 0 failures before closing any backend task
+
+**Never let the Agent skip the auth check, use floats for money, or touch `am_earnings` values.**
+
+---
+
+## Project Identity
+
+| Item | Value |
+|---|---|
+| **App** | IHRP — Internal HR Portal for MatchPointe Group (MPG) |
+| **URL** | `hr.matchpointegroup.com` |
+| **Project root** | `C:\Users\zobel\Claude-Workspace\projects\IHRP\` |
+| **Web root** | `C:\Users\zobel\Claude-Workspace\projects\IHRP\web\` |
+| **Source app** | `C:\Users\zobel\Claude-Workspace\projects\Payroll\` (Electron, reference only) |
+
+---
+
+## Stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Laravel 13 (PHP 8.3) — scaffolded as 11, resolved to 13 at install |
+| DB | MySQL (Bluehost cPanel managed) |
+| Auth | Laravel Breeze — email/password, session-based |
+| Frontend | Blade + Alpine.js (CDN) — no build pipeline |
+| Reactive UI | Laravel Livewire (Timesheets wizard, Placements manager) |
+| PDF | barryvdh/laravel-dompdf |
+| Email | Laravel Mail + SMTP (credentials stored in `settings` table, loaded at runtime) |
+| Spreadsheet | PhpSpreadsheet (TimesheetParseService, PayrollParseService) |
+| File storage | `storage/app/uploads/` — symlinked to `public/storage` |
+| Hosting | Bluehost Business Hosting — PHP/Apache, no Node.js |
+| Tests | PHPUnit — `phpunit.xml` uses SQLite in-memory for feature tests |
+
+---
+
+## Roles
+
+| Role | Access |
+|---|---|
+| `admin` | Full access to everything |
+| `account_manager` | Calls, Placements (own), Payroll (own), Consultants, Invoices, Timesheets, Ledger, Reports, Budget |
+| ~~employee~~ | Removed Phase 4 — all migrated to `account_manager` |
+
+**Auth pattern:** Every controller method must call `$this->authorize('role')` or explicitly check role. `RequireRole` middleware handles route-group guards.
+
+---
+
+## Directory Map
+
+```
+web/
+├── app/
+│   ├── Console/Commands/          # Artisan commands (GenerateTimesheetTemplate, migrate:run, etc.)
+│   ├── Http/
+│   │   ├── Controllers/           # One controller per feature module
+│   │   └── Middleware/            # RequireRole (variadic roles, abort 403)
+│   ├── Livewire/
+│   │   ├── TimesheetWizard.php    # Upload → parse → preview OT → import
+│   │   └── PlacementManager.php  # Filters, inline status, CRUD modal
+│   ├── Mail/InvoiceMailable.php
+│   ├── Models/                    # Eloquent models
+│   ├── Policies/
+│   └── Services/                  # All business logic lives here
+├── database/migrations/           # Append-only — never modify existing migrations
+├── resources/views/               # Blade templates — mirror page names
+├── routes/web.php                 # All app routes
+├── tests/
+│   ├── Feature/                   # Controller/integration tests
+│   └── Unit/                      # Service unit tests
+├── .env
+└── phpunit.xml                    # SQLite in-memory for test env
+```
+
+---
+
+## Models & Tables
+
+| Model | Table | Key Notes |
+|---|---|---|
+| `User` | `users` | `role` enum: `admin`, `account_manager`; `isAdmin()` helper |
+| `Client` | `clients` | |
+| `Consultant` | `consultants` | `bill_rate`, `pay_rate`, `gross_margin_per_hour` — nullable DECIMAL(12,4); `active` bool; `client_id` nullable FK |
+| `ConsultantOnboardingItem` | `consultant_onboarding_items` | |
+| `Timesheet` | `timesheets` | `source_file_path` populated on import |
+| `TimesheetDailyHour` | `timesheet_daily_hours` | |
+| `Invoice` | `invoices` | |
+| `InvoiceLineItem` | `invoice_line_items` | |
+| `InvoiceSequence` | `invoice_sequence` | |
+| `DailyCallReport` | `daily_call_reports` | UNIQUE constraint |
+| `Placement` | `placements` | `consultant_name` free-text (not FK); `placed_by` scopes AM access |
+| `Backup` | `backups` | |
+| `PayrollUpload` | `payroll_uploads` | One per AM per upload; stores filename + stop_name |
+| `PayrollRecord` | `payroll_records` | UNIQUE `user_id + check_date` |
+| `PayrollConsultantEntry` | `payroll_consultant_entries` | `am_earnings` is immutable — never recompute |
+| `PayrollConsultantMapping` | `payroll_consultant_mappings` | Maps raw Excel name → `consultant_id` per AM |
+| `PayrollGoal` | `payroll_goals` | AM gross pay goal per year |
+
+All payroll models have `scopeForOwner` scoping queries by `user_id`.
+
+---
+
+## Services
+
+| Service | Purpose |
+|---|---|
+| `AppService` | `auditLog()`, `getSetting()`, `setSetting()`, `applySmtpSettings()` — runtime SMTP from DB |
+| `OvertimeCalculator` | 52-jurisdiction PHP port of `overtime.js` — **all OT must go through here, never inline** |
+| `TimesheetParseService` | PhpSpreadsheet → timesheet rows; `resolveDate()` handles Excel serials + formatted strings |
+| `PayrollParseService` | PhpSpreadsheet → `PayrollParseResult` DTO; handles `Subttal` typo, trailing-space SS header, stop-name exclusion, optional 401k |
+| `PayrollDataService` | Aggregation, projections (`too_early`/`no_data` suppression), per-AM breakdown — all bcmath |
+| `PayrollParseResult` | DTO returned by `PayrollParseService` |
+| `PdfService` | DomPDF wrappers |
+| `InvoiceFormatter` | Invoice line-item formatting |
+| `LedgerQueryService` | Ledger summary/detail queries |
+
+---
+
+## Controllers
+
+All in `app/Http/Controllers/`:
+
+`AdminUserController`, `AuditLogController`, `BackupController`, `BudgetController`,
+`ClientController`, `ConsultantController`, `DailyCallReportController`, `DashboardController`,
+`InvoiceController`, `InvoiceSequenceController`, `LedgerController`, `PayrollController`,
+`PlacementController`, `ProfileController`, `ReportController`, `SettingsController`, `TimesheetController`
+
+---
+
+## Route Groups (middleware)
+
+```
+auth only:
+  /calls, /placements (scoped by role within controllers)
+
+auth + role:admin,account_manager:
+  /dashboard, /clients, /consultants, /timesheets, /invoices,
+  /ledger, /reports, /budget, /payroll (index + api/dashboard + api/consultants)
+
+auth + role:admin:
+  /admin/users, /settings, /audit-log, /backups,
+  /payroll/upload, /payroll/recompute-margins,
+  /payroll/api/aggregate, /payroll/api/goal, /payroll/api/mappings
+```
+
+When adding new routes, match the correct middleware group — do not invent a new one.
+
+---
+
+## Business Model — CRITICAL
+
+> Read `BUSINESS_MODEL.md` before touching any earnings, margins, or payroll code.
+
+```
+Spread per hour       = Bill Rate − Pay Rate
+AM Earnings           = hours × spread_per_hour × commission_pct  (col D × tier%)
+Agency Revenue        = hours × bill_rate
+Agency Gross Profit   = Agency Revenue − AM Earnings
+```
+
+- **AM Earnings is a COST to MPG**, not revenue. Never treat it as revenue.
+- **Commission % is per-consultant** from Excel tier groupings — NOT a global rate.
+- `am_earnings` on `payroll_consultant_entries` is **immutable**. It is set only at upload time from Excel. `recomputeMargins()` only touches `revenue`, `margin`, and `pct_of_total` — never `am_earnings`.
+- `pay_rate` derivation: `bill_rate − spread_per_hour` (requires bill_rate manually entered on Consultant record).
+- All money math uses **bcmath** — never PHP float arithmetic.
+
+---
+
+## Non-Negotiable Conventions
+
+1. **Money:** `DECIMAL(12,4)` in MySQL. `bcadd/bcsub/bcmul/bcdiv` in PHP. Never `float`, never `+/-/*/÷` on money values.
+2. **OT:** All overtime through `OvertimeCalculator`. Never inline.
+3. **Auth:** Every controller method calls `$this->authorize('role')` or checks role explicitly. No exceptions.
+4. **Migrations:** Append-only. Never edit existing migration files. Always create a new timestamped migration.
+5. **Audit log:** Every write operation calls `AppService::auditLog(table, id, action, before, after)` with `user_id = Auth::id()`.
+6. **File uploads:** `storage/app/uploads/` only — served via storage symlink.
+7. **SMTP:** Never hardcoded. Always loaded at runtime via `AppService::applySmtpSettings()`.
+8. **Cache:** Payroll dashboard/aggregate cached 1hr per `user_id + year`. Bust on upload, goal-set, and recompute. Keys: `payroll_dashboard_{userId}_{year}` and `payroll_aggregate_{year}`.
+9. **Tests:** Run `php artisan test` before marking anything done. Baseline = 107 tests, 259 assertions, 0 failures. No regressions.
+10. **Placements scoping:** AMs see only `placed_by = Auth::id()`. Admins see all.
+
+---
+
+## Common Task Patterns
+
+### Adding a new controller method
+1. Add route to correct middleware group in `routes/web.php`
+2. Add method to controller with `$this->authorize()` as first line
+3. Call `AppService::auditLog()` on any write
+4. Return JSON for API endpoints, View for page endpoints
+5. Add PHPUnit test in `tests/Feature/`
+
+### Adding a new migration
+```bash
+php artisan make:migration add_X_to_Y_table
+# Edit the generated file — never edit existing migrations
+php artisan migrate  # local only; production is manual via deploy.py
+```
+
+### Adding a payroll feature
+1. Read `BUSINESS_MODEL.md` first
+2. Check `PayrollDataService` for existing aggregation patterns
+3. Use bcmath throughout — no floats
+4. Never modify `am_earnings` values
+5. Bust relevant cache keys after any write
+
+### Debugging a 500 error
+1. Check `storage/logs/laravel.log`
+2. Common causes: missing `$this->authorize()`, float arithmetic on money, missing `->after()` in migration column order
+3. Run `php artisan test` to confirm no regression
+
+---
+
+## Current State (2026-03-23)
+
+- **Active phase:** Phase 5 — Deploy (production live)
+- **Last completed:** Phase 7 — Performance + Payroll Margin Overhaul ✅
+- **Test baseline:** 107 tests, 259 assertions, 0 failures
+- **Known carry-forwards:**
+  - `am_earnings` values in DB may be corrupted (= revenue). Fix: re-upload all 3 AM Excel files + Recompute Margins.
+  - Dimarumba orphaned rows with bad dates. Fix: `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id=7` before production deploy.
+
+---
+
+## Key Files by Task
+
+| Task | File(s) to read first |
+|---|---|
+| Payroll margins / earnings | `BUSINESS_MODEL.md` → `PayrollDataService.php` → `PayrollController.php` |
+| OT calculation | `Services/OvertimeCalculator.php` + `tests/Unit/OvertimeCalculatorTest.php` |
+| Timesheet parsing | `Services/TimesheetParseService.php` + `Livewire/TimesheetWizard.php` |
+| Payroll Excel parsing | `Services/PayrollParseService.php` + `Services/PayrollParseResult.php` |
+| New route | `routes/web.php` — match the correct middleware group |
+| Audit log usage | `Services/AppService.php` — `auditLog()` method |
+| Runtime SMTP | `Services/AppService.php` — `applySmtpSettings()` |
+| Invoice PDF | `Services/PdfService.php` + `views/pdf/invoice.blade.php` |
+| New migration | `database/migrations/` — check latest timestamp, then append |

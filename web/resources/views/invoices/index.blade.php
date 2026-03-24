@@ -139,17 +139,31 @@
             x-show="previewId !== null"
             x-cloak
             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-            @keydown.escape.window="previewId = null"
+            @keydown.escape.window="closePreview()"
         >
             <div class="flex h-[85vh] w-full max-w-5xl flex-col rounded-lg bg-white shadow-xl">
                 <div class="flex items-center justify-between border-b px-4 py-3">
                     <h3 class="font-semibold">Invoice preview</h3>
                     <div class="flex gap-2">
                         <button type="button" class="text-sm text-indigo-600 hover:underline" x-show="previewId" @click="exportPdf(previewId)">Export PDF</button>
-                        <button type="button" class="text-gray-500" @click="previewId = null">✕</button>
+                        <button type="button" class="text-gray-500" @click="closePreview()">✕</button>
                     </div>
                 </div>
-                <iframe :src="previewId ? `/invoices/${previewId}/preview` : ''" class="min-h-0 flex-1 w-full" title="Invoice PDF"></iframe>
+                <div class="relative min-h-0 flex flex-1 flex-col">
+                    <div
+                        x-show="previewLoading"
+                        x-cloak
+                        class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 text-sm text-gray-600"
+                    >
+                        Loading PDF…
+                    </div>
+                    <iframe
+                        :src="previewSrc"
+                        class="min-h-0 flex-1 w-full"
+                        title="Invoice PDF"
+                        @load="previewLoading = false"
+                    ></iframe>
+                </div>
             </div>
         </div>
 
@@ -195,11 +209,23 @@
                 editingPo: null,
                 poDraft: '',
                 previewId: null,
+                previewSrc: '',
+                previewLoading: false,
                 sendPayload: null,
                 sendForm: { to: '', subject: '', note: '' },
                 sendLoading: false,
+                closePreview() {
+                    this.previewId = null;
+                    this.previewSrc = '';
+                    this.previewLoading = false;
+                },
                 openPreview(id) {
+                    this.previewLoading = true;
                     this.previewId = id;
+                    this.previewSrc = '';
+                    this.$nextTick(() => {
+                        this.previewSrc = `/invoices/${id}/preview`;
+                    });
                 },
                 exportPdf(id) {
                     window.location = `/invoices/${id}/export`;

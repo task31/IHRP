@@ -1,6 +1,9 @@
 # Claude Code local session files — never commit
 .claude/settings.local.json
 
+# Local deploy credentials — never commit
+.deploy.env
+
 # Cursor local cache files — never commit
 *.mdc.txt
 

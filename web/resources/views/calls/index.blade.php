@@ -14,6 +14,12 @@
                     Today: <span class="font-medium text-gray-700">{{ \Illuminate\Support\Carbon::parse($todayDate)->format('l, F j, Y') }}</span>
                 </p>
             </div>
+            @can('admin')
+                <a
+                    href="{{ route('calls.report') }}"
+                    class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
+                >Admin summaries</a>
+            @endcan
         </div>
     </x-slot>
 

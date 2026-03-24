@@ -35,6 +35,8 @@ Route::middleware('auth')->group(function () {
     // Call reports
     Route::get('/calls', [DailyCallReportController::class, 'index'])->name('calls.index');
     Route::post('/calls', [DailyCallReportController::class, 'store'])->name('calls.store');
+    Route::get('/calls/report/monthly', [DailyCallReportController::class, 'reportMonthly'])->name('calls.report.monthly');
+    Route::get('/calls/report/yearly', [DailyCallReportController::class, 'reportYearly'])->name('calls.report.yearly');
     Route::get('/calls/report', [DailyCallReportController::class, 'aggregate'])->name('calls.report');
 
     // Placements

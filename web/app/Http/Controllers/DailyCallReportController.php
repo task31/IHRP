@@ -6,6 +6,8 @@ use App\Models\DailyCallReport;
 use App\Models\User;
 use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -219,5 +221,119 @@ class DailyCallReportController extends Controller
             'filters' => $filters,
             'users' => User::query()->orderBy('name')->get(['id', 'name']),
         ]);
+    }
+
+    public function reportMonthly(Request $request): JsonResponse|View
+    {
+        $this->authorize('admin');
+
+        $filters = $request->validate([
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $year = (int) ($filters['year'] ?? now()->year);
+
+        $ymExpr = $this->yearMonthGroupSql();
+        $rows = DailyCallReport::query()
+            ->when(
+                isset($filters['user_id']),
+                fn ($q) => $q->where('user_id', (int) $filters['user_id']),
+            )
+            ->whereYear('report_date', $year)
+            ->selectRaw("{$ymExpr} as ym")
+            ->selectRaw('COUNT(*) as total_days')
+            ->selectRaw('SUM(calls_made) as total_calls')
+            ->selectRaw('SUM(contacts_reached) as total_contacts')
+            ->selectRaw('SUM(submittals) as total_submittals')
+            ->selectRaw('SUM(interviews_scheduled) as total_interviews')
+            ->groupByRaw($ymExpr)
+            ->orderBy('ym')
+            ->get();
+
+        $byYm = $rows->keyBy('ym');
+        $monthlyRows = collect(range(1, 12))->map(function (int $month) use ($year, $byYm) {
+            $key = sprintf('%04d-%02d', $year, $month);
+            $row = $byYm->get($key);
+
+            return (object) [
+                'label' => Carbon::create($year, $month, 1)->format('F Y'),
+                'ym' => $key,
+                'total_days' => $row ? (int) $row->total_days : 0,
+                'total_calls' => $row ? (int) $row->total_calls : 0,
+                'total_contacts' => $row ? (int) $row->total_contacts : 0,
+                'total_submittals' => $row ? (int) $row->total_submittals : 0,
+                'total_interviews' => $row ? (int) $row->total_interviews : 0,
+            ];
+        });
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'year' => $year,
+                'months' => $monthlyRows->values(),
+                'filters' => $filters,
+            ]);
+        }
+
+        return view('calls.report-monthly', [
+            'monthlyRows' => $monthlyRows,
+            'filters' => array_merge($filters, ['year' => $year]),
+            'users' => User::query()->orderBy('name')->get(['id', 'name']),
+            'yearOptions' => array_reverse(range(now()->year - 10, now()->year)),
+        ]);
+    }
+
+    public function reportYearly(Request $request): JsonResponse|View
+    {
+        $this->authorize('admin');
+
+        $filters = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+        ]);
+
+        $yExpr = $this->calendarYearGroupSql();
+        $rows = DailyCallReport::query()
+            ->when(
+                isset($filters['user_id']),
+                fn ($q) => $q->where('user_id', (int) $filters['user_id']),
+            )
+            ->selectRaw("{$yExpr} as y")
+            ->selectRaw('COUNT(*) as total_days')
+            ->selectRaw('SUM(calls_made) as total_calls')
+            ->selectRaw('SUM(contacts_reached) as total_contacts')
+            ->selectRaw('SUM(submittals) as total_submittals')
+            ->selectRaw('SUM(interviews_scheduled) as total_interviews')
+            ->groupByRaw($yExpr)
+            ->orderByDesc('y')
+            ->get();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'years' => $rows,
+                'filters' => $filters,
+            ]);
+        }
+
+        return view('calls.report-yearly', [
+            'yearlyRows' => $rows,
+            'filters' => $filters,
+            'users' => User::query()->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    private function yearMonthGroupSql(): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%Y-%m', report_date)",
+            default => "DATE_FORMAT(report_date, '%Y-%m')",
+        };
+    }
+
+    private function calendarYearGroupSql(): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "CAST(strftime('%Y', report_date) AS INTEGER)",
+            default => 'YEAR(report_date)',
+        };
     }
 }

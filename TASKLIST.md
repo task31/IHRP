@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T016, T017)_
+_Last updated: 2026-03-24 (T020)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -46,9 +46,9 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T015** — Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026") instead of raw dates. **Done 2026-03-24:** `App\Support\PayPeriodFormatter`; index table + view modal (`pay_period_label` JSON); import wizard preview; audit + duplicate-skip strings; `PayPeriodFormatterTest`.
 - [x] **T016** — Timesheets: allow editing individual entries after import. **Done 2026-03-24:** `PATCH /timesheets/{id}/hours` (admin); recomputes OT/margins via `OvertimeCalculator` using **stored snapshots** only; replaces `timesheet_daily_hours`; audit `TIMESHEET_HOURS_EDIT`; blocked when `invoice_id` set; admin edit UI in timesheet **View** modal; `TimesheetHoursUpdateTest`.
 - [x] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days). **Done 2026-03-24:** `App\Support\BiweeklyPayPeriod` (anchor Monday `2020-01-06`, 14-day periods); `timesheets:generate-template` sets F6/F7 + column A row dates for both weeks; committed refreshed `storage/app/templates/timesheet_template.xlsx`; `BiweeklyPayPeriodTest`.
-- [ ] **T018** — Invoices: optimize PDF preview load time
+- [x] **T018** — Invoices: optimize PDF preview load time. **Done 2026-03-24:** `preview` + `export` stream existing `storage/app/{pdf_path}` when present (skip DomPDF); path validated (`invoices/` only, no `..`); `updatePo` calls `persistInvoicePdf` so PO edits refresh stored file; modal **Loading PDF…** + `closePreview`; `InvoicePreviewTest`; **136 tests** pass.
 - [x] **T019** — Reports: format billed/cost columns as `$2,565.00` (currently `2565.0000`). **Done 2026-03-24:** `App\Support\ReportMoney` + monthly/year-end PDF blades (Billed/Cost cells + readable headers); CSV/JSON unchanged for tooling; `ReportMoneyTest`.
-- [ ] **T020** — Calls: add monthly + yearly aggregate reporting views
+- [x] **T020** — Calls: add monthly + yearly aggregate reporting views. **Done 2026-03-24:** `GET /calls/report/monthly` + `GET /calls/report/yearly` (admin); SQLite/MySQL date grouping; monthly = 12 rows (zeros for empty months) with year + optional `user_id`; yearly = all calendar years desc; tab nav on employee/monthly/yearly views; JSON via `Accept: application/json`; **Admin summaries** link on `/calls`; tests in `DailyCallReportControllerTest`; **141 tests** pass.
 - [ ] **T021** — Clients: consider hiding `po_number` field in client modal once all placements have PO numbers assigned
 
 ---

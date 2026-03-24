@@ -187,19 +187,26 @@ class InvoiceController extends Controller
             return $inv->fresh(['lineItems', 'consultant', 'client', 'timesheet']);
         });
 
-        $invoice->load(['lineItems', 'consultant', 'client', 'timesheet']);
-        $pdf = (new PdfService)->generateInvoice($invoice);
-        $relPath = 'invoices/'.$invoice->invoice_number.'.pdf';
-        Storage::disk('local')->put($relPath, $pdf);
-        $invoice->update(['pdf_path' => $relPath]);
+        $this->persistInvoicePdf($invoice);
 
         return response()->json($invoice->fresh(['lineItems', 'consultant', 'client', 'timesheet']));
     }
 
-    public function preview(string $id): Response
+    public function preview(string $id): BinaryFileResponse|Response
     {
         $this->authorize('account_manager');
         $invoice = Invoice::query()->with(['lineItems', 'consultant', 'client', 'timesheet'])->findOrFail($id);
+
+        $absolute = $this->resolveStoredInvoicePdfPath($invoice);
+        if ($absolute !== null) {
+            $safeName = preg_replace('/[^A-Za-z0-9._-]+/', '_', $invoice->invoice_number).'.pdf';
+
+            return response()->file($absolute, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.$safeName.'"',
+            ]);
+        }
+
         $pdf = (new PdfService)->generateInvoice($invoice);
 
         return response($pdf, 200)->header('Content-Type', 'application/pdf');
@@ -208,8 +215,18 @@ class InvoiceController extends Controller
     public function export(string $id): BinaryFileResponse
     {
         $this->authorize('account_manager');
-        $invoice = Invoice::query()->findOrFail($id);
-        $pdf = (new PdfService)->generateInvoice($invoice->load(['lineItems', 'consultant', 'client', 'timesheet']));
+        $invoice = Invoice::query()->with(['lineItems', 'consultant', 'client', 'timesheet'])->findOrFail($id);
+
+        $absolute = $this->resolveStoredInvoicePdfPath($invoice);
+        if ($absolute !== null) {
+            return response()->download(
+                $absolute,
+                'invoice_'.$invoice->id.'.pdf',
+                ['Content-Type' => 'application/pdf']
+            );
+        }
+
+        $pdf = (new PdfService)->generateInvoice($invoice);
         $tmp = tempnam(sys_get_temp_dir(), 'inv');
         file_put_contents($tmp, $pdf);
 
@@ -244,6 +261,9 @@ class InvoiceController extends Controller
         $old = $invoice->po_number;
         $invoice->update(['po_number' => $data['poNumber']]);
         AppService::auditLog('invoices', (int) $invoice->id, 'UPDATE_PO', ['po_number' => $old], ['po_number' => $data['poNumber']]);
+
+        $invoice->refresh();
+        $this->persistInvoicePdf($invoice);
 
         return response()->json(['ok' => true]);
     }
@@ -295,5 +315,35 @@ class InvoiceController extends Controller
     public function destroy(string $id): JsonResponse
     {
         return response()->json(['error' => 'Not implemented'], 405);
+    }
+
+    private function persistInvoicePdf(Invoice $invoice): void
+    {
+        $invoice->load(['lineItems', 'consultant', 'client', 'timesheet']);
+        $pdf = (new PdfService)->generateInvoice($invoice);
+        $relPath = 'invoices/'.$invoice->invoice_number.'.pdf';
+        Storage::disk('local')->put($relPath, $pdf);
+        $invoice->update(['pdf_path' => $relPath]);
+    }
+
+    private function resolveStoredInvoicePdfPath(Invoice $invoice): ?string
+    {
+        $rel = $invoice->pdf_path;
+        if (! is_string($rel) || $rel === '') {
+            return null;
+        }
+        $rel = str_replace('\\', '/', $rel);
+        if (str_contains($rel, '..')) {
+            return null;
+        }
+        if (! str_starts_with($rel, 'invoices/')) {
+            return null;
+        }
+        $disk = Storage::disk('local');
+        if (! $disk->exists($rel)) {
+            return null;
+        }
+
+        return $disk->path($rel);
     }
 }
