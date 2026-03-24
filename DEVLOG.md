@@ -1888,3 +1888,20 @@ These are two separate things — normal setup. We only need to add one line to 
 **Deploy:** run migration `2026_03_25_180000_create_email_inbox_tables`; configure Azure / `INBOUND_MAILBOX_UPN`; `composer install` for new package.
 
 **Files (representative):** `web/database/migrations/2026_03_25_180000_create_email_inbox_tables.php`, `web/app/Http/Controllers/EmailInboxController.php`, `web/app/Services/*Inbound*`, `web/app/Services/EmailInboxAttachmentApplyService.php`, `web/resources/views/admin/partials/email-inbox.blade.php`, `web/routes/web.php`, `web/tests/Feature/EmailInbox*.php`, `TASKLIST.md`, `references/email-inbox-feature-plan.md`.
+
+---
+
+### 🔨 [BUILD — Cursor] — Consultant MSA / contract file + inbox apply _(2026-03-26)_
+
+**Goal:** Store client–agency **master service agreement (contract)** per consultant (PDF); **Contract** action left of **W-9** on Consultants; apply PDF from **email inbox** like W-9.
+
+**Done:**
+- Migration `2026_03_26_120000_add_contract_file_to_consultants_table`: `contract_file_path`, `contract_on_file`; backfill onboarding `msa_contract` for existing consultants; `msa_contract` added to `ONBOARDING_ITEMS` for new consultants.
+- `ConsultantController`: `contractUpload` / `contractPath` (AM+admin view) / `contractDelete`; files under `uploads/contracts/consultant_{id}.pdf`.
+- Routes `consultants/{consultant}/contract` (POST/GET/DELETE).
+- `EmailInboxAttachmentApplyService::applyContract` + `POST admin/inbox/attachments/.../apply-contract`; inbox JSON `can_apply_contract` / `apply_contract_url`; drawer button **Apply as contract (MSA)**.
+- `consultants/index.blade.php`: Contract modal + onboarding label/help; progress fallback denominator 8.
+
+**156 tests, 416 assertions, 0 failures** (at commit time).
+
+**Deploy:** run migration `2026_03_26_120000_add_contract_file_to_consultants_table`; preserve `storage/app/uploads/contracts/` like other uploads.

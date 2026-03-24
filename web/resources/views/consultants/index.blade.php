@@ -10,6 +10,7 @@
 
     $onboardingLabels = [
         'w9' => 'W-9 on file',
+        'msa_contract' => 'MSA / contract on file',
         'pay_rate_confirmed' => 'Pay rate confirmed',
         'bill_rate_confirmed' => 'Bill rate confirmed',
         'client_assigned' => 'Client assigned',
@@ -239,7 +240,7 @@
                             <td class="px-3 py-2">
                                 @php
                                     $done = (int) ($c->onboarding_complete ?? 0);
-                                    $tot = max(1, (int) ($c->onboarding_total ?? 7));
+                                    $tot = max(1, (int) ($c->onboarding_total ?? 8));
                                     $rowPct = min(100, ($done / $tot) * 100);
                                     $rowComplete = $done >= $tot;
                                 @endphp
@@ -264,6 +265,13 @@
                             <td class="px-3 py-2 text-right whitespace-nowrap">
                                 @can('admin')
                                     <button type="button" class="text-xs text-indigo-600 hover:underline" @click="openEdit({{ (int) $c->id }})">Edit</button>
+                                    <button
+                                        type="button"
+                                        class="ml-1 text-xs text-slate-600 hover:underline"
+                                        @click="openContract({{ (int) $c->id }}, {{ ($c->contract_on_file ?? false) ? 'true' : 'false' }})"
+                                    >
+                                        Contract
+                                    </button>
                                     <button
                                         type="button"
                                         class="ml-1 text-xs text-gray-600 hover:underline"
@@ -368,7 +376,7 @@
         >
             <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
                 <h3 class="text-lg font-semibold">Onboarding checklist</h3>
-                <p class="mt-1 text-xs text-gray-500" x-show="!canEditOnboarding">View only — contact an admin to update checklist items or file the W-9.</p>
+                <p class="mt-1 text-xs text-gray-500" x-show="!canEditOnboarding">View only — contact an admin to update checklist items or upload the W-9 / contract.</p>
                 <div class="mt-3 h-2 w-full rounded-full bg-gray-100">
                     <div class="h-2 rounded-full bg-indigo-600 transition-all" :style="'width:' + onboardingProgress() + '%'"></div>
                 </div>
@@ -396,9 +404,42 @@
                     </template>
                 </ul>
                 @can('admin')
-                    <p class="mt-3 text-xs text-gray-500">W-9 file: use <strong>W-9</strong> in the row Actions menu (marks this checklist item when uploaded).</p>
+                    <p class="mt-3 text-xs text-gray-500">W-9 and client–agency contract (MSA): use <strong>Contract</strong> or <strong>W-9</strong> in the row Actions menu (checklist updates when uploaded).</p>
                 @endcan
                 <button type="button" class="mt-4 text-sm text-gray-600 hover:underline" @click="showOnboardingModal = false">Close</button>
+            </div>
+        </div>
+
+        {{-- Contract (MSA) --}}
+        <div
+            x-show="showContractModal"
+            x-cloak
+            class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+            @keydown.escape.window="showContractModal = false"
+        >
+            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+                <h3 class="text-lg font-semibold">Contract (MSA)</h3>
+                <p class="mt-1 text-xs text-gray-500">Client–agency master service agreement for this consultant. PDF only, max 10MB.</p>
+                <a
+                    :href="contractConsultantId ? `/consultants/${contractConsultantId}/contract` : '#'"
+                    target="_blank"
+                    rel="noopener"
+                    class="mt-3 inline-block text-sm text-indigo-600 hover:underline"
+                    x-show="contractConsultantId && contractHasFile"
+                >View current contract</a>
+                <div class="mt-4 space-y-3">
+                    <input type="file" x-ref="contractInput" accept=".pdf,application/pdf" class="block w-full text-sm" />
+                    <div class="flex justify-end gap-2">
+                        <button type="button" class="text-sm text-gray-600" @click="showContractModal = false">Cancel</button>
+                        <button
+                            type="button"
+                            class="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                            :disabled="contractUploading"
+                            @click="uploadContract()"
+                            x-text="contractUploading ? 'Uploading…' : 'Upload'"
+                        ></button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -528,11 +569,15 @@
                 canEditOnboarding: !!canEditOnboarding,
                 showFormModal: false,
                 showOnboardingModal: false,
+                showContractModal: false,
                 showW9Modal: false,
                 isEdit: false,
                 saving: false,
                 onboardingItems: [],
                 onboardingConsultantId: null,
+                contractConsultantId: null,
+                contractHasFile: false,
+                contractUploading: false,
                 w9ConsultantId: null,
                 w9HasFile: false,
                 w9Uploading: false,
@@ -663,6 +708,43 @@
                         row.completed = next;
                     } else {
                         window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Could not update', type: 'error' } }));
+                    }
+                },
+                openContract(id, hasFile) {
+                    this.contractConsultantId = id;
+                    this.contractHasFile = !!hasFile;
+                    this.showContractModal = true;
+                    this.$nextTick(() => {
+                        if (this.$refs.contractInput) this.$refs.contractInput.value = '';
+                    });
+                },
+                async uploadContract() {
+                    const file = this.$refs.contractInput?.files?.[0];
+                    if (!file || !this.contractConsultantId) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Choose a PDF file', type: 'error' } }));
+                        return;
+                    }
+                    this.contractUploading = true;
+                    const fd = new FormData();
+                    fd.append('contract', file);
+                    const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                    const res = await fetch(`/consultants/${this.contractConsultantId}/contract`, {
+                        method: 'POST',
+                        headers: { Accept: 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest' },
+                        body: fd,
+                    });
+                    this.contractUploading = false;
+                    if (res.ok) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Contract uploaded' } }));
+                        this.showContractModal = false;
+                        window.location.reload();
+                    } else {
+                        let msg = 'Upload failed';
+                        try {
+                            const e = await res.json();
+                            if (e.message) msg = e.message;
+                        } catch (_) {}
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: msg, type: 'error' } }));
                     }
                 },
                 openW9(id, hasFile) {

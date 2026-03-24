@@ -85,6 +85,51 @@ final class EmailInboxAttachmentApplyService
         ]);
     }
 
+    public function applyContract(EmailInboxAttachment $attachment, int $consultantId): void
+    {
+        if (! self::attachmentIsPdf($attachment)) {
+            throw ValidationException::withMessages([
+                'attachment' => ['This attachment is not a PDF.'],
+            ]);
+        }
+
+        $disk = Storage::disk('local');
+        if (! $disk->exists($attachment->storage_path)) {
+            throw ValidationException::withMessages([
+                'attachment' => ['Attachment file is missing from storage.'],
+            ]);
+        }
+
+        $consultant = Consultant::query()->find($consultantId);
+        if (! $consultant) {
+            throw ValidationException::withMessages([
+                'consultant_id' => ['Consultant not found.'],
+            ]);
+        }
+
+        $srcFull = $disk->path($attachment->storage_path);
+        $name = "consultant_{$consultantId}.pdf";
+
+        if ($consultant->contract_file_path) {
+            $disk->delete('uploads/contracts/'.$consultant->contract_file_path);
+        }
+
+        $disk->put('uploads/contracts/'.$name, file_get_contents($srcFull) ?: '');
+
+        $consultant->update(['contract_file_path' => $name, 'contract_on_file' => true]);
+
+        ConsultantOnboardingItem::query()->updateOrCreate(
+            ['consultant_id' => $consultantId, 'item_key' => 'msa_contract'],
+            ['completed' => true]
+        );
+
+        AppService::auditLog('consultants', $consultantId, 'UPDATE', [], [
+            'contract_file_path' => $name,
+            'source' => 'email_inbox',
+            'email_inbox_attachment_id' => $attachment->id,
+        ]);
+    }
+
     /**
      * @return array{saved: int, overwrote: int, errors: list<string>}
      */

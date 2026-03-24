@@ -17,6 +17,7 @@ class ConsultantController extends Controller
 {
     private const ONBOARDING_ITEMS = [
         'w9',
+        'msa_contract',
         'pay_rate_confirmed',
         'bill_rate_confirmed',
         'client_assigned',
@@ -274,6 +275,77 @@ class ConsultantController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function contractUpload(Request $request, string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $request->validate(['contract' => ['required', 'file', 'mimes:pdf', 'max:10240']]);
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($consultant->contract_file_path) {
+            Storage::disk('local')->delete('uploads/contracts/'.$consultant->contract_file_path);
+        }
+
+        $name = "consultant_{$id}.pdf";
+        $request->file('contract')->storeAs('uploads/contracts', $name, 'local');
+        $consultant->update(['contract_file_path' => $name, 'contract_on_file' => true]);
+        $this->setOnboardingItem((int) $id, 'msa_contract', true);
+        AppService::auditLog('consultants', (int) $id, 'UPDATE', [], ['contract_file_path' => $name]);
+
+        return response()->json(['ok' => true, 'path' => $name]);
+    }
+
+    public function contractPath(Request $request, string $id): JsonResponse|BinaryFileResponse
+    {
+        $this->authorize('account_manager');
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant || ! $consultant->contract_file_path) {
+            if ($request->expectsJson()) {
+                return response()->json(null);
+            }
+
+            abort(404);
+        }
+        $full = storage_path('app/uploads/contracts/'.$consultant->contract_file_path);
+        if (! is_file($full)) {
+            if ($request->expectsJson()) {
+                return response()->json(['missing' => true]);
+            }
+
+            abort(404);
+        }
+
+        if (! $request->expectsJson()) {
+            return response()->file($full, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.str_replace('"', '', $consultant->contract_file_path).'"',
+            ]);
+        }
+
+        return response()->json(['path' => $full, 'fileName' => $consultant->contract_file_path]);
+    }
+
+    public function contractDelete(string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($consultant->contract_file_path) {
+            Storage::disk('local')->delete('uploads/contracts/'.$consultant->contract_file_path);
+        }
+        $old = $consultant->contract_file_path;
+        $consultant->update(['contract_file_path' => null, 'contract_on_file' => false]);
+        $this->setOnboardingItem((int) $id, 'msa_contract', false);
+        AppService::auditLog('consultants', (int) $id, 'UPDATE', ['contract_file_path' => $old], ['contract_file_path' => null]);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function endDateAlerts(Request $request): JsonResponse
     {
         $this->authorize('account_manager');
@@ -376,6 +448,77 @@ class ConsultantController extends Controller
         $consultant->update(['w9_file_path' => null, 'w9_on_file' => false]);
         $this->setOnboardingItem((int) $id, 'w9', false);
         AppService::auditLog('consultants', (int) $id, 'UPDATE', ['w9_file_path' => $old], ['w9_file_path' => null]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function contractUpload(Request $request, string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $request->validate(['contract' => ['required', 'file', 'mimes:pdf', 'max:10240']]);
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($consultant->contract_file_path) {
+            Storage::disk('local')->delete('uploads/contracts/'.$consultant->contract_file_path);
+        }
+
+        $name = "consultant_{$id}.pdf";
+        $request->file('contract')->storeAs('uploads/contracts', $name, 'local');
+        $consultant->update(['contract_file_path' => $name, 'contract_on_file' => true]);
+        $this->setOnboardingItem((int) $id, 'msa_contract', true);
+        AppService::auditLog('consultants', (int) $id, 'UPDATE', [], ['contract_file_path' => $name]);
+
+        return response()->json(['ok' => true, 'path' => $name]);
+    }
+
+    public function contractPath(Request $request, string $id): JsonResponse|BinaryFileResponse
+    {
+        $this->authorize('account_manager');
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant || ! $consultant->contract_file_path) {
+            if ($request->expectsJson()) {
+                return response()->json(null);
+            }
+
+            abort(404);
+        }
+        $full = storage_path('app/uploads/contracts/'.$consultant->contract_file_path);
+        if (! is_file($full)) {
+            if ($request->expectsJson()) {
+                return response()->json(['missing' => true]);
+            }
+
+            abort(404);
+        }
+
+        if (! $request->expectsJson()) {
+            return response()->file($full, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="'.str_replace('"', '', $consultant->contract_file_path).'"',
+            ]);
+        }
+
+        return response()->json(['path' => $full, 'fileName' => $consultant->contract_file_path]);
+    }
+
+    public function contractDelete(string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $consultant = Consultant::query()->find($id);
+        if (! $consultant) {
+            return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if ($consultant->contract_file_path) {
+            Storage::disk('local')->delete('uploads/contracts/'.$consultant->contract_file_path);
+        }
+        $old = $consultant->contract_file_path;
+        $consultant->update(['contract_file_path' => null, 'contract_on_file' => false]);
+        $this->setOnboardingItem((int) $id, 'msa_contract', false);
+        AppService::auditLog('consultants', (int) $id, 'UPDATE', ['contract_file_path' => $old], ['contract_file_path' => null]);
 
         return response()->json(['ok' => true]);
     }

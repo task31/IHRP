@@ -77,6 +77,8 @@ class EmailInboxTest extends TestCase
         $response->assertJsonPath('body_plain', 'See attached');
         $response->assertJsonPath('attachments.0.filename', 'doc.pdf');
         $response->assertJsonPath('attachments.0.download_url', route('admin.inbox.attachments.download', $att));
+        $response->assertJsonPath('attachments.0.can_apply_contract', true);
+        $response->assertJsonPath('attachments.0.apply_contract_url', route('admin.inbox.attachments.apply-contract', $att));
 
         $this->assertDatabaseHas('email_inbox_messages', [
             'id' => $msg->id,

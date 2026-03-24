@@ -263,6 +263,16 @@
                                             </button>
                                             <button
                                                 type="button"
+                                                class="rounded bg-slate-200 px-2 py-1 text-xs font-medium text-slate-900 hover:bg-slate-300 disabled:opacity-50"
+                                                :disabled="!att.can_apply_contract || applyBusy !== null"
+                                                x-show="att.can_apply_contract"
+                                                @click="applyContract(att)"
+                                            >
+                                                <span x-show="applyBusy !== att.id">Apply as contract (MSA)</span>
+                                                <span x-show="applyBusy === att.id">…</span>
+                                            </button>
+                                            <button
+                                                type="button"
                                                 class="rounded bg-indigo-100 px-2 py-1 text-xs font-medium text-indigo-900 hover:bg-indigo-200 disabled:opacity-50"
                                                 :disabled="!att.can_apply_timesheet || applyBusy !== null"
                                                 x-show="att.can_apply_timesheet"
@@ -341,6 +351,40 @@
                         return;
                     }
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message || 'W-9 saved' } }));
+                } finally {
+                    this.applyBusy = null;
+                }
+            },
+            async applyContract(att) {
+                if (!this.selectedConsultantId) {
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Select a consultant first.', type: 'error' } }));
+
+                    return;
+                }
+                if (!att.can_apply_contract) {
+                    return;
+                }
+                this.applyBusy = att.id;
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                try {
+                    const res = await fetch(att.apply_contract_url, {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ consultant_id: Number(this.selectedConsultantId) }),
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: this.parseErrorMessage(data), type: 'error' } }));
+
+                        return;
+                    }
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message || 'Contract saved' } }));
                 } finally {
                     this.applyBusy = null;
                 }

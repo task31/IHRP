@@ -19,6 +19,8 @@ class Consultant extends Model
         'project_end_date',
         'w9_on_file',
         'w9_file_path',
+        'contract_on_file',
+        'contract_file_path',
         'active',
     ];
 
@@ -32,6 +34,7 @@ class Consultant extends Model
             'bill_rate' => 'decimal:4',
             'gross_margin_per_hour' => 'decimal:4',
             'w9_on_file' => 'boolean',
+            'contract_on_file' => 'boolean',
             'active' => 'boolean',
             'project_start_date' => 'date',
             'project_end_date' => 'date',

@@ -75,6 +75,42 @@ class EmailInboxApplyTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_apply_contract_copies_pdf_to_consultant(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $client = Client::query()->create(['name' => 'Acme', 'active' => true]);
+        $consultant = Consultant::query()->create([
+            'full_name' => 'Contract User',
+            'pay_rate' => 50,
+            'bill_rate' => 100,
+            'state' => 'TX',
+            'industry_type' => 'general',
+            'client_id' => $client->id,
+            'active' => true,
+        ]);
+
+        $msg = $this->makeMessage();
+        $pdf = '%PDF-1.4 inbox msa';
+        Storage::disk('local')->put('inbox/msa.pdf', $pdf);
+        $att = EmailInboxAttachment::query()->create([
+            'email_inbox_message_id' => $msg->id,
+            'graph_attachment_id' => null,
+            'filename' => 'msa.pdf',
+            'content_type' => 'application/pdf',
+            'size_bytes' => strlen($pdf),
+            'storage_path' => 'inbox/msa.pdf',
+        ]);
+
+        $this->actingAs($admin)->postJson(route('admin.inbox.attachments.apply-contract', $att), [
+            'consultant_id' => $consultant->id,
+        ])->assertOk()->assertJsonPath('ok', true);
+
+        $consultant->refresh();
+        $this->assertSame('consultant_'.$consultant->id.'.pdf', $consultant->contract_file_path);
+        $this->assertTrue($consultant->contract_on_file);
+        $this->assertSame($pdf, Storage::disk('local')->get('uploads/contracts/consultant_'.$consultant->id.'.pdf'));
+    }
+
     public function test_apply_w9_copies_pdf_to_consultant(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);

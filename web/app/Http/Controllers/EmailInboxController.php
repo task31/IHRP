@@ -35,8 +35,10 @@ class EmailInboxController extends Controller
             'size_bytes' => $a->size_bytes,
             'download_url' => route('admin.inbox.attachments.download', $a),
             'can_apply_w9' => EmailInboxAttachmentApplyService::attachmentIsPdf($a),
+            'can_apply_contract' => EmailInboxAttachmentApplyService::attachmentIsPdf($a),
             'can_apply_timesheet' => EmailInboxAttachmentApplyService::attachmentIsTimesheetable($a),
             'apply_w9_url' => route('admin.inbox.attachments.apply-w9', $a),
+            'apply_contract_url' => route('admin.inbox.attachments.apply-contract', $a),
             'apply_timesheet_url' => route('admin.inbox.attachments.apply-timesheet', $a),
         ]);
 
@@ -84,6 +86,25 @@ class EmailInboxController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'W-9 applied to consultant.',
+        ]);
+    }
+
+    public function applyContract(Request $request, EmailInboxAttachment $email_inbox_attachment): JsonResponse
+    {
+        $this->authorize('admin');
+
+        $data = $request->validate([
+            'consultant_id' => ['required', 'integer', 'exists:consultants,id'],
+        ]);
+
+        app(EmailInboxAttachmentApplyService::class)->applyContract(
+            $email_inbox_attachment,
+            (int) $data['consultant_id']
+        );
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Contract (MSA) applied to consultant.',
         ]);
     }
 

@@ -54,6 +54,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
         ->name('admin.inbox.message.json');
     Route::post('admin/inbox/attachments/{email_inbox_attachment}/apply-w9', [EmailInboxController::class, 'applyW9'])
         ->name('admin.inbox.attachments.apply-w9');
+    Route::post('admin/inbox/attachments/{email_inbox_attachment}/apply-contract', [EmailInboxController::class, 'applyContract'])
+        ->name('admin.inbox.attachments.apply-contract');
     Route::post('admin/inbox/attachments/{email_inbox_attachment}/apply-timesheet', [EmailInboxController::class, 'applyTimesheet'])
         ->name('admin.inbox.attachments.apply-timesheet');
     Route::get('admin/inbox/attachments/{email_inbox_attachment}/download', [EmailInboxController::class, 'downloadAttachment'])
@@ -93,6 +95,9 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::post('consultants/{consultant}/w9', [ConsultantController::class, 'w9Upload'])->name('consultants.w9.upload');
     Route::get('consultants/{consultant}/w9', [ConsultantController::class, 'w9Path'])->name('consultants.w9.show');
     Route::delete('consultants/{consultant}/w9', [ConsultantController::class, 'w9Delete'])->name('consultants.w9.destroy');
+    Route::post('consultants/{consultant}/contract', [ConsultantController::class, 'contractUpload'])->name('consultants.contract.upload');
+    Route::get('consultants/{consultant}/contract', [ConsultantController::class, 'contractPath'])->name('consultants.contract.show');
+    Route::delete('consultants/{consultant}/contract', [ConsultantController::class, 'contractDelete'])->name('consultants.contract.destroy');
     Route::post('consultants/{consultant}/deactivate', [ConsultantController::class, 'deactivate'])->name('consultants.deactivate');
     Route::patch('consultants/{consultant}/field', [ConsultantController::class, 'patchField'])->name('consultants.patch-field');
     Route::resource('consultants', ConsultantController::class)->except(['create', 'edit']);
