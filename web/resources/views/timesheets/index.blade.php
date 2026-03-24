@@ -134,9 +134,7 @@
                     @forelse ($timesheets as $t)
                         <tr>
                             <td class="px-4 py-2 text-gray-700">
-                                {{ \Illuminate\Support\Carbon::parse($t['pay_period_start'])->format('M j') }}
-                                –
-                                {{ \Illuminate\Support\Carbon::parse($t['pay_period_end'])->format('M j, Y') }}
+                                {{ $t['pay_period_label'] ?? '' }}
                             </td>
                             <td class="px-4 py-2">{{ $t['consultant_name'] ?? '—' }}</td>
                             <td class="px-4 py-2 text-gray-600">{{ $t['client_name'] ?? '—' }}</td>
@@ -204,7 +202,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Pay period</p>
-                                    <p class="font-medium" x-text="viewData.pay_period_start + ' → ' + viewData.pay_period_end"></p>
+                                    <p class="font-medium" x-text="viewData.pay_period_label || (viewData.pay_period_start + ' – ' + viewData.pay_period_end)"></p>
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">State</p>

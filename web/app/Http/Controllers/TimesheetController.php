@@ -9,6 +9,7 @@ use App\Models\TimesheetDailyHour;
 use App\Services\AppService;
 use App\Services\OvertimeCalculator;
 use App\Services\TimesheetParseService;
+use App\Support\PayPeriodFormatter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +41,7 @@ class TimesheetController extends Controller
             $a = $t->toArray();
             $a['consultant_name'] = $t->consultant?->full_name;
             $a['client_name'] = $t->client?->name;
+            $a['pay_period_label'] = PayPeriodFormatter::formatRange($t->pay_period_start, $t->pay_period_end);
 
             return $a;
         });
@@ -72,6 +74,7 @@ class TimesheetController extends Controller
         return response()->json(array_merge($t->toArray(), [
             'consultant_name' => $t->consultant?->full_name,
             'client_name'     => $t->client?->name,
+            'pay_period_label' => PayPeriodFormatter::formatRange($t->pay_period_start, $t->pay_period_end),
             'dailyHours'      => $daily,
         ]));
     }
@@ -326,13 +329,16 @@ class TimesheetController extends Controller
                 $this->insertDailyHours((int) $ts->id, $week1Hours, $week2Hours);
                 AppService::auditLog('timesheets', (int) $ts->id, 'TIMESHEET_IMPORT', [], [
                     'consultant' => $consultant->full_name,
-                    'period' => $row['payPeriodStart'].'–'.$row['payPeriodEnd'],
+                    'period' => PayPeriodFormatter::formatRange($row['payPeriodStart'], $row['payPeriodEnd'])
+                        ?: ($row['payPeriodStart'].' – '.$row['payPeriodEnd']),
                 ]);
 
                 return ['saved' => 1, 'overwrote' => 0];
             }
 
-            $errors[] = "Duplicate skipped: {$consultant->full_name} {$row['payPeriodStart']}–{$row['payPeriodEnd']}";
+            $periodLabel = PayPeriodFormatter::formatRange($row['payPeriodStart'], $row['payPeriodEnd'])
+                ?: "{$row['payPeriodStart']} – {$row['payPeriodEnd']}";
+            $errors[] = "Duplicate skipped: {$consultant->full_name} {$periodLabel}";
 
             return ['saved' => 0, 'overwrote' => 0];
         });

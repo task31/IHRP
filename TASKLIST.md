@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T014)_
+_Last updated: 2026-03-24 (T015)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -43,7 +43,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 - [x] **T013** — Clients page: show which AM manages each client. **Done 2026-03-24:** nullable `clients.account_manager_id` → `users` (`nullOnDelete`); `Client::accountManager()`; admin create/edit modal **Account manager** dropdown (active AM users); table column **Account manager**; JSON index includes `accountManager`; validation `exists` + `role=account_manager`; audit `MUTABLE` includes `account_manager_id`; migration `2026_03_24_120000_add_account_manager_id_to_clients_table`; tests `ClientControllerTest` (**121 tests**).
 - [x] **T014** — Consultants page: merge onboarding 3/7 badge into unified checklist flow. **Done 2026-03-24:** removed duplicate **W-9** pills next to name (W-9 stays in checklist + Actions **W-9** upload); **Checklist** column is a single **Progress** control (bar + `n/7`) that opens the same modal; removed redundant **Checklist** action link; modal **Mark/Done** toggles **admin-only**, AMs see read-only **Pending/Done** + note; admin hint for W-9 upload.
-- [ ] **T015** — Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026") instead of raw dates
+- [x] **T015** — Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026") instead of raw dates. **Done 2026-03-24:** `App\Support\PayPeriodFormatter`; index table + view modal (`pay_period_label` JSON); import wizard preview; audit + duplicate-skip strings; `PayPeriodFormatterTest`.
 - [ ] **T016** — Timesheets: allow editing individual entries after import
 - [ ] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days)
 - [ ] **T018** — Invoices: optimize PDF preview load time

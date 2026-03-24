@@ -80,7 +80,7 @@
                                 @endphp
                                 <tr class="border-t border-gray-100" wire:key="br-{{ $i }}">
                                     <td class="px-2 py-1">{{ $c?->full_name ?? '—' }}</td>
-                                    <td class="px-2 py-1">{{ $br['payPeriodStart'] ?? '' }} – {{ $br['payPeriodEnd'] ?? '' }}</td>
+                                    <td class="px-2 py-1">{{ \App\Support\PayPeriodFormatter::formatRange($br['payPeriodStart'] ?? null, $br['payPeriodEnd'] ?? null) }}</td>
                                     <td class="px-2 py-1">{{ number_format($reg, 2) }}</td>
                                 </tr>
                             @endforeach
