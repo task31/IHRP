@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T020)_
+_Last updated: 2026-03-25 (T026 implemented)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -57,6 +57,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 - [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step). **Next:** run one full `python deploy.py --step deploy` after a trivial commit to confirm `.cpanel.yml` tasks on server; optional CI for push-triggered deploy.
 - [x] **T023** — Enable `pdo_sqlite` in local PHP so full PHPUnit suite runs locally without MySQL (ties to T012). **Done 2026-03-24** — same closure as T012.
+- [x] **T026** — Admin **email inbox**: Microsoft Graph sync (`inbound-mail:sync`, schedule every 5 min), `email_inbox_*` tables, `storage/app/uploads/inbound/{id}/`; **UI** on `/admin/users` below User Directory + sidebar **Email inbox** → `#email-inbox`; drawer (✕ + backdrop close); JSON `GET admin/inbox/messages/{id}/json`, `EmailHtmlSanitizer` (HTMLPurifier); env `AZURE_*`, `INBOUND_MAILBOX_UPN` in `.env.example`; tests `EmailInboxTest`; **145 tests** pass. **Ops:** run `php artisan migrate`, set Graph env + app registration, cron `schedule:run`. **Plan:** `references/email-inbox-feature-plan.md`.
 
 ---
 

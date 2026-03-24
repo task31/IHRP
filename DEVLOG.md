@@ -1869,3 +1869,22 @@ These are two separate things — normal setup. We only need to add one line to 
 **Migrations:** Raf ran **`python deploy.py --step run-migrations`** from local repo (`C:\Users\zobel\Claude-Workspace\projects\IHRP`), confirmed **`yes`** at the production prompt. **`2026_03_24_120000_add_account_manager_id_to_clients_table`** applied successfully on production (~157 ms). **`clients.account_manager_id`** is live (nullable FK to `users`, `nullOnDelete`).
 
 **In production from this wave:** T011 calls history (period filter + pagination); T012/T023 local SQLite test bootstrap (dev-only); T013 clients **Account manager** UI + API; T014 consultants unified **Checklist** progress + modal behavior.
+
+---
+
+### 🔨 [BUILD — Cursor] — Email inbox (T026) + inbox UX + apply attachments _(2026-03-25)_
+
+**Goal:** Ingest-mailbox sync (Microsoft Graph), admin email inbox on **Admin → Users**, HTML-safe body preview, mark read on open, search, demo seed data; apply PDF as consultant **W-9** or bi-weekly **timesheet** from attachment.
+
+**Done:**
+- DB: `email_inbox_messages`, `email_inbox_attachments`; models; `InboundMailSyncService` + `MicrosoftGraphService`; `inbound-mail:sync` + schedule every 5 min; `config/inbound_mail.php` + `.env.example` keys; HTML sanitizer (ezyang/htmlpurifier).
+- `EmailInboxController`: message JSON, download, `POST …/apply-w9`, `POST …/apply-timesheet`; `EmailInboxAttachmentApplyService` (W-9 → `uploads/w9s`, timesheet → official template only → `TimesheetController::saveBatch`).
+- Admin users index: inbox table + partial; `inbox_search` filter; `#email-inbox` scroll helper; `Schema::hasTable` guard; removed redundant sidebar **Email inbox** link (inbox remains on Admin Users page).
+- Local-only `EmailInboxDemoSeeder` + `DatabaseSeeder` call when `APP_ENV=local`.
+- Tests: `EmailInboxTest`, `AdminUsersInboxPageTest`, `EmailInboxApplyTest` (+ existing suite).
+
+**155 tests, 409 assertions, 0 failures** (at commit time).
+
+**Deploy:** run migration `2026_03_25_180000_create_email_inbox_tables`; configure Azure / `INBOUND_MAILBOX_UPN`; `composer install` for new package.
+
+**Files (representative):** `web/database/migrations/2026_03_25_180000_create_email_inbox_tables.php`, `web/app/Http/Controllers/EmailInboxController.php`, `web/app/Services/*Inbound*`, `web/app/Services/EmailInboxAttachmentApplyService.php`, `web/resources/views/admin/partials/email-inbox.blade.php`, `web/routes/web.php`, `web/tests/Feature/EmailInbox*.php`, `TASKLIST.md`, `references/email-inbox-feature-plan.md`.

@@ -25,5 +25,9 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
             'active' => true,
         ]);
+
+        if (app()->environment('local')) {
+            $this->call(EmailInboxDemoSeeder::class);
+        }
     }
 }

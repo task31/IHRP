@@ -8,6 +8,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ConsultantController;
 use App\Http\Controllers\DailyCallReportController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EmailInboxController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\InvoiceSequenceController;
 use App\Http\Controllers\LedgerController;
@@ -48,6 +49,15 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::resource('admin/users', AdminUserController::class)->names('admin.users');
+
+    Route::get('admin/inbox/messages/{email_inbox_message}/json', [EmailInboxController::class, 'showJson'])
+        ->name('admin.inbox.message.json');
+    Route::post('admin/inbox/attachments/{email_inbox_attachment}/apply-w9', [EmailInboxController::class, 'applyW9'])
+        ->name('admin.inbox.attachments.apply-w9');
+    Route::post('admin/inbox/attachments/{email_inbox_attachment}/apply-timesheet', [EmailInboxController::class, 'applyTimesheet'])
+        ->name('admin.inbox.attachments.apply-timesheet');
+    Route::get('admin/inbox/attachments/{email_inbox_attachment}/download', [EmailInboxController::class, 'downloadAttachment'])
+        ->name('admin.inbox.attachments.download');
 
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::patch('settings', [SettingsController::class, 'update'])->name('settings.update');

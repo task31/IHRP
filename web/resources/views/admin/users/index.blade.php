@@ -81,5 +81,27 @@
                 </div>
             </div>
         </div>
+
+        @include('admin.partials.email-inbox', ['inboxMessages' => $inboxMessages])
+
+        {{-- Hash #email-inbox: native scroll is unreliable on same-page navigation; force scroll into view --}}
+        <script>
+            (function () {
+                function scrollToEmailInbox() {
+                    if (location.hash !== '#email-inbox') {
+                        return;
+                    }
+                    var el = document.getElementById('email-inbox');
+                    if (!el) {
+                        return;
+                    }
+                    requestAnimationFrame(function () {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+                document.addEventListener('DOMContentLoaded', scrollToEmailInbox);
+                window.addEventListener('hashchange', scrollToEmailInbox);
+            })();
+        </script>
     </div>
 </x-app-layout>

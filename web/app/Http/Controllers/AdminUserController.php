@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Consultant;
+use App\Models\EmailInboxMessage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminUserController extends Controller
@@ -15,16 +18,44 @@ class AdminUserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         $this->authorize('admin');
 
         $users = User::query()
             ->with('consultant:id,full_name,active')
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
-        return view('admin.users.index', compact('users'));
+        $inboxSearch = trim((string) $request->query('inbox_search', ''));
+
+        $inboxConsultants = Schema::hasTable('consultants')
+            ? Consultant::query()->where('active', true)->orderBy('full_name')->get(['id', 'full_name'])
+            : collect();
+
+        $inboxMessages = Schema::hasTable('email_inbox_messages')
+            ? EmailInboxMessage::query()
+                ->with('attachments')
+                ->latest('received_at')
+                ->when($inboxSearch !== '', function ($q) use ($inboxSearch) {
+                    $term = '%'.addcslashes($inboxSearch, '%_\\').'%';
+                    $q->where(function ($inner) use ($term) {
+                        $inner->where('subject', 'like', $term)
+                            ->orWhere('from_name', 'like', $term)
+                            ->orWhere('from_email', 'like', $term)
+                            ->orWhere('body_preview', 'like', $term)
+                            ->orWhere('body_plain', 'like', $term);
+                    });
+                })
+                ->paginate(12, ['*'], 'inbox_page')
+                ->withQueryString()
+            : new LengthAwarePaginator([], 0, 12, 1, [
+                'path' => $request->url(),
+                'pageName' => 'inbox_page',
+            ]);
+
+        return view('admin.users.index', compact('users', 'inboxMessages', 'inboxSearch', 'inboxConsultants'));
     }
 
     /**
