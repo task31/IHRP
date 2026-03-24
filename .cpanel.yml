@@ -7,3 +7,4 @@ deployment:
     - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan config:cache"
     - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan route:cache"
     - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan view:cache"
+    - "/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan timesheets:generate-template"

@@ -45,22 +45,40 @@ final class TimesheetParseService
     }
 
     /**
+     * Resolve a cell value to an ISO date string.
+     * Accepts either an Excel date serial (float/int) or a formatted date string.
+     */
+    public static function resolveDate(mixed $value): string
+    {
+        if (is_numeric($value) && (float) $value > 1) {
+            return self::serialToISO((float) $value);
+        }
+        if (is_string($value)) {
+            $ts = strtotime($value);
+            if ($ts !== false) {
+                return gmdate('Y-m-d', $ts);
+            }
+        }
+        throw new \InvalidArgumentException("Cannot parse date value: {$value}");
+    }
+
+    /**
      * @param  list<list<mixed>>  $rows
      * @return array{consultantName: string, payPeriodStart: string, payPeriodEnd: string, week1Hours: list<float>, week2Hours: list<float>, totalHours: float}
      */
     public static function parseTemplate(array $rows): array
     {
-        $startSerial = $rows[5][5] ?? null;
-        $endSerial = $rows[6][5] ?? null;
-        if (! is_numeric($startSerial) || ! is_numeric($endSerial)) {
-            throw new \InvalidArgumentException('Invalid date serials in template');
+        $startVal = $rows[5][5] ?? null;
+        $endVal   = $rows[6][5] ?? null;
+        if ($startVal === null || $startVal === '' || $endVal === null || $endVal === '') {
+            throw new \InvalidArgumentException('Missing date values in template (F6/F7)');
         }
 
         $toHours = fn ($val): float => (is_float($val) || is_int($val)) ? (float) $val : 0.0;
 
         $consultantName = trim((string) ($rows[1][1] ?? ''));
-        $payPeriodStart = self::serialToISO((float) $startSerial);
-        $payPeriodEnd = self::serialToISO((float) $endSerial);
+        $payPeriodStart = self::resolveDate($startVal);
+        $payPeriodEnd   = self::resolveDate($endVal);
 
         $week1Hours = [];
         foreach ([9, 10, 11, 12, 13, 14, 15] as $i) {
