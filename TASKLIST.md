@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24_
+_Last updated: 2026-03-24 (T002 verified)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -20,10 +20,10 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 ## 🔴 P0 — Blockers (must close before Phase 5 is done)
 
 - [x] **T001** — Verify Add Placement button fix is live on production (`wire:click.self="cancelForm"` + Alpine scope fix committed). **Verified working (2026-03-24) after layout Livewire script fix + regression test added.**
-- [ ] **T002** — Delete Dimarumba corrupted payroll rows on production DB: `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id=7`
+- [x] **T002** — Delete Dimarumba corrupted payroll rows on production DB: `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id=7`. **Verified 2026-03-24 on production:** `user_id=7` has zero payroll rows; Leonardo Dimarumba is `user_id=4` with 6 valid 2026 `check_date` rows only; **no** `payroll_records` exist with `YEAR(check_date) < 2015` (global `GROUP BY user_id` empty). DELETE executed anyway (0 rows). Original `user_id=7` note was from non-prod / stale mapping.
 - [ ] **T003** — Re-upload all 3 AM Excel files on production (fixes corrupted `am_earnings` values; also populates `spread_per_hour` + `commission_pct` correctly)
 - [ ] **T004** — Enter bill_rates on consultant records in production, then run Recompute Margins (`POST /payroll/recompute-margins`)
-- [ ] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual)
+- [ ] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Current status (2026-03-24): cPanel UAPI auth still failing with 403 Forbidden.**
 - [ ] **T006** — Confirm `ADMIN_PASSWORD` env var is set in production `.env` (seeder uses it; falls back to random if missing)
 - [ ] **T007** — Confirm `php artisan storage:link` has been run on production server
 - [ ] **T008** — Run full production smoke test: admin role (all features) + AM role (placements, calls, payroll) + security checks (SSL, APP_DEBUG=false, no stack traces)
@@ -55,7 +55,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 ## 🔵 P3 — Tech Debt / Infrastructure
 
-- [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step)
+- [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step). **Blocked by cPanel UAPI auth 403 Forbidden as of 2026-03-24.**
 - [ ] **T023** — Enable `pdo_sqlite` in local PHP so full PHPUnit suite runs locally without MySQL (ties to T012)
 
 ---
