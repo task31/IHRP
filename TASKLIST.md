@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T005 UAPI token verified)_
+_Last updated: 2026-03-24 (deploy agent protocol in TASKLIST)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -73,8 +73,9 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 2. Mark it `[ → in progress]` when starting.
 3. Mark it `[x]` when confirmed done (not just coded — verified).
 4. If a task reveals new work, append it as a new `T0XX` item at the bottom of the correct section.
-5. Deploy agent (`ihrp-deploy-expert`) handles all P0 deploy/production items.
-6. Backend agent (`ihrp-backend-expert`) handles all backend/migration/service items.
+5. **Production default path:** after **`git push`** (or when shipping), the **Architect** delegates to the **`ihrp-deploy-expert`** subagent (Cursor **Task** tool) to run **`deploy.py`** / the runbook in **`.cursor/rules/ihrp-deploy.mdc`** — not ad hoc shell from Chat. Migrations still need **explicit Raf confirmation** before `--force`.
+6. Deploy agent (`ihrp-deploy-expert`) owns execution of P0 deploy/production steps; Architect reviews output and DEVLOG.
+7. Backend agent (`ihrp-backend-expert`) handles all backend/migration/service items.
 
 ---
 
