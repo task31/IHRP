@@ -1859,3 +1859,13 @@ These are two separate things — normal setup. We only need to add one line to 
 **121 tests, 308 assertions, 0 failures.**
 
 **Production:** run pending migration for `account_manager_id` when deploying T013.
+
+---
+
+### 🔨 [DEPLOY — Raf] — Production: T011–T014 shipped _(2026-03-24)_
+
+**Code on server:** `master` through **`609f94c`** deployed to Bluehost app root (`public_html/hr/`) via **`deploy.py`** (including **`ssh-deploy`** when cPanel UAPI `VersionControlDeployment/create` failed — `repository_root` argument missing).
+
+**Migrations:** Raf ran **`python deploy.py --step run-migrations`** from local repo (`C:\Users\zobel\Claude-Workspace\projects\IHRP`), confirmed **`yes`** at the production prompt. **`2026_03_24_120000_add_account_manager_id_to_clients_table`** applied successfully on production (~157 ms). **`clients.account_manager_id`** is live (nullable FK to `users`, `nullOnDelete`).
+
+**In production from this wave:** T011 calls history (period filter + pagination); T012/T023 local SQLite test bootstrap (dev-only); T013 clients **Account manager** UI + API; T014 consultants unified **Checklist** progress + modal behavior.
