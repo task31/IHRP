@@ -32,9 +32,6 @@
         </script>
 
         @livewireStyles
-
-        <!-- Alpine.js via CDN (no Vite / Node on Bluehost) -->
-        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </head>
     <body class="font-sans antialiased bg-gray-100">
         <div class="min-h-screen md:flex">
@@ -171,7 +168,7 @@
             </template>
         </div>
 
-        @livewireScriptConfig
+        @livewireScripts
 
         <script>
             function toastManager() {
