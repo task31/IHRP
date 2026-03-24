@@ -5,7 +5,7 @@
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
-AddHandler application/x-httpd-ea-php83 .php
+AddHandler application/x-httpd-ea-php83___lsphp .php
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
