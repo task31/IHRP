@@ -15,19 +15,35 @@
         <p>Fiscal year: {{ $data['year'] }}</p>
     @endif
     @if(isset($data['rows']) && is_array($data['rows']))
+        @php
+            $moneyCols = \App\Support\ReportMoney::moneyColumnKeys();
+            $headers = array_keys($data['rows'][0] ?? []);
+            $headerLabels = [
+                'consultant' => 'Consultant',
+                'client' => 'Client',
+                'billed' => 'Billed',
+                'cost' => 'Cost',
+            ];
+        @endphp
         <table>
             <thead>
                 <tr>
-                    @foreach(array_keys($data['rows'][0] ?? []) as $col)
-                        <th>{{ $col }}</th>
+                    @foreach($headers as $col)
+                        <th>{{ $headerLabels[$col] ?? $col }}</th>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @foreach($data['rows'] as $row)
                     <tr>
-                        @foreach($row as $cell)
-                            <td>{{ is_scalar($cell) ? $cell : json_encode($cell) }}</td>
+                        @foreach($row as $key => $cell)
+                            <td>
+                                @if(in_array($key, $moneyCols, true))
+                                    {{ \App\Support\ReportMoney::usd($cell) }}
+                                @else
+                                    {{ is_scalar($cell) ? $cell : json_encode($cell) }}
+                                @endif
+                            </td>
                         @endforeach
                     </tr>
                 @endforeach

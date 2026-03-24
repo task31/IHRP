@@ -159,5 +159,5 @@ Source (Electron app): `C:\Users\zobel\Claude-Workspace\projects\Payroll\`
 | **MPG business model + calculation rules** | **`BUSINESS_MODEL.md`** |
 | Full decision + build history | `DEVLOG.md` |
 | Phase summaries (completed) | This file (`CLAUDE.md`) |
-| Current phase plan | `phase-N-plan.md` |
+| Current phase plan | `phase-N-plan.md` (active); completed plans in `references/archived-phase-plans/` |
 | Phase map + status | `PHASES.md` |

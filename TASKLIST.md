@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T015)_
+_Last updated: 2026-03-24 (T019, T024)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -47,7 +47,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [ ] **T016** — Timesheets: allow editing individual entries after import
 - [ ] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days)
 - [ ] **T018** — Invoices: optimize PDF preview load time
-- [ ] **T019** — Reports: format billed/cost columns as `$2,565.00` (currently `2565.0000`)
+- [x] **T019** — Reports: format billed/cost columns as `$2,565.00` (currently `2565.0000`). **Done 2026-03-24:** `App\Support\ReportMoney` + monthly/year-end PDF blades (Billed/Cost cells + readable headers); CSV/JSON unchanged for tooling; `ReportMoneyTest`.
 - [ ] **T020** — Calls: add monthly + yearly aggregate reporting views
 - [ ] **T021** — Clients: consider hiding `po_number` field in client modal once all placements have PO numbers assigned
 
@@ -62,7 +62,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 ## 🧹 P4 — Cleanup + Docs
 
-- [ ] **T024** — Remove stale files from project root: `smoke_debug.py`, `smoke_test.py`, completed `phase-N-plan.md` files that are no longer needed
+- [x] **T024** — Remove stale files from project root: `smoke_debug.py`, `smoke_test.py`, completed `phase-N-plan.md` files that are no longer needed. **Done 2026-03-24:** `phase-*-plan.md` moved to `references/archived-phase-plans/` (+ README); smoke `*.py` not present in repo; `CLAUDE.md` SSOT row updated.
 - [ ] **T025** — Consolidate all deploy knowledge (LiteSpeed handler notes, deploy process, known DB issues) — already partially captured in `.cursor/rules/ihrp-deploy.mdc` and `references/` folder; ensure nothing is only in loose notes
 
 ---
