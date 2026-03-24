@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T003 marked complete per Raf)_
+_Last updated: 2026-03-24 (T004 skipped per Raf)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -22,7 +22,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T001** — Verify Add Placement button fix is live on production (`wire:click.self="cancelForm"` + Alpine scope fix committed). **Verified working (2026-03-24) after layout Livewire script fix + regression test added.**
 - [x] **T002** — Delete Dimarumba corrupted payroll rows on production DB: `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id=7`. **Verified 2026-03-24 on production:** `user_id=7` has zero payroll rows; Leonardo Dimarumba is `user_id=4` with 6 valid 2026 `check_date` rows only; **no** `payroll_records` exist with `YEAR(check_date) < 2015` (global `GROUP BY user_id` empty). DELETE executed anyway (0 rows). Original `user_id=7` note was from non-prod / stale mapping.
 - [x] **T003** — Re-upload all 3 AM Excel files on production (fixes corrupted `am_earnings` values; also populates `spread_per_hour` + `commission_pct` correctly). **Confirmed complete by Raf (2026-03-24).**
-- [ ] **T004** — Enter bill_rates on consultant records in production, then run Recompute Margins (`POST /payroll/recompute-margins`)
+- [x] **T004** — Enter bill_rates on consultant records in production, then run Recompute Margins (`POST /payroll/recompute-margins`). **Skipped per Raf (2026-03-24)** — not doing this step now; reopen later if margins need a refresh from bill rates.
 - [ ] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Current status (2026-03-24): cPanel UAPI auth still failing with 403 Forbidden.**
 - [ ] **T006** — Confirm `ADMIN_PASSWORD` env var is set in production `.env` (seeder uses it; falls back to random if missing)
 - [ ] **T007** — Confirm `php artisan storage:link` has been run on production server
