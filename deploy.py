@@ -17,9 +17,9 @@ Requirements:
 
 Credentials (.deploy.env — gitignored):
   BLUEHOST_SSH_KEY=C:/Users/zobel/Downloads/id_rsa
-  BLUEHOST_SSH_PASSWORD=Vape13578!
+  BLUEHOST_SSH_PASSWORD=...   # SSH key passphrase + fallback for cPanel UAPI
+  BLUEHOST_CPANEL_TOKEN=...   # optional; cPanel → Manage API Tokens — preferred for UAPI (port 2083)
   # SSH key is used for SSH connections (Bluehost disables password SSH auth)
-  # Password is used for cPanel UAPI (port 2083) only
 """
 
 import argparse
@@ -74,8 +74,9 @@ SSH_KEY  = os.environ.get(
     os.path.expanduser("C:/Users/zobel/Downloads/id_rsa"),
 )
 
-# cPanel UAPI password (separate from SSH — used only for port 2083 API calls)
+# cPanel UAPI: prefer API token; else account password (port 2083 only)
 CPANEL_PASS = os.environ.get("BLUEHOST_SSH_PASSWORD", "")
+CPANEL_TOKEN = os.environ.get("BLUEHOST_CPANEL_TOKEN", "").strip()
 
 # ─── SSH Helpers ─────────────────────────────────────────────────────────────
 
@@ -165,18 +166,31 @@ def resolve_composer_command(ssh: paramiko.SSHClient) -> str | None:
 
 # ─── cPanel UAPI ─────────────────────────────────────────────────────────────
 
+def _cpanel_uapi_secret() -> str | None:
+    """Credential after ``cpanel USER:`` — token preferred over account password."""
+    if CPANEL_TOKEN:
+        return CPANEL_TOKEN
+    if CPANEL_PASS:
+        return CPANEL_PASS
+    return None
+
+
 def _cpanel_request(method: str, url: str, **kwargs) -> dict:
     """
     Make a cPanel UAPI request using the correct Authorization header format.
-    cPanel UAPI requires:  Authorization: cpanel username:password
+    cPanel UAPI requires:  Authorization: cpanel username:password_or_api_token
     NOT HTTP Basic auth (which is what requests.get(..., auth=(user, pass)) sends).
     """
-    if not CPANEL_PASS:
-        print("⚠️  BLUEHOST_SSH_PASSWORD not set in .deploy.env — cPanel API calls will fail.")
-        return {"status": 0, "errors": ["no password"]}
+    secret = _cpanel_uapi_secret()
+    if not secret:
+        print(
+            "⚠️  Set BLUEHOST_CPANEL_TOKEN (preferred) or BLUEHOST_SSH_PASSWORD in .deploy.env "
+            "— cPanel UAPI calls need one of these."
+        )
+        return {"status": 0, "errors": ["no cpanel credentials"]}
 
     headers = {
-        "Authorization": f"cpanel {USER}:{CPANEL_PASS}",
+        "Authorization": f"cpanel {USER}:{secret}",
     }
     try:
         r = requests.request(method, url, headers=headers, verify=False, timeout=30, **kwargs)
@@ -565,16 +579,24 @@ def step_diagnose():
 
     # 3. cPanel API
     print(f"\nTesting cPanel UAPI at https://{HOST}:2083...")
-    if not CPANEL_PASS:
-        print("⚠️  BLUEHOST_SSH_PASSWORD not in .deploy.env — skipping cPanel test")
+    if not _cpanel_uapi_secret():
+        print("⚠️  No BLUEHOST_CPANEL_TOKEN or BLUEHOST_SSH_PASSWORD — skipping cPanel UAPI test")
     else:
+        auth_label = "API token" if CPANEL_TOKEN else "account password"
+        print(f"   Auth: {auth_label}")
         result = _cpanel_request("GET", f"https://{HOST}:2083/execute/Stats/get_bandwidth")
         if result.get("status") == 1:
-            print("✅ cPanel UAPI auth works")
+            print("✅ cPanel UAPI auth works (Stats/get_bandwidth)")
         else:
-            print(f"❌ cPanel UAPI auth failed: {result.get('errors', result)}")
-            print("   Possible fix: generate a cPanel API Token in cPanel → Manage API Tokens")
-            print("   Then set BLUEHOST_CPANEL_TOKEN=<token> in .deploy.env and use it as auth")
+            print(f"⚠️  Stats/get_bandwidth: {result.get('errors', result)}")
+            print("   (Some hosts restrict Stats; try VersionControl below.)")
+
+        vc = _cpanel_request("GET", f"https://{HOST}:2083/execute/VersionControl/retrieve")
+        if vc.get("status") == 1:
+            print("✅ VersionControl/retrieve OK — `--step deploy` should work")
+        else:
+            print(f"❌ VersionControl/retrieve: {vc.get('errors', vc)}")
+            print("   If still 403, Bluehost may block Git UAPI for this account — use `--step ssh-deploy`.")
 
     print()
 
