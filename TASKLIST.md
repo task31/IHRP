@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T004 skipped per Raf)_
+_Last updated: 2026-03-24 (T007 verified)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -25,7 +25,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T004** — Enter bill_rates on consultant records in production, then run Recompute Margins (`POST /payroll/recompute-margins`). **Skipped per Raf (2026-03-24)** — not doing this step now; reopen later if margins need a refresh from bill rates.
 - [ ] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Current status (2026-03-24): cPanel UAPI auth still failing with 403 Forbidden.**
 - [ ] **T006** — Confirm `ADMIN_PASSWORD` env var is set in production `.env` (seeder uses it; falls back to random if missing)
-- [ ] **T007** — Confirm `php artisan storage:link` has been run on production server
+- [x] **T007** — Confirm `php artisan storage:link` has been run on production server. **Verified 2026-03-24:** `public/storage` → `storage/app/public` symlink present on Bluehost (`ls -la …/public/storage` shows `-> …/hr/storage/app/public`).
 - [ ] **T008** — Run full production smoke test: admin role (all features) + AM role (placements, calls, payroll) + security checks (SSL, APP_DEBUG=false, no stack traces)
 
 ---
