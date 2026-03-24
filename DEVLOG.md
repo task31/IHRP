@@ -1824,3 +1824,19 @@ These are two separate things — normal setup. We only need to add one line to 
 - [ ] `AddHandler application/x-httpd-php83 .php` in `public/.htaccess` was incorrect for Bluehost EasyApache — removed entirely (server handles PHP via MultiPHP Manager). Update `.htaccess` template to not include this line.
 - [ ] `->after('hours')` in migrations `060326` and `093156` caused fresh-install failures — fixed in commit `f2f0de0`. Root cause: migration timestamps were out of order relative to the column they reference.
 - [ ] `.cpanel.yml` auto-deploy hook not yet wired to `~/repositories/IHRP` — future git pushes won't auto-deploy until this is tested end-to-end
+
+---
+
+### 🔨 [BUILD — Cursor] — TASKLIST T011: Calls history pagination + date window _(2026-03-24)_
+
+**Goal:** `DailyCallReportController::index()` loaded all rows; add default 30-day rolling filter, optional wider ranges, and pagination.
+
+**Done:**
+- Query param `period`: `30` (default), `90`, `365`, `all`; validated; invalid → session errors on web.
+- History: `paginate(50)` + `withQueryString()`; JSON responses use paginator serialization.
+- `calls/index.blade.php`: period chips, range label, `links()` when multi-page; empty state copy for filtered vs all.
+- Tests: `web/tests/Feature/DailyCallReportControllerTest.php` (default window, `all`, pagination, invalid period).
+
+**117 tests, 295 assertions, 0 failures** (after adding 4 feature tests).
+
+**Files:** `web/app/Http/Controllers/DailyCallReportController.php`, `web/resources/views/calls/index.blade.php`, `web/tests/Feature/DailyCallReportControllerTest.php`, `TASKLIST.md`.

@@ -1,6 +1,8 @@
 @php
-    /** @var \Illuminate\Support\Collection<int, \App\Models\DailyCallReport> $reports */
+    /** @var \Illuminate\Contracts\Pagination\LengthAwarePaginator<int, \App\Models\DailyCallReport> $reports */
     /** @var array<string, array{calls_made: int, contacts_reached: int, submittals: int, interviews_scheduled: int, notes: string}> $myReportsByDate */
+    /** @var string $historyPeriod */
+    /** @var string $historyRangeLabel */
 @endphp
 
 <x-app-layout>
@@ -162,7 +164,35 @@
         </div>
 
         <div>
-            <h3 class="mb-3 text-sm font-semibold text-gray-700">History</h3>
+            <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-700">History</h3>
+                    <p class="mt-1 text-xs text-gray-500">{{ $historyRangeLabel }}</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ([
+                        ['key' => '30', 'label' => '30 days'],
+                        ['key' => '90', 'label' => '90 days'],
+                        ['key' => '365', 'label' => '12 mo'],
+                        ['key' => 'all', 'label' => 'All'],
+                    ] as $opt)
+                        @php
+                            $active = $historyPeriod === $opt['key'];
+                            $href = $opt['key'] === '30'
+                                ? route('calls.index')
+                                : route('calls.index', ['period' => $opt['key']]);
+                        @endphp
+                        <a
+                            href="{{ $href }}"
+                            @class([
+                                'rounded-md px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition',
+                                'bg-indigo-600 text-white ring-indigo-600' => $active,
+                                'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50' => ! $active,
+                            ])
+                        >{{ $opt['label'] }}</a>
+                    @endforeach
+                </div>
+            </div>
             <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -204,13 +234,22 @@
                         @empty
                             <tr>
                                 <td colspan="{{ $showEmployeeColumn ? 7 : 6 }}" class="px-4 py-8 text-center text-gray-500">
-                                    No call reports yet.
+                                    @if ($historyPeriod === 'all')
+                                        No call reports yet.
+                                    @else
+                                        No call reports in this date range.
+                                    @endif
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            @if ($reports->hasPages())
+                <div class="mt-4">
+                    {{ $reports->links() }}
+                </div>
+            @endif
         </div>
     </div>
 

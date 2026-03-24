@@ -10,10 +10,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DailyCallReportController extends Controller
 {
+    private const HISTORY_PER_PAGE = 50;
+
     /** @var list<string> */
     private const AUDIT_FIELDS = [
         'user_id',
@@ -30,10 +33,21 @@ class DailyCallReportController extends Controller
         $this->authorize('viewAny', DailyCallReport::class);
 
         $user = Auth::user();
+
+        $filters = $request->validate([
+            'period' => ['sometimes', 'string', Rule::in(['30', '90', '365', 'all'])],
+        ]);
+        $period = $filters['period'] ?? '30';
+
         $query = DailyCallReport::query()->with('user')->orderByDesc('report_date')->orderByDesc('id');
+        [$rangeStart, $rangeEnd] = $this->historyPeriodBounds($period);
+        if ($rangeStart !== null && $rangeEnd !== null) {
+            $query
+                ->whereDate('report_date', '>=', $rangeStart->toDateString())
+                ->whereDate('report_date', '<=', $rangeEnd->toDateString());
+        }
 
-
-        $reports = $query->get();
+        $reports = $query->paginate(self::HISTORY_PER_PAGE)->withQueryString();
 
         if ($request->expectsJson()) {
             return response()->json($reports);
@@ -66,13 +80,40 @@ class DailyCallReportController extends Controller
             ')
             ->first();
 
+        $historyRangeLabel = $rangeStart !== null && $rangeEnd !== null
+            ? $rangeStart->format('M j, Y').' – '.$rangeEnd->format('M j, Y')
+            : 'All dates';
+
         return view('calls.index', [
             'reports' => $reports,
+            'historyPeriod' => $period,
+            'historyRangeLabel' => $historyRangeLabel,
             'myReportsByDate' => $myReportsPayload,
             'todayDate' => now()->toDateString(),
             'showEmployeeColumn' => true,
             'monthlyStats' => $monthlyStats,
         ]);
+    }
+
+    /**
+     * @return array{0: \Illuminate\Support\Carbon|null, 1: \Illuminate\Support\Carbon|null}
+     */
+    private function historyPeriodBounds(string $period): array
+    {
+        if ($period === 'all') {
+            return [null, null];
+        }
+
+        $days = match ($period) {
+            '90' => 90,
+            '365' => 365,
+            default => 30,
+        };
+
+        $end = now()->startOfDay();
+        $start = $end->copy()->subDays($days - 1);
+
+        return [$start, $end];
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse

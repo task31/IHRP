@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T010)_
+_Last updated: 2026-03-24 (T011)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -34,7 +34,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 - [x] **T009** — Fix `audit_log.description` NULL on PAYROLL_UPLOAD and RECOMPUTE_MARGINS entries — populate with AM name + filename + period count for human-readable audit trail. **Done 2026-03-24:** `AppService::auditLog` optional `$description`; payroll upload + recompute margins set readable strings; PHPUnit coverage in `PayrollControllerTest`.
 - [x] **T010** — Add admin UI to link `users.consultant_id` → consultant record (currently must be set manually in DB). **Done 2026-03-24:** Admin users index shows **Linked consultant**; create/edit forms already had selector — extended with **inactive linked consultant** in dropdown, **`User::consultant()`** relationship, **`consultant_id` cleared when role is admin**; tests in `AdminUserControllerTest`.
-- [ ] **T011** — Add pagination + 30-day default filter to `DailyCallReportController::index()` (no pagination exists; will be a problem as team grows)
+- [x] **T011** — Add pagination + 30-day default filter to `DailyCallReportController::index()` (no pagination exists; will be a problem as team grows). **Done 2026-03-24:** default rolling window last 30 days; `period` query `30|90|365|all`; history `paginate(50)` + `withQueryString()`; filter chips + range label + `links()` on `calls/index`; tests in `DailyCallReportControllerTest`.
 - [ ] **T012** — Fix `pdo_sqlite` local PHP extension not enabled — blocks running full PHPUnit test suite locally without connecting to MySQL
 
 ---
