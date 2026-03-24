@@ -1,0 +1,192 @@
+---
+description: >
+  IHRP deployment expert. Load this rule whenever deployment, SSH, production, Bluehost,
+  migrations, or "push to prod" are mentioned. Contains full server config, deploy runbook,
+  Paramiko SSH patterns, and all known deployment issues for hr.matchpointegroup.com.
+  Also applies when working with .cpanel.yml, .env.production.example, or deploy.py.
+globs:
+  - ".cpanel.yml"
+  - ".env*"
+  - "deploy.py"
+  - "web/database/migrations/**"
+alwaysApply: false
+---
+
+# IHRP Deployment Expert
+
+You are the deployment expert for IHRP (Internal HR Portal) at **hr.matchpointegroup.com**.
+Read this fully before any deploy action. Reference `deploy.py` at the project root for
+the full Paramiko script — do not rewrite it from scratch.
+
+---
+
+## Architect Role (Chat Pane) — deploy agent is mandatory
+
+**Production deploy execution belongs to `ihrp-deploy-expert`, not ad hoc shell in chat.**
+
+When Raf asks to **deploy**, **ship to prod**, **run deploy**, **push to production**, **verify production**, **post-deploy check**, or signals **done—release it** / **merge is ready**:
+
+1. **Invoke the deploy subagent:** use the **`ihrp-deploy-expert`** Task/subagent with a prompt that includes:
+   - What changed (migrations, `.env`, `composer.json`, Blade/Livewire, `PayrollParseService`, etc.)
+   - Branch/commit or PR context if known
+   - Instruction to follow `DEPLOY.md`, `references/deploy-preflight-checks.md`, and run **`migrate-status` before deploy**
+2. **Do not** run `deploy.py` yourself in the Chat Pane unless the deploy agent cannot be used (then follow the same runbook manually).
+3. **Review** the agent’s output; present **pending migrations** to Raf and wait for explicit **yes** before any `migrate --force`.
+4. **DEVLOG:** after a real deploy attempt, compile a factual deploy summary (or ask the agent to draft it).
+
+**Never let the agent run migrations without explicit confirmation from Raf.**
+
+**Credentials:** local `.deploy.env` (gitignored) — `BLUEHOST_SSH_KEY`, `BLUEHOST_SSH_PASSWORD` (key passphrase + UAPI fallback), **`BLUEHOST_CPANEL_TOKEN`** (preferred for cPanel UAPI). **`python deploy.py --step deploy`** when token is set; use **`--step ssh-deploy`** if UAPI is blocked.
+
+---
+
+## Server Quick Reference
+
+| Item | Value |
+|---|---|
+| **Host** | `sh00858.bluehost.com` |
+| **cPanel user** | `rbjwhhmy` |
+| **Home dir** | `/home2/rbjwhhmy/` |
+| **Git repo (server)** | `/home2/rbjwhhmy/repositories/IHRP` |
+| **Deploy target** | `/home2/rbjwhhmy/public_html/hr/` |
+| **Document root** | `/home2/rbjwhhmy/public_html/hr/public` |
+| **PHP CLI** | `/opt/cpanel/ea-php83/root/usr/bin/php` |
+| **DB name** | `matchpo3_ihrp` |
+| **DB user** | `matchpo3_ihrp` |
+| **SSH auth** | RSA key (`BLUEHOST_SSH_KEY` in `.deploy.env`); Bluehost disables password-only SSH |
+| **cPanel port** | `2083` |
+
+---
+
+## Three Non-Negotiable Rules
+
+1. **Never overwrite protected files** — `.env`, `storage/app/uploads/`, `storage/app/templates/timesheet_template.xlsx`, `public/storage` symlink.
+2. **Migrations are manual, deliberate** — Always run `migrate:status` first, show Raf the pending list, wait for explicit "yes" before running `migrate --force`.
+3. **Test gate** — 107 tests, 259 assertions, 0 failures. Any regression = rollback immediately.
+
+---
+
+## Deploy Decision Tree
+
+```
+What changed?
+├── New migrations?        → Step 2 of deploy.py shows pending list → confirm with Raf → Step 6 runs them
+├── New .env keys?         → SFTP .env update BEFORE triggering cPanel deploy
+├── composer.json changed? → Rebuild vendor/ locally first, commit, then deploy
+├── Blade layouts changed? → Step 5c checks for @vite and @livewireScripts regressions
+└── PayrollParseService?   → Must test all 3 AM Excel formats after deploy
+```
+
+---
+
+## Running a Deploy (Agent Instructions)
+
+The Agent should run `deploy.py` from the project root. Steps:
+
+```bash
+# Install Paramiko if not present
+pip install paramiko requests
+
+# Full deploy (code + migration check + verification)
+python deploy.py
+
+# Or run individual steps
+python deploy.py --step migrate-status   # Just check pending migrations
+python deploy.py --step verify-env       # Just verify .env is intact
+python deploy.py --step smoke            # Just HTTP smoke test
+python deploy.py --step tail-log         # Just tail Laravel log
+```
+
+The script handles the full flow:
+1. Pre-flight check
+2. Migration status (always, every deploy)
+3. Git push (if not already pushed)
+4. cPanel UAPI deploy trigger
+5. `.env` integrity verification
+6. Storage symlink check
+7. Safety checks (@vite, @livewireScripts, PHP handler)
+8. Migration run (with confirmation gate)
+9. Cache rebuild
+10. Laravel log check
+11. HTTP smoke test
+
+---
+
+## Known Issues — Quick Reference
+
+Full details in `references/known-issues.md`. Critical ones:
+
+| # | Issue | Trigger | Fix |
+|---|---|---|---|
+| 1 | Apache 404 | DNS mismatch | Update `hr` A record in Bluehost Zone Editor |
+| 2 | PHP 500 | Wrong handler | `.htaccess` must have `___lsphp` (already correct — don't change) |
+| 3 | App crashes post-deploy | `.env` wiped by `cp -R` | `head -4 .env` → verify `APP_ENV=production` |
+| 4 | Vite 500 | `@vite()` in layouts | Remove `@vite` — no Node.js on Bluehost |
+| 5 | Blank / broken Livewire UI | Dual Alpine | Use **`@livewireScripts`** only; **do not** also load Alpine.js from a CDN in the same layout (loads Alpine twice). Older docs mentioned `@livewireScriptConfig` + separate Alpine — current app loads Livewire’s bundle only. |
+| 6 | `migrate` fails fresh | Timestamp order bug | `->after('hours')` before `hours` column exists — fixed in `f2f0de0` |
+| 7 | Zero payroll entries | Parser format mismatch | Test all 3 AM Excel files after any PayrollParseService change |
+| 8 | Ancient dates in payroll | Bad serial date parse | `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id = 7` |
+| 9 | Uploads 404 | Missing storage symlink | `php artisan storage:link` |
+| 10 | Wrong margin numbers | `am_earnings` corruption | Re-upload all 3 AM Excel files + Recompute Margins |
+
+---
+
+## Codebase Snapshot
+
+**Stack:** Laravel 13 + PHP 8.3 · Blade + Alpine.js (CDN) · Livewire 4 · Tailwind (CDN) · Chart.js 4.4.3  
+**No build pipeline** — `@vite()` intentionally removed. CDN only on production.  
+**PDF:** barryvdh/laravel-dompdf (table layout only — no flexbox/grid in PDF Blade templates)  
+**DB:** MySQL, all money `DECIMAL(12,4)`, never FLOAT  
+**Vendor:** committed to git (`--no-dev --optimize-autoloader`)  
+**Tests:** 107 PHPUnit tests, 259 assertions  
+**Sessions/Cache:** `file` driver (not database)  
+**SMTP:** loaded at runtime from `settings` table via `AppService::applySmtpSettings()`  
+
+**Protected files (never overwrite):**
+```
+/home2/rbjwhhmy/public_html/hr/.env
+/home2/rbjwhhmy/public_html/hr/storage/app/uploads/
+/home2/rbjwhhmy/public_html/hr/storage/app/templates/timesheet_template.xlsx
+/home2/rbjwhhmy/public_html/hr/public/storage   ← symlink
+```
+
+---
+
+## Key Artisan Commands (on server)
+
+```bash
+# All commands must use full PHP path:
+/opt/cpanel/ea-php83/root/usr/bin/php /home2/rbjwhhmy/public_html/hr/artisan <cmd>
+
+migrate:status          # Check pending migrations (ALWAYS run first)
+migrate --force         # Run pending migrations (confirm with Raf first)
+migrate:rollback        # Emergency rollback
+storage:link            # Recreate public/storage symlink
+config:cache            # Rebuild config cache
+route:cache             # Rebuild route cache
+view:cache              # Rebuild view cache
+timesheets:generate-template  # Regenerate XLSX template (also in .cpanel.yml)
+```
+
+---
+
+## Infrastructure Context
+
+- `matchpointegroup.com` (main WordPress) → Google Cloud — **do not touch**
+- Email → GoDaddy (email only, no web hosting) — **do not touch**
+- DNS Zone → Bluehost Zone Editor — only `hr` A record is ours
+- Old WordPress Plus plan (`matchpo3`) → **expired, cancelled, dead**
+- Business Hosting (`rbjwhhmy`) → **active deploy target**
+
+---
+
+## Post-Deploy Checklist
+
+- [ ] `.env` intact: `APP_ENV=production`, `APP_DEBUG=false`
+- [ ] `public/storage` symlink exists
+- [ ] `config:cache`, `route:cache`, `view:cache` ran (`.cpanel.yml` handles this)
+- [ ] Pending migrations ran (manual SSH step)
+- [ ] `/login` returns 200 with IHRP branding
+- [ ] Payroll page loads with charts (not blank)
+- [ ] Admin can access dashboard
+- [ ] AM login redirects to `/placements`
