@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T007 verified)_
+_Last updated: 2026-03-24 (T005 UAPI token verified)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -23,7 +23,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T002** — Delete Dimarumba corrupted payroll rows on production DB: `DELETE FROM payroll_records WHERE YEAR(check_date) < 2015 AND user_id=7`. **Verified 2026-03-24 on production:** `user_id=7` has zero payroll rows; Leonardo Dimarumba is `user_id=4` with 6 valid 2026 `check_date` rows only; **no** `payroll_records` exist with `YEAR(check_date) < 2015` (global `GROUP BY user_id` empty). DELETE executed anyway (0 rows). Original `user_id=7` note was from non-prod / stale mapping.
 - [x] **T003** — Re-upload all 3 AM Excel files on production (fixes corrupted `am_earnings` values; also populates `spread_per_hour` + `commission_pct` correctly). **Confirmed complete by Raf (2026-03-24).**
 - [x] **T004** — Enter bill_rates on consultant records in production, then run Recompute Margins (`POST /payroll/recompute-margins`). **Skipped per Raf (2026-03-24)** — not doing this step now; reopen later if margins need a refresh from bill rates.
-- [ ] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Current status (2026-03-24): cPanel UAPI auth still failing with 403 Forbidden.**
+- [x] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Resolved 2026-03-24:** `BLUEHOST_CPANEL_TOKEN` in `.deploy.env` + `deploy.py` UAPI auth; `python deploy.py --step diagnose` reports **VersionControl/retrieve OK**. After `git push`, run **`python deploy.py --step deploy`** (or full flow) to trigger cPanel pull + `.cpanel.yml`. Fully unattended “on every push” without a local/CI step = optional GitHub Action → same UAPI or `ssh-deploy`.
 - [ ] **T006** — Confirm `ADMIN_PASSWORD` env var is set in production `.env` (seeder uses it; falls back to random if missing)
 - [x] **T007** — Confirm `php artisan storage:link` has been run on production server. **Verified 2026-03-24:** `public/storage` → `storage/app/public` symlink present on Bluehost (`ls -la …/public/storage` shows `-> …/hr/storage/app/public`).
 - [ ] **T008** — Run full production smoke test: admin role (all features) + AM role (placements, calls, payroll) + security checks (SSL, APP_DEBUG=false, no stack traces)
@@ -55,7 +55,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 ## 🔵 P3 — Tech Debt / Infrastructure
 
-- [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step). **Blocked by cPanel UAPI auth 403 Forbidden as of 2026-03-24.**
+- [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step). **Next:** run one full `python deploy.py --step deploy` after a trivial commit to confirm `.cpanel.yml` tasks on server; optional CI for push-triggered deploy.
 - [ ] **T023** — Enable `pdo_sqlite` in local PHP so full PHPUnit suite runs locally without MySQL (ties to T012)
 
 ---
