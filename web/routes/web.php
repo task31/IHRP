@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::get('dashboard/stats', [DashboardController::class, 'index'])->name('dashboard.stats');
+    Route::get('dashboard/calls-stats', [DashboardController::class, 'callsStats'])->name('dashboard.calls-stats');
 
     Route::resource('clients', ClientController::class)->except(['create', 'edit']);
 
