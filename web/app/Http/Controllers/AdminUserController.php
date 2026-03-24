@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Consultant;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,6 +20,7 @@ class AdminUserController extends Controller
         $this->authorize('admin');
 
         $users = User::query()
+            ->with('consultant:id,full_name,active')
             ->latest()
             ->paginate(20);
 
@@ -32,10 +34,7 @@ class AdminUserController extends Controller
     {
         $this->authorize('admin');
 
-        $consultants = Consultant::query()
-            ->where('active', true)
-            ->orderBy('full_name')
-            ->get();
+        $consultants = $this->consultantsForUserForm();
 
         return view('admin.users.create', compact('consultants'));
     }
@@ -61,7 +60,7 @@ class AdminUserController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
-            'consultant_id' => $validated['consultant_id'] ?? null,
+            'consultant_id' => $this->normalizedConsultantId($validated['role'], $validated['consultant_id'] ?? null),
             'active' => (bool) ($validated['active'] ?? true),
         ]);
 
@@ -87,10 +86,7 @@ class AdminUserController extends Controller
     {
         $this->authorize('admin');
 
-        $consultants = Consultant::query()
-            ->where('active', true)
-            ->orderBy('full_name')
-            ->get();
+        $consultants = $this->consultantsForUserForm($user);
 
         return view('admin.users.edit', compact('user', 'consultants'));
     }
@@ -115,7 +111,7 @@ class AdminUserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
-            'consultant_id' => $validated['consultant_id'] ?? null,
+            'consultant_id' => $this->normalizedConsultantId($validated['role'], $validated['consultant_id'] ?? null),
             'active' => (bool) ($validated['active'] ?? false),
         ];
 
@@ -148,5 +144,36 @@ class AdminUserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'User deactivated.');
+    }
+
+    /**
+     * Active consultants plus, on edit, the user's current link even if that consultant is inactive.
+     *
+     * @return Collection<int, Consultant>
+     */
+    private function consultantsForUserForm(?User $user = null): Collection
+    {
+        $q = Consultant::query()
+            ->where(function ($q) use ($user) {
+                $q->where('active', true);
+                if ($user?->consultant_id) {
+                    $q->orWhere('id', $user->consultant_id);
+                }
+            })
+            ->orderBy('full_name');
+
+        return $q->get();
+    }
+
+    private function normalizedConsultantId(string $role, mixed $consultantId): ?int
+    {
+        if ($role !== 'account_manager') {
+            return null;
+        }
+        if ($consultantId === null || $consultantId === '') {
+            return null;
+        }
+
+        return (int) $consultantId;
     }
 }

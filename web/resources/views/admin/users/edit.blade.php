@@ -51,6 +51,7 @@
                             @endforeach
                         </select>
                         <x-input-error :messages="$errors->get('consultant_id')" class="mt-2" />
+                        <p class="mt-1 text-xs text-gray-500">For <strong>account managers</strong> only. Admins cannot keep a consultant link.</p>
                     </div>
 
                     <div class="flex items-center gap-2">

@@ -22,6 +22,7 @@
                                 <th class="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
                                 <th class="px-3 py-2 text-left font-semibold text-gray-700">Email</th>
                                 <th class="px-3 py-2 text-left font-semibold text-gray-700">Role</th>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Linked consultant</th>
                                 <th class="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
                                 <th class="px-3 py-2 text-left font-semibold text-gray-700">Actions</th>
                             </tr>
@@ -35,6 +36,16 @@
                                         <span class="inline-flex rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700">
                                             {{ str_replace('_', ' ', $user->role) }}
                                         </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-gray-600">
+                                        @if ($user->consultant)
+                                            {{ $user->consultant->full_name }}
+                                            @if (! $user->consultant->active)
+                                                <span class="text-xs text-amber-700">(inactive)</span>
+                                            @endif
+                                        @else
+                                            <span class="text-gray-400">—</span>
+                                        @endif
                                     </td>
                                     <td class="px-3 py-2">
                                         @if ($user->active)
@@ -58,7 +69,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-3 py-4 text-center text-gray-500">No users found.</td>
+                                    <td colspan="6" class="px-3 py-4 text-center text-gray-500">No users found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
