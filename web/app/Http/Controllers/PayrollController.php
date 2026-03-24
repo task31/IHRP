@@ -240,15 +240,35 @@ class PayrollController extends Controller
             ]);
         });
 
+        $periodCount = count($result->records);
+        $yearsForLabel = $affectedYears;
+        sort($yearsForLabel);
+        $yearsLabel = $yearsForLabel === []
+            ? 'none'
+            : implode(', ', array_map('strval', $yearsForLabel));
+        $newConsultantNote = $newConsultants === []
+            ? ''
+            : '; auto-created consultants: '.implode(', ', $newConsultants);
+        $uploadDescription = sprintf(
+            'Payroll upload for %s (user_id=%d): file %s; %d check period(s); years [%s]; stop name %s%s',
+            $targetUser->name,
+            $targetUser->id,
+            $file->getClientOriginalName(),
+            $periodCount,
+            $yearsLabel,
+            json_encode($stopName, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            $newConsultantNote,
+        );
+
         AppService::auditLog('payroll_uploads', 0, 'PAYROLL_UPLOAD', [], [
             'target_am_id' => $targetUser->id,
             'filename' => $file->getClientOriginalName(),
             'stop_name' => $stopName,
-            'record_count' => count($result->records),
+            'record_count' => $periodCount,
             'years_affected' => $affectedYears,
             'new_consultants' => $newConsultants,
             'warnings' => $result->warnings,
-        ]);
+        ], $uploadDescription);
 
         $ownerId = $targetUser->id;
         foreach ($affectedYears as $yr) {
@@ -497,10 +517,17 @@ class PayrollController extends Controller
             Cache::forget("payroll_aggregate_{$yr}");
         }
 
+        $recomputeDescription = sprintf(
+            'Recompute margins for %s (user_id=%d): %d consultant entry row(s) updated (revenue/margin/pct)',
+            $target->name,
+            $target->id,
+            $updated,
+        );
+
         AppService::auditLog('payroll_consultant_entries', 0, 'RECOMPUTE_MARGINS', [], [
             'target_am_id' => $target->id,
             'entries_updated' => $updated,
-        ]);
+        ], $recomputeDescription);
 
         return response()->json(['success' => true, 'updated' => $updated]);
     }

@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (manual smoke confirmed)_
+_Last updated: 2026-03-24 (T009 audit descriptions)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -32,7 +32,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 ## 🟡 P1 — Data + Audit Integrity
 
-- [ ] **T009** — Fix `audit_log.description` NULL on PAYROLL_UPLOAD and RECOMPUTE_MARGINS entries — populate with AM name + filename + period count for human-readable audit trail
+- [x] **T009** — Fix `audit_log.description` NULL on PAYROLL_UPLOAD and RECOMPUTE_MARGINS entries — populate with AM name + filename + period count for human-readable audit trail. **Done 2026-03-24:** `AppService::auditLog` optional `$description`; payroll upload + recompute margins set readable strings; PHPUnit coverage in `PayrollControllerTest`.
 - [ ] **T010** — Add admin UI to link `users.consultant_id` → consultant record (currently must be set manually in DB)
 - [ ] **T011** — Add pagination + 30-day default filter to `DailyCallReportController::index()` (no pagination exists; will be a problem as team grows)
 - [ ] **T012** — Fix `pdo_sqlite` local PHP extension not enabled — blocks running full PHPUnit test suite locally without connecting to MySQL

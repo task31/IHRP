@@ -13,8 +13,14 @@ final class AppService
      * @param  array<string, mixed>  $oldData
      * @param  array<string, mixed>  $newData
      */
-    public static function auditLog(string $table, int $recordId, string $action, array $oldData, array $newData): void
-    {
+    public static function auditLog(
+        string $table,
+        int $recordId,
+        string $action,
+        array $oldData,
+        array $newData,
+        ?string $description = null,
+    ): void {
         DB::table('audit_log')->insert([
             'timestamp' => now(),
             'table_name' => $table,
@@ -23,7 +29,7 @@ final class AppService
             'field_changed' => null,
             'old_value' => $oldData === [] ? null : json_encode($oldData),
             'new_value' => $newData === [] ? null : json_encode($newData),
-            'description' => null,
+            'description' => $description,
             'user_id' => Auth::id(),
         ]);
     }

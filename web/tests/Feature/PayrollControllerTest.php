@@ -10,6 +10,7 @@ use App\Models\PayrollRecord;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -143,6 +144,47 @@ class PayrollControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('recordCount', 1);
+
+        $desc = DB::table('audit_log')
+            ->where('action_type', 'PAYROLL_UPLOAD')
+            ->orderByDesc('id')
+            ->value('description');
+        $this->assertNotNull($desc);
+        $this->assertStringContainsString('payroll.xlsx', (string) $desc);
+        $this->assertStringContainsString((string) $am->name, (string) $desc);
+        $this->assertStringContainsString('Rafael', (string) $desc);
+    }
+
+    public function test_recompute_margins_audit_log_has_description(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $am = User::factory()->create(['role' => 'account_manager', 'name' => 'Smoke AM']);
+        PayrollConsultantEntry::query()->create([
+            'user_id' => $am->id,
+            'consultant_name' => 'Test Consultant',
+            'year' => 2026,
+            'hours' => '10.0000',
+            'spread_per_hour' => '5.0000',
+            'commission_pct' => '0.50000000',
+            'am_earnings' => '100.0000',
+            'revenue' => '100.0000',
+            'cost' => '100.0000',
+            'margin' => '0.0000',
+            'pct_of_total' => '100.0000',
+            'consultant_id' => null,
+        ]);
+        $this->actingAs($admin)
+            ->postJson(route('payroll.recompute.margins'), ['user_id' => $am->id])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $desc = DB::table('audit_log')
+            ->where('action_type', 'RECOMPUTE_MARGINS')
+            ->orderByDesc('id')
+            ->value('description');
+        $this->assertNotNull($desc);
+        $this->assertStringContainsString('Smoke AM', (string) $desc);
+        $this->assertStringContainsString('user_id='.$am->id, (string) $desc);
     }
 
     public function test_upload_missing_stop_name_returns_422(): void
