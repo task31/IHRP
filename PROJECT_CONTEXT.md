@@ -91,37 +91,32 @@ _Stack decisions made with: Claude (claude.ai) — manager confirmed PHP/Bluehos
 ---
 
 <!-- handoff:start -->
-## SESSION HANDOFF — 2026-03-22 (~11:00)
+## SESSION HANDOFF — 2026-03-23 (~17:30)
 
-**Phase:** 6 — Payroll Integration (smoke test in progress)
+**Phase:** 5 — Deploy (production live at hr.matchpointegroup.com)
 **Branch:** master
+**Last commit:** 2cb78c2 — feat: add call activity analytics section to admin dashboard
 
-**Last commit:** dddb059 — fix: make remove_employee_role migration SQLite-compatible
-
-**What was built this session (not yet committed):**
-1. Fixed dual Alpine instance bug — `@livewireScriptConfig` in app.blade.php
-2. Fixed double-reload race condition — `$watch` post-init + `isLoading` guard
-3. Goal tracker UI on payroll dashboard (admin only)
-4. `401k Contribution` made optional in parser
-5. Payroll upload now auto-creates Consultant records from payroll sheet names
-6. `gross_margin_per_hour` feature: migration + parser + upload controller + edit modal
-7. `pay_rate`, `bill_rate`, `state`, `client_id` made nullable on consultants (3 migrations)
-8. Inline cell editing on Consultants page: click any field to edit in-place
+**What was fixed/built this session:**
+1. Alpine scope bug fixed on clients, consultants, timesheets pages — buttons in `x-slot="header"` moved into `x-data` div
+2. Placements `wire:click.self` (no method) fixed → `wire:click.self="cancelForm"`
+3. Timesheet template regenerated with proper biweekly structure + `GenerateTimesheetTemplate` artisan command added to deploy hook
+4. Parser `resolveDate()` added — accepts both Excel date serials and formatted date strings
+5. Call Activity analytics section added to admin dashboard (period picker, Chart.js trend, leaderboard, AM breakdown table)
 
 **To resume:**
-- Read last `[REVIEW]` block in DEVLOG.md (Phase 6 Smoke Session 1)
-- Run `php artisan migrate` (already done locally — 3 migrations applied)
-- Continue smoke test: upload remaining AMs, verify GMPH on consultants, test re-upload
-- After smoke passes → Phase 6 sign-off → update PHASES.md
+- All fixes are live on production after next cPanel deploy push
+- Call analytics section shows "No call data" until AMs log daily calls
+- 107 tests passing, working tree clean
 
 **Key files changed:**
-- `web/resources/views/layouts/app.blade.php` — @livewireScriptConfig fix
-- `web/resources/views/payroll/index.blade.php` — goal tracker, $watch pattern
-- `web/app/Services/PayrollParseService.php` — optional 401k, hours tracking, GMPH
-- `web/app/Http/Controllers/PayrollController.php` — auto-create consultants, GMPH write
-- `web/app/Models/Consultant.php` — gross_margin_per_hour in fillable/casts
-- `web/resources/views/consultants/index.blade.php` — inline cell editing
-- `web/app/Http/Controllers/ConsultantController.php` — patchField() method
-- `web/routes/web.php` — PATCH consultants/{id}/field route
-- `web/database/migrations/2026_03_22_*` — 3 new migrations
+- `web/resources/views/clients/index.blade.php` — Alpine scope fix
+- `web/resources/views/consultants/index.blade.php` — Alpine scope fix
+- `web/resources/views/timesheets/index.blade.php` — Alpine scope fix
+- `web/resources/views/livewire/placement-manager.blade.php` — wire:click.self fix
+- `web/app/Services/TimesheetParseService.php` — resolveDate()
+- `web/app/Console/Commands/GenerateTimesheetTemplate.php` — new command
+- `web/app/Http/Controllers/DashboardController.php` — callsStats() endpoint
+- `web/resources/views/dashboard.blade.php` — call analytics section
+- `.cpanel.yml` — timesheets:generate-template added to deploy hook
 <!-- handoff:end -->
