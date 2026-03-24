@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T006–T008 verified)_
+_Last updated: 2026-03-24 (manual smoke confirmed)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -26,7 +26,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T005** — Wire `.cpanel.yml` auto-deploy to `~/repositories/IHRP` on Bluehost so future `git push` auto-deploys (currently semi-manual). **Resolved 2026-03-24:** `BLUEHOST_CPANEL_TOKEN` in `.deploy.env` + `deploy.py` UAPI auth; `python deploy.py --step diagnose` reports **VersionControl/retrieve OK**. After `git push`, run **`python deploy.py --step deploy`** (or full flow) to trigger cPanel pull + `.cpanel.yml`. Fully unattended “on every push” without a local/CI step = optional GitHub Action → same UAPI or `ssh-deploy`.
 - [x] **T006** — Confirm `ADMIN_PASSWORD` env var is set in production `.env` (seeder uses it; falls back to random if missing). **Verified 2026-03-24:** production `.env` has non-empty `ADMIN_PASSWORD=` (grep pattern; value not logged).
 - [x] **T007** — Confirm `php artisan storage:link` has been run on production server. **Verified 2026-03-24:** `public/storage` → `storage/app/public` symlink present on Bluehost (`ls -la …/public/storage` shows `-> …/hr/storage/app/public`).
-- [x] **T008** — Run full production smoke test: admin role (all features) + AM role (placements, calls, payroll) + security checks (SSL, APP_DEBUG=false, no stack traces). **Verified 2026-03-24 (automated + spot checks):** `APP_DEBUG=false` in production `.env`; `GET /login` → 200; bogus path → **404** (not 5xx); TLS OK to `https://hr.matchpointegroup.com`. **Manual walkthrough** (admin all modules + AM placements/calls/payroll) still recommended before high-traffic use — not blocked on P0 close.
+- [x] **T008** — Run full production smoke test: admin role (all features) + AM role (placements, calls, payroll) + security checks (SSL, APP_DEBUG=false, no stack traces). **Verified 2026-03-24:** automated checks + **manual smoke completed by Raf** (admin + AM flows).
 
 ---
 
@@ -83,4 +83,4 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 
 Phase 5 is not done until all P0 items (T001–T008) are checked off and production smoke test passes.
 
-**Status 2026-03-24:** P0 checklist **T001–T008** all `[x]` per TASKLIST; deploy/smoke evidence captured in T006–T008 notes. Architect may still append DEVLOG **REVIEW** + phase close commit per workflow.
+**Status 2026-03-24:** P0 checklist **T001–T008** all `[x]`; automated + **manual** production smoke confirmed. Architect may still append DEVLOG **REVIEW** + phase close commit per workflow.
