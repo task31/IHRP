@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
@@ -19,6 +20,7 @@ class Client extends Model
         'budget_alert_critical_sent',
         'po_number',
         'active',
+        'account_manager_id',
     ];
 
     /**
@@ -32,6 +34,14 @@ class Client extends Model
             'budget_alert_critical_sent' => 'boolean',
             'active' => 'boolean',
         ];
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function accountManager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'account_manager_id');
     }
 
     /**

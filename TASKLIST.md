@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T011)_
+_Last updated: 2026-03-24 (T014)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -35,14 +35,14 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T009** — Fix `audit_log.description` NULL on PAYROLL_UPLOAD and RECOMPUTE_MARGINS entries — populate with AM name + filename + period count for human-readable audit trail. **Done 2026-03-24:** `AppService::auditLog` optional `$description`; payroll upload + recompute margins set readable strings; PHPUnit coverage in `PayrollControllerTest`.
 - [x] **T010** — Add admin UI to link `users.consultant_id` → consultant record (currently must be set manually in DB). **Done 2026-03-24:** Admin users index shows **Linked consultant**; create/edit forms already had selector — extended with **inactive linked consultant** in dropdown, **`User::consultant()`** relationship, **`consultant_id` cleared when role is admin**; tests in `AdminUserControllerTest`.
 - [x] **T011** — Add pagination + 30-day default filter to `DailyCallReportController::index()` (no pagination exists; will be a problem as team grows). **Done 2026-03-24:** default rolling window last 30 days; `period` query `30|90|365|all`; history `paginate(50)` + `withQueryString()`; filter chips + range label + `links()` on `calls/index`; tests in `DailyCallReportControllerTest`.
-- [ ] **T012** — Fix `pdo_sqlite` local PHP extension not enabled — blocks running full PHPUnit test suite locally without connecting to MySQL
+- [x] **T012** — Fix `pdo_sqlite` local PHP extension not enabled — blocks running full PHPUnit test suite locally without connecting to MySQL. **Done 2026-03-24:** verified `pdo_sqlite` on dev PHP 8.3 (WinGet); `web/tests/bootstrap.php` fails fast with pointer to `references/local-php-sqlite-testing.md`; **117 tests** pass with `sqlite :memory:`.
 
 ---
 
 ## 🟠 P2 — UI / Product Backlog
 
-- [ ] **T013** — Clients page: show which AM manages each client
-- [ ] **T014** — Consultants page: merge onboarding 3/7 badge into unified checklist flow
+- [x] **T013** — Clients page: show which AM manages each client. **Done 2026-03-24:** nullable `clients.account_manager_id` → `users` (`nullOnDelete`); `Client::accountManager()`; admin create/edit modal **Account manager** dropdown (active AM users); table column **Account manager**; JSON index includes `accountManager`; validation `exists` + `role=account_manager`; audit `MUTABLE` includes `account_manager_id`; migration `2026_03_24_120000_add_account_manager_id_to_clients_table`; tests `ClientControllerTest` (**121 tests**).
+- [x] **T014** — Consultants page: merge onboarding 3/7 badge into unified checklist flow. **Done 2026-03-24:** removed duplicate **W-9** pills next to name (W-9 stays in checklist + Actions **W-9** upload); **Checklist** column is a single **Progress** control (bar + `n/7`) that opens the same modal; removed redundant **Checklist** action link; modal **Mark/Done** toggles **admin-only**, AMs see read-only **Pending/Done** + note; admin hint for W-9 upload.
 - [ ] **T015** — Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026") instead of raw dates
 - [ ] **T016** — Timesheets: allow editing individual entries after import
 - [ ] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days)
@@ -56,7 +56,7 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 ## 🔵 P3 — Tech Debt / Infrastructure
 
 - [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (related to T005; T005 is the prod fix, this is the verification/testing step). **Next:** run one full `python deploy.py --step deploy` after a trivial commit to confirm `.cpanel.yml` tasks on server; optional CI for push-triggered deploy.
-- [ ] **T023** — Enable `pdo_sqlite` in local PHP so full PHPUnit suite runs locally without MySQL (ties to T012)
+- [x] **T023** — Enable `pdo_sqlite` in local PHP so full PHPUnit suite runs locally without MySQL (ties to T012). **Done 2026-03-24** — same closure as T012.
 
 ---
 

@@ -1,6 +1,7 @@
 @php
     /** @var \Illuminate\Support\Collection<int, \App\Models\Client> $clients */
     /** @var \Illuminate\Support\Collection<string|int, mixed> $spentByClient */
+    /** @var \Illuminate\Support\Collection<int, \App\Models\User> $accountManagers */
 @endphp
 
 <x-app-layout>
@@ -22,6 +23,7 @@
                 <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                     <tr>
                         <th class="px-4 py-3">Name</th>
+                        <th class="px-4 py-3">Account manager</th>
                         <th class="px-4 py-3">Billing Contact</th>
                         <th class="px-4 py-3">Email</th>
                         <th class="px-4 py-3">Terms</th>
@@ -42,6 +44,9 @@
                                 @if (! $client->active)
                                     <span class="ml-2 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">Inactive</span>
                                 @endif
+                            </td>
+                            <td class="px-4 py-3 text-gray-700">
+                                {{ $client->accountManager->name ?? '—' }}
                             </td>
                             <td class="px-4 py-3 text-gray-700">{{ $client->billing_contact_name ?? '—' }}</td>
                             <td class="px-4 py-3">
@@ -106,6 +111,17 @@
             <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl" @click.outside="showModal = false">
                 <h3 class="text-lg font-semibold text-gray-900" x-text="isEdit ? 'Edit Client' : 'Add Client'"></h3>
                 <div class="mt-4 space-y-3">
+                    @can('admin')
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600">Account manager</label>
+                            <select x-model="form.account_manager_id" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                                <option value="">— Unassigned —</option>
+                                @foreach ($accountManagers as $am)
+                                    <option value="{{ $am->id }}">{{ $am->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endcan
                     <div>
                         <label class="block text-xs font-medium text-gray-600">Client Name *</label>
                         <input type="text" x-model="form.name" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
@@ -183,6 +199,7 @@
                 saving: false,
                 form: {
                     id: null,
+                    account_manager_id: '',
                     name: '',
                     billing_contact_name: '',
                     billing_address: '',
@@ -197,6 +214,7 @@
                     this.isEdit = false;
                     this.form = {
                         id: null,
+                        account_manager_id: '',
                         name: '',
                         billing_contact_name: '',
                         billing_address: '',
@@ -212,6 +230,7 @@
                     const r = await apiFetch(`/clients/${id}`).then((x) => x.json());
                     this.form = {
                         id: r.id,
+                        account_manager_id: r.account_manager_id != null ? String(r.account_manager_id) : '',
                         name: r.name ?? '',
                         billing_contact_name: r.billing_contact_name ?? '',
                         billing_address: r.billing_address ?? '',
@@ -235,6 +254,10 @@
                         payment_terms: this.form.payment_terms,
                         total_budget: this.form.total_budget === '' ? null : Number(this.form.total_budget),
                         po_number: this.form.po_number || null,
+                        account_manager_id:
+                            this.form.account_manager_id === '' || this.form.account_manager_id === null
+                                ? null
+                                : Number(this.form.account_manager_id),
                     };
                     const url = this.isEdit ? `/clients/${this.form.id}` : '/clients';
                     const method = this.isEdit ? 'PUT' : 'POST';

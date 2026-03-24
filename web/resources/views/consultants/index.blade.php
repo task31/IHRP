@@ -22,7 +22,7 @@
 <x-app-layout>
     <div
         class="space-y-4"
-        x-data="consultantsPage(@js($clients))"
+        x-data="consultantsPage(@js($clients), @js(auth()->user()->isAdmin()))"
     >
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl font-semibold text-gray-800">Consultants</h2>
@@ -48,7 +48,7 @@
                         <th class="px-3 py-3">GMPH</th>
                         <th class="px-3 py-3">Start</th>
                         <th class="px-3 py-3">End</th>
-                        <th class="px-3 py-3">Onboarding</th>
+                        <th class="px-3 py-3">Checklist</th>
                         <th class="px-3 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -57,11 +57,6 @@
                         <tr>
                             <td class="px-3 py-2">
                                 <span class="font-medium text-gray-900">{{ $c->full_name }}</span>
-                                @if ($c->w9_on_file)
-                                    <span class="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-800">W-9 ✓</span>
-                                @else
-                                    <span class="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500">No W-9</span>
-                                @endif
                             </td>
                             {{-- Client --}}
                             <td
@@ -245,13 +240,30 @@
                                 @php
                                     $done = (int) ($c->onboarding_complete ?? 0);
                                     $tot = max(1, (int) ($c->onboarding_total ?? 7));
+                                    $rowPct = min(100, ($done / $tot) * 100);
+                                    $rowComplete = $done >= $tot;
                                 @endphp
-                                <span class="{{ $done >= $tot ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }} rounded px-2 py-0.5 text-xs font-medium">{{ $done }}/{{ $tot }}</span>
+                                <button
+                                    type="button"
+                                    class="max-w-[148px] rounded-lg border px-2 py-1.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-indigo-400 {{ $rowComplete ? 'border-green-200 bg-green-50/90' : 'border-gray-200 bg-white' }}"
+                                    @click="openOnboarding({{ (int) $c->id }})"
+                                    title="Open onboarding checklist"
+                                >
+                                    <div class="mb-1 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                        <span>Progress</span>
+                                        <span class="tabular-nums text-gray-700">{{ $done }}/{{ $tot }}</span>
+                                    </div>
+                                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                                        <div
+                                            class="h-1.5 rounded-full {{ $rowComplete ? 'bg-green-500' : 'bg-indigo-600' }}"
+                                            style="width: {{ $rowPct }}%"
+                                        ></div>
+                                    </div>
+                                </button>
                             </td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">
                                 @can('admin')
                                     <button type="button" class="text-xs text-indigo-600 hover:underline" @click="openEdit({{ (int) $c->id }})">Edit</button>
-                                    <button type="button" class="ml-1 text-xs text-gray-600 hover:underline" @click="openOnboarding({{ (int) $c->id }})">Checklist</button>
                                     <button
                                         type="button"
                                         class="ml-1 text-xs text-gray-600 hover:underline"
@@ -355,7 +367,8 @@
             @keydown.escape.window="showOnboardingModal = false"
         >
             <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 class="text-lg font-semibold">Onboarding Checklist</h3>
+                <h3 class="text-lg font-semibold">Onboarding checklist</h3>
+                <p class="mt-1 text-xs text-gray-500" x-show="!canEditOnboarding">View only — contact an admin to update checklist items or file the W-9.</p>
                 <div class="mt-3 h-2 w-full rounded-full bg-gray-100">
                     <div class="h-2 rounded-full bg-indigo-600 transition-all" :style="'width:' + onboardingProgress() + '%'"></div>
                 </div>
@@ -363,16 +376,28 @@
                     <template x-for="row in onboardingItems" :key="row.id ?? row.item_key">
                         <li class="flex items-center justify-between gap-2 border-b border-gray-50 py-2">
                             <span x-text="onboardingLabel(row.item_key)"></span>
-                            <button
-                                type="button"
-                                class="rounded px-2 py-1 text-xs"
-                                :class="row.completed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
-                                @click="toggleOnboarding(row)"
-                                x-text="row.completed ? 'Done' : 'Mark'"
-                            ></button>
+                            <template x-if="canEditOnboarding">
+                                <button
+                                    type="button"
+                                    class="rounded px-2 py-1 text-xs shrink-0"
+                                    :class="row.completed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
+                                    @click="toggleOnboarding(row)"
+                                    x-text="row.completed ? 'Done' : 'Mark'"
+                                ></button>
+                            </template>
+                            <template x-if="!canEditOnboarding">
+                                <span
+                                    class="rounded px-2 py-1 text-xs shrink-0"
+                                    :class="row.completed ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'"
+                                    x-text="row.completed ? 'Done' : 'Pending'"
+                                ></span>
+                            </template>
                         </li>
                     </template>
                 </ul>
+                @can('admin')
+                    <p class="mt-3 text-xs text-gray-500">W-9 file: use <strong>W-9</strong> in the row Actions menu (marks this checklist item when uploaded).</p>
+                @endcan
                 <button type="button" class="mt-4 text-sm text-gray-600 hover:underline" @click="showOnboardingModal = false">Close</button>
             </div>
         </div>
@@ -495,11 +520,12 @@
             };
         }
 
-        function consultantsPage(clientList) {
+        function consultantsPage(clientList, canEditOnboarding) {
             const labels = @json($onboardingLabels);
 
             return {
                 clientList: clientList || [],
+                canEditOnboarding: !!canEditOnboarding,
                 showFormModal: false,
                 showOnboardingModal: false,
                 showW9Modal: false,

@@ -1840,3 +1840,22 @@ These are two separate things — normal setup. We only need to add one line to 
 **117 tests, 295 assertions, 0 failures** (after adding 4 feature tests).
 
 **Files:** `web/app/Http/Controllers/DailyCallReportController.php`, `web/resources/views/calls/index.blade.php`, `web/tests/Feature/DailyCallReportControllerTest.php`, `TASKLIST.md`.
+
+---
+
+### 🔨 [BUILD — Cursor] — TASKLIST T012–T014 _(2026-03-24)_
+
+**T012 / T023 — Local PHPUnit + SQLite**
+- `web/tests/bootstrap.php` exits with a clear message if `pdo_sqlite` is missing; `web/phpunit.xml` bootstraps through it.
+- `references/local-php-sqlite-testing.md` — verify steps and enable notes (Windows / Linux / macOS).
+
+**T013 — Clients: account manager**
+- Migration `2026_03_24_120000_add_account_manager_id_to_clients_table.php` (nullable FK `users.id`, `nullOnDelete`).
+- `Client::accountManager()`, `ClientController` store/update/index + JSON eager-load; admin modal dropdown (active AMs); table column; audit `MUTABLE`; `ClientControllerTest`.
+
+**T014 — Consultants: unified onboarding checklist**
+- `consultants/index.blade.php`: **Checklist** column = single **Progress** control (bar + `n/7`) opening the modal; removed duplicate W-9 pills beside name; removed redundant **Checklist** action; **Mark/Done** admin-only, AM read-only **Pending/Done** + copy; W-9 upload remains under admin **Actions**.
+
+**121 tests, 308 assertions, 0 failures.**
+
+**Production:** run pending migration for `account_manager_id` when deploying T013.

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\User;
 use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ClientController extends Controller
@@ -15,17 +18,25 @@ class ClientController extends Controller
     private const MUTABLE = [
         'name', 'billing_contact_name', 'billing_address',
         'email', 'smtp_email', 'payment_terms', 'total_budget', 'po_number',
+        'account_manager_id',
     ];
 
     public function index(Request $request): JsonResponse|View
     {
         $this->authorize('account_manager');
 
-        $clients = Client::query()->orderBy('name')->get();
+        $clients = Client::query()
+            ->with(['accountManager:id,name'])
+            ->orderBy('name')
+            ->get();
 
         if ($request->expectsJson()) {
             return response()->json(
-                Client::query()->where('active', true)->orderBy('name')->get()
+                Client::query()
+                    ->where('active', true)
+                    ->with(['accountManager:id,name'])
+                    ->orderBy('name')
+                    ->get()
             );
         }
 
@@ -34,9 +45,18 @@ class ClientController extends Controller
             ->groupBy('client_id')
             ->pluck('spent', 'client_id');
 
+        $accountManagers = Auth::user()->isAdmin()
+            ? User::query()
+                ->where('role', 'account_manager')
+                ->where('active', true)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+            : collect();
+
         return view('clients.index', [
             'clients' => $clients,
             'spentByClient' => $spentByClient,
+            'accountManagers' => $accountManagers,
         ]);
     }
 
@@ -63,6 +83,11 @@ class ClientController extends Controller
             'payment_terms' => ['nullable', 'string', 'max:255'],
             'total_budget' => ['nullable', 'numeric'],
             'po_number' => ['nullable', 'string', 'max:255'],
+            'account_manager_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where('role', 'account_manager'),
+            ],
         ]);
 
         $client = Client::query()->create([
@@ -74,6 +99,7 @@ class ClientController extends Controller
             'payment_terms' => $data['payment_terms'] ?? 'Net 30',
             'total_budget' => $data['total_budget'] ?? 0,
             'po_number' => isset($data['po_number']) ? trim((string) $data['po_number']) : null,
+            'account_manager_id' => $data['account_manager_id'] ?? null,
             'active' => true,
         ]);
 
@@ -99,6 +125,11 @@ class ClientController extends Controller
             'payment_terms' => ['nullable', 'string', 'max:255'],
             'total_budget' => ['nullable', 'numeric'],
             'po_number' => ['nullable', 'string', 'max:255'],
+            'account_manager_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('users', 'id')->where('role', 'account_manager'),
+            ],
         ]);
 
         $old = $client->only(self::MUTABLE);
@@ -112,6 +143,7 @@ class ClientController extends Controller
             'payment_terms' => $data['payment_terms'] ?? 'Net 30',
             'total_budget' => $data['total_budget'] ?? $client->total_budget,
             'po_number' => isset($data['po_number']) ? trim((string) $data['po_number']) : null,
+            'account_manager_id' => $data['account_manager_id'] ?? null,
         ]);
 
         $new = $client->fresh()->only(self::MUTABLE);
