@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Support\BiweeklyPayPeriod;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -31,16 +34,19 @@ class GenerateTimesheetTemplate extends Command
 
         // ── Rows 3-4: blank ───────────────────────────────────────────
 
+        [$payStart, $payEnd] = BiweeklyPayPeriod::suggestedPeriodContaining(Carbon::now());
+        $periodStart = Carbon::parse($payStart)->startOfDay();
+
         // ── Row 6: Pay Period Start ───────────────────────────────────
         $sheet->setCellValue('A6', 'Pay Period Start:');
-        $sheet->setCellValue('F6', date('Y-m-d'));  // user replaces with their start date
+        $sheet->setCellValue('F6', $payStart);
         $sheet->getStyle('A6')->getFont()->setBold(true);
         $sheet->getStyle('F6')->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN);
 
         // ── Row 7: Pay Period End ─────────────────────────────────────
         $sheet->setCellValue('A7', 'Pay Period End:');
-        $sheet->setCellValue('F7', date('Y-m-d', strtotime('+13 days')));  // user replaces
+        $sheet->setCellValue('F7', $payEnd);
         $sheet->getStyle('A7')->getFont()->setBold(true);
         $sheet->getStyle('F7')->getBorders()->getAllBorders()
             ->setBorderStyle(Border::BORDER_THIN);
@@ -59,8 +65,12 @@ class GenerateTimesheetTemplate extends Command
 
         // ── Rows 10–16: Week 1 (Mon–Sun) ─────────────────────────────
         $days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        $dateFmt = NumberFormat::FORMAT_DATE_YYYYMMDDSLASH;
         for ($i = 0; $i < 7; $i++) {
             $row = 10 + $i;
+            $d = $periodStart->copy()->addDays($i);
+            $sheet->setCellValue("A{$row}", ExcelDate::PHPToExcel($d->toDateTime()));
+            $sheet->getStyle("A{$row}")->getNumberFormat()->setFormatCode($dateFmt);
             $sheet->setCellValue("B{$row}", $days[$i]);
             $sheet->setCellValue("G{$row}", 0);
             $sheet->getStyle("G{$row}")->getBorders()->getAllBorders()
@@ -70,6 +80,9 @@ class GenerateTimesheetTemplate extends Command
         // ── Rows 17–23: Week 2 (Mon–Sun) ─────────────────────────────
         for ($i = 0; $i < 7; $i++) {
             $row = 17 + $i;
+            $d = $periodStart->copy()->addDays(7 + $i);
+            $sheet->setCellValue("A{$row}", ExcelDate::PHPToExcel($d->toDateTime()));
+            $sheet->getStyle("A{$row}")->getNumberFormat()->setFormatCode($dateFmt);
             $sheet->setCellValue("B{$row}", $days[$i]);
             $sheet->setCellValue("G{$row}", 0);
             $sheet->getStyle("G{$row}")->getBorders()->getAllBorders()

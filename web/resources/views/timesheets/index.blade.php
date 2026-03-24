@@ -15,7 +15,45 @@
 @endphp
 
 <x-app-layout>
-    <div x-data="{ importOpen: false, viewOpen: false, viewData: null, viewLoading: false }" class="space-y-6">
+    <div x-data="{
+            importOpen: false,
+            viewOpen: false,
+            viewData: null,
+            viewLoading: false,
+            editW1: [0, 0, 0, 0, 0, 0, 0],
+            editW2: [0, 0, 0, 0, 0, 0, 0],
+            editSaving: false,
+            timesheetHoursUrl(id) { return `{{ url('/') }}/timesheets/${id}/hours`; },
+            syncEditHoursFromViewData() {
+                const w1 = [0, 0, 0, 0, 0, 0, 0], w2 = [0, 0, 0, 0, 0, 0, 0];
+                for (const row of (this.viewData?.dailyHours || [])) {
+                    const idx = parseInt(row.day_of_week, 10);
+                    const wn = parseInt(row.week_number, 10);
+                    const h = parseFloat(row.hours) || 0;
+                    if (wn === 1) w1[idx] = h;
+                    if (wn === 2) w2[idx] = h;
+                }
+                this.editW1 = w1;
+                this.editW2 = w2;
+            },
+            async saveEditedHours() {
+                if (!this.viewData?.id) return;
+                this.editSaving = true;
+                const res = await apiFetch(this.timesheetHoursUrl(this.viewData.id), {
+                    method: 'PATCH',
+                    body: JSON.stringify({ week1: this.editW1, week2: this.editW2 }),
+                });
+                this.editSaving = false;
+                if (res.ok) {
+                    this.viewData = await res.json();
+                    this.syncEditHoursFromViewData();
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Timesheet hours updated' } }));
+                } else {
+                    const j = await res.json().catch(() => ({}));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: j.error || 'Update failed', type: 'error' } }));
+                }
+            },
+        }" class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl font-semibold text-gray-800">Timesheets</h2>
             <div class="flex flex-wrap items-center gap-2">
@@ -146,7 +184,7 @@
                             </td>
                             <td class="px-4 py-2">
                                 <button type="button"
-                                    x-on:click="viewOpen = true; viewLoading = true; viewData = null; apiFetch('{{ route('timesheets.show', $t['id']) }}').then(r => r.json()).then(d => { viewData = d; viewLoading = false; })"
+                                    x-on:click="viewOpen = true; viewLoading = true; viewData = null; apiFetch('{{ route('timesheets.show', $t['id']) }}').then(r => r.json()).then(d => { viewData = d; viewLoading = false; syncEditHoursFromViewData(); })"
                                     class="text-xs font-medium text-indigo-600 hover:underline">
                                     View
                                 </button>
@@ -188,7 +226,7 @@
                         <p class="text-gray-500">Loading…</p>
                     </template>
                     <template x-if="!viewLoading && viewData">
-                        <div class="space-y-5">
+                        <div class="space-y-5" x-init="syncEditHoursFromViewData()">
 
                             {{-- Header info --}}
                             <div class="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-gray-50 p-4 text-sm sm:grid-cols-3">
@@ -221,6 +259,45 @@
                                     <p class="font-medium" x-text="viewData.ot_rule_applied"></p>
                                 </div>
                             </div>
+
+                            @can('admin')
+                                <div x-show="!viewData.locked_for_hour_edit" class="rounded-lg border border-amber-100 bg-amber-50/80 p-4 text-sm">
+                                    <p class="font-medium text-amber-900">Edit daily hours</p>
+                                    <p class="mt-1 text-xs text-amber-800">Totals below use pay/bill rates and state <span class="font-medium">from when this timesheet was saved</span> (snapshots).</p>
+                                    <div class="mt-3 space-y-3">
+                                        <div>
+                                            <p class="mb-1 text-xs font-medium text-gray-700">Week 1 (Mon → Sun)</p>
+                                            <div class="grid grid-cols-7 gap-1">
+                                                @foreach (['M', 'T', 'W', 'T', 'F', 'S', 'S'] as $i => $_d)
+                                                    <label class="text-center text-[10px] text-gray-500">{{ $_d }}
+                                                        <input type="number" step="0.25" min="0" x-model.number="editW1[{{ $i }}]"
+                                                            class="mt-0.5 w-full rounded border border-gray-300 px-0.5 py-1 text-xs" />
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1 text-xs font-medium text-gray-700">Week 2 (Mon → Sun)</p>
+                                            <div class="grid grid-cols-7 gap-1">
+                                                @foreach (['M', 'T', 'W', 'T', 'F', 'S', 'S'] as $i => $_d)
+                                                    <label class="text-center text-[10px] text-gray-500">{{ $_d }}
+                                                        <input type="number" step="0.25" min="0" x-model.number="editW2[{{ $i }}]"
+                                                            class="mt-0.5 w-full rounded border border-gray-300 px-0.5 py-1 text-xs" />
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <button type="button" @click="saveEditedHours()" :disabled="editSaving"
+                                            class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                                            <span x-show="!editSaving">Save hours &amp; recalculate</span>
+                                            <span x-show="editSaving">Saving…</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div x-show="viewData.locked_for_hour_edit" class="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                                    Hours cannot be edited because an invoice is linked to this timesheet.
+                                </div>
+                            @endcan
 
                             {{-- Hours & pay by week --}}
                             <div>

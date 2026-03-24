@@ -91,6 +91,7 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::post('timesheets', [TimesheetController::class, 'storeManual'])->name('timesheets.store');
     Route::get('timesheets/check-duplicate', [TimesheetController::class, 'checkDuplicate'])->name('timesheets.check-duplicate');
     Route::get('timesheets/template/download', [TimesheetController::class, 'downloadTemplate'])->name('timesheets.template');
+    Route::patch('timesheets/{timesheet}/hours', [TimesheetController::class, 'updateHours'])->name('timesheets.update-hours');
     Route::resource('timesheets', TimesheetController::class)->only(['index', 'show']);
 
     Route::post('invoices/generate', [InvoiceController::class, 'generate'])->name('invoices.generate');

@@ -76,6 +76,7 @@ class TimesheetController extends Controller
             'client_name'     => $t->client?->name,
             'pay_period_label' => PayPeriodFormatter::formatRange($t->pay_period_start, $t->pay_period_end),
             'dailyHours'      => $daily,
+            'locked_for_hour_edit' => $t->invoice_id !== null,
         ]));
     }
 
@@ -230,7 +231,6 @@ class TimesheetController extends Controller
             ? strtoupper($row['state'])
             : (string) $consultant->state;
 
-        $industry = $consultant->industry_type === 'other' ? 'general' : $consultant->industry_type;
         $hireDate = $consultant->project_start_date?->format('Y-m-d');
 
         $payRate = (float) $consultant->pay_rate;
@@ -239,28 +239,15 @@ class TimesheetController extends Controller
         $week1Hours = array_map(fn ($h) => (float) $h, $row['week1Hours']);
         $week2Hours = array_map(fn ($h) => (float) $h, $row['week2Hours']);
 
-        $week1Result = OvertimeCalculator::calculateOvertimePay([
-            'state' => $state,
-            'industry' => $industry,
-            'hoursPerDay' => $week1Hours,
-            'regularRate' => $payRate,
-            'billRate' => $billRate,
-            'hireDate' => $hireDate,
-        ]);
-        $week2Result = OvertimeCalculator::calculateOvertimePay([
-            'state' => $state,
-            'industry' => $industry,
-            'hoursPerDay' => $week2Hours,
-            'regularRate' => $payRate,
-            'billRate' => $billRate,
-            'hireDate' => $hireDate,
-        ]);
-
-        $totalConsultantCost = (float) $week1Result['totalConsultantCost'] + (float) $week2Result['totalConsultantCost'];
-        $totalClientBillable = (float) $week1Result['totalClientBillable'] + (float) $week2Result['totalClientBillable'];
-        $grossMarginDollars = $totalClientBillable - $totalConsultantCost;
-        $grossMarginPercent = $totalClientBillable > 0 ? ($grossMarginDollars / $totalClientBillable) * 100 : 0;
-        $otRuleApplied = (string) $week1Result['otRuleApplied'];
+        $computed = $this->computeTimesheetAggregates(
+            $state,
+            $consultant->industry_type,
+            $hireDate,
+            $payRate,
+            $billRate,
+            $week1Hours,
+            $week2Hours,
+        );
 
         $existing = Timesheet::query()
             ->where('consultant_id', $consultant->id)
@@ -269,44 +256,16 @@ class TimesheetController extends Controller
             ->first();
 
         return DB::transaction(function () use (
-            $existing, $row, $consultant, $clientId, $payRate, $billRate, $week1Result, $week2Result,
-            $totalConsultantCost, $totalClientBillable, $grossMarginDollars, $grossMarginPercent, $otRuleApplied,
+            $existing, $row, $consultant, $clientId, $payRate, $billRate, $computed,
             $week1Hours, $week2Hours, &$errors, $state, $sourceFilePath
         ) {
-            $attrs = [
+            $attrs = array_merge([
                 'client_id' => $clientId,
                 'pay_rate_snapshot' => $payRate,
                 'bill_rate_snapshot' => $billRate,
                 'state_snapshot' => $state,
                 'industry_type_snapshot' => $consultant->industry_type,
-                'ot_rule_applied' => $otRuleApplied,
-                'week1_regular_hours' => $week1Result['regularHours'],
-                'week1_ot_hours' => $week1Result['otHours'],
-                'week1_dt_hours' => $week1Result['doubleTimeHours'],
-                'week1_regular_pay' => $week1Result['regularPay'],
-                'week1_ot_pay' => $week1Result['otPay'],
-                'week1_dt_pay' => $week1Result['doubleTimePay'],
-                'week1_regular_billable' => $week1Result['regularBillable'],
-                'week1_ot_billable' => $week1Result['otBillable'],
-                'week1_dt_billable' => $week1Result['doubleTimeBillable'],
-                'week2_regular_hours' => $week2Result['regularHours'],
-                'week2_ot_hours' => $week2Result['otHours'],
-                'week2_dt_hours' => $week2Result['doubleTimeHours'],
-                'week2_regular_pay' => $week2Result['regularPay'],
-                'week2_ot_pay' => $week2Result['otPay'],
-                'week2_dt_pay' => $week2Result['doubleTimePay'],
-                'week2_regular_billable' => $week2Result['regularBillable'],
-                'week2_ot_billable' => $week2Result['otBillable'],
-                'week2_dt_billable' => $week2Result['doubleTimeBillable'],
-                'total_regular_hours' => $week1Result['regularHours'] + $week2Result['regularHours'],
-                'total_ot_hours' => $week1Result['otHours'] + $week2Result['otHours'],
-                'total_dt_hours' => $week1Result['doubleTimeHours'] + $week2Result['doubleTimeHours'],
-                'total_consultant_cost' => round($totalConsultantCost, 4),
-                'total_client_billable' => round($totalClientBillable, 4),
-                'gross_revenue' => round($totalClientBillable, 4),
-                'gross_margin_dollars' => round($grossMarginDollars, 4),
-                'gross_margin_percent' => round($grossMarginPercent, 4),
-            ];
+            ], $computed);
 
             if ($existing && ! empty($row['overwrite'])) {
                 TimesheetDailyHour::query()->where('timesheet_id', $existing->id)->delete();
@@ -342,6 +301,78 @@ class TimesheetController extends Controller
 
             return ['saved' => 0, 'overwrote' => 0];
         });
+    }
+
+    /**
+     * @param  list<float>  $week1Hours
+     * @param  list<float>  $week2Hours
+     * @return array<string, mixed>
+     */
+    private function computeTimesheetAggregates(
+        string $state,
+        ?string $industryTypeSnapshot,
+        ?string $hireDate,
+        float $payRate,
+        float $billRate,
+        array $week1Hours,
+        array $week2Hours,
+    ): array {
+        $industry = ($industryTypeSnapshot === null || $industryTypeSnapshot === '' || $industryTypeSnapshot === 'other')
+            ? 'general'
+            : (string) $industryTypeSnapshot;
+
+        $week1Result = OvertimeCalculator::calculateOvertimePay([
+            'state' => $state,
+            'industry' => $industry,
+            'hoursPerDay' => $week1Hours,
+            'regularRate' => $payRate,
+            'billRate' => $billRate,
+            'hireDate' => $hireDate,
+        ]);
+        $week2Result = OvertimeCalculator::calculateOvertimePay([
+            'state' => $state,
+            'industry' => $industry,
+            'hoursPerDay' => $week2Hours,
+            'regularRate' => $payRate,
+            'billRate' => $billRate,
+            'hireDate' => $hireDate,
+        ]);
+
+        $totalConsultantCost = (float) $week1Result['totalConsultantCost'] + (float) $week2Result['totalConsultantCost'];
+        $totalClientBillable = (float) $week1Result['totalClientBillable'] + (float) $week2Result['totalClientBillable'];
+        $grossMarginDollars = $totalClientBillable - $totalConsultantCost;
+        $grossMarginPercent = $totalClientBillable > 0 ? ($grossMarginDollars / $totalClientBillable) * 100 : 0;
+        $otRuleApplied = (string) $week1Result['otRuleApplied'];
+
+        return [
+            'ot_rule_applied' => $otRuleApplied,
+            'week1_regular_hours' => $week1Result['regularHours'],
+            'week1_ot_hours' => $week1Result['otHours'],
+            'week1_dt_hours' => $week1Result['doubleTimeHours'],
+            'week1_regular_pay' => $week1Result['regularPay'],
+            'week1_ot_pay' => $week1Result['otPay'],
+            'week1_dt_pay' => $week1Result['doubleTimePay'],
+            'week1_regular_billable' => $week1Result['regularBillable'],
+            'week1_ot_billable' => $week1Result['otBillable'],
+            'week1_dt_billable' => $week1Result['doubleTimeBillable'],
+            'week2_regular_hours' => $week2Result['regularHours'],
+            'week2_ot_hours' => $week2Result['otHours'],
+            'week2_dt_hours' => $week2Result['doubleTimeHours'],
+            'week2_regular_pay' => $week2Result['regularPay'],
+            'week2_ot_pay' => $week2Result['otPay'],
+            'week2_dt_pay' => $week2Result['doubleTimePay'],
+            'week2_regular_billable' => $week2Result['regularBillable'],
+            'week2_ot_billable' => $week2Result['otBillable'],
+            'week2_dt_billable' => $week2Result['doubleTimeBillable'],
+            'total_regular_hours' => $week1Result['regularHours'] + $week2Result['regularHours'],
+            'total_ot_hours' => $week1Result['otHours'] + $week2Result['otHours'],
+            'total_dt_hours' => $week1Result['doubleTimeHours'] + $week2Result['doubleTimeHours'],
+            'total_consultant_cost' => round($totalConsultantCost, 4),
+            'total_client_billable' => round($totalClientBillable, 4),
+            'gross_revenue' => round($totalClientBillable, 4),
+            'gross_margin_dollars' => round($grossMarginDollars, 4),
+            'gross_margin_percent' => round($grossMarginPercent, 4),
+        ];
     }
 
     /**
@@ -438,11 +469,80 @@ class TimesheetController extends Controller
         return response()->download($path, 'timesheet_template.xlsx');
     }
 
-    public function update(Request $request, string $timesheet): JsonResponse
+    public function updateHours(Request $request, string $timesheet): JsonResponse
     {
         $this->authorize('admin');
+        $data = $request->validate([
+            'week1' => ['required', 'array', 'size:7'],
+            'week2' => ['required', 'array', 'size:7'],
+            'week1.*' => ['numeric', 'min:0'],
+            'week2.*' => ['numeric', 'min:0'],
+        ]);
 
-        return response()->json(['error' => 'Use POST /timesheets/save for batch import'], 405);
+        $ts = Timesheet::query()->with(['consultant', 'client'])->find($timesheet);
+        if (! $ts) {
+            return response()->json(['error' => 'Timesheet not found'], 404);
+        }
+        if ($ts->invoice_id !== null) {
+            return response()->json(['error' => 'Cannot edit hours after an invoice is linked to this timesheet.'], 422);
+        }
+
+        $week1 = array_map(fn ($h) => (float) $h, array_values($data['week1']));
+        $week2 = array_map(fn ($h) => (float) $h, array_values($data['week2']));
+        $hireDate = $ts->consultant?->project_start_date?->format('Y-m-d');
+
+        $computed = $this->computeTimesheetAggregates(
+            (string) $ts->state_snapshot,
+            $ts->industry_type_snapshot,
+            $hireDate,
+            (float) $ts->pay_rate_snapshot,
+            (float) $ts->bill_rate_snapshot,
+            $week1,
+            $week2,
+        );
+
+        $beforeSnapshot = TimesheetDailyHour::query()
+            ->where('timesheet_id', $ts->id)
+            ->orderBy('week_number')
+            ->orderBy('day_of_week')
+            ->get(['week_number', 'day_of_week', 'hours'])
+            ->map(fn ($r) => $r->toArray())
+            ->all();
+
+        DB::transaction(function () use ($ts, $computed, $week1, $week2, $beforeSnapshot) {
+            TimesheetDailyHour::query()->where('timesheet_id', $ts->id)->delete();
+            $this->insertDailyHours((int) $ts->id, $week1, $week2);
+            $ts->update($computed);
+            AppService::auditLog(
+                'timesheets',
+                (int) $ts->id,
+                'TIMESHEET_HOURS_EDIT',
+                ['daily_hours' => $beforeSnapshot],
+                [
+                    'week1' => $week1,
+                    'week2' => $week2,
+                    'total_regular_hours' => $computed['total_regular_hours'],
+                    'total_ot_hours' => $computed['total_ot_hours'],
+                    'total_client_billable' => $computed['total_client_billable'],
+                ],
+                'Daily hours revised; aggregates recomputed from stored rate/state snapshots.',
+            );
+        });
+
+        $ts->refresh();
+        $daily = TimesheetDailyHour::query()
+            ->where('timesheet_id', $ts->id)
+            ->orderBy('week_number')
+            ->orderBy('day_of_week')
+            ->get();
+
+        return response()->json(array_merge($ts->toArray(), [
+            'consultant_name' => $ts->consultant?->full_name,
+            'client_name' => $ts->client?->name,
+            'pay_period_label' => PayPeriodFormatter::formatRange($ts->pay_period_start, $ts->pay_period_end),
+            'dailyHours' => $daily,
+            'locked_for_hour_edit' => $ts->invoice_id !== null,
+        ]));
     }
 
     public function destroy(string $id): JsonResponse

@@ -1,5 +1,5 @@
 # IHRP Master Task List
-_Last updated: 2026-03-24 (T019, T024)_
+_Last updated: 2026-03-24 (T016, T017)_
 _Source of truth for all remaining work. Check items off as completed. Append new items — never delete._
 
 ---
@@ -44,8 +44,8 @@ _Source of truth for all remaining work. Check items off as completed. Append ne
 - [x] **T013** — Clients page: show which AM manages each client. **Done 2026-03-24:** nullable `clients.account_manager_id` → `users` (`nullOnDelete`); `Client::accountManager()`; admin create/edit modal **Account manager** dropdown (active AM users); table column **Account manager**; JSON index includes `accountManager`; validation `exists` + `role=account_manager`; audit `MUTABLE` includes `account_manager_id`; migration `2026_03_24_120000_add_account_manager_id_to_clients_table`; tests `ClientControllerTest` (**121 tests**).
 - [x] **T014** — Consultants page: merge onboarding 3/7 badge into unified checklist flow. **Done 2026-03-24:** removed duplicate **W-9** pills next to name (W-9 stays in checklist + Actions **W-9** upload); **Checklist** column is a single **Progress** control (bar + `n/7`) that opens the same modal; removed redundant **Checklist** action link; modal **Mark/Done** toggles **admin-only**, AMs see read-only **Pending/Done** + note; admin hint for W-9 upload.
 - [x] **T015** — Timesheets: format pay period as human-readable ("Mar 9 – Mar 13, 2026") instead of raw dates. **Done 2026-03-24:** `App\Support\PayPeriodFormatter`; index table + view modal (`pay_period_label` JSON); import wizard preview; audit + duplicate-skip strings; `PayPeriodFormatterTest`.
-- [ ] **T016** — Timesheets: allow editing individual entries after import
-- [ ] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days)
+- [x] **T016** — Timesheets: allow editing individual entries after import. **Done 2026-03-24:** `PATCH /timesheets/{id}/hours` (admin); recomputes OT/margins via `OvertimeCalculator` using **stored snapshots** only; replaces `timesheet_daily_hours`; audit `TIMESHEET_HOURS_EDIT`; blocked when `invoice_id` set; admin edit UI in timesheet **View** modal; `TimesheetHoursUpdateTest`.
+- [x] **T017** — Timesheets: auto-populate pay period dates in template based on known biweekly schedule (currently generates with today + 13 days). **Done 2026-03-24:** `App\Support\BiweeklyPayPeriod` (anchor Monday `2020-01-06`, 14-day periods); `timesheets:generate-template` sets F6/F7 + column A row dates for both weeks; committed refreshed `storage/app/templates/timesheet_template.xlsx`; `BiweeklyPayPeriodTest`.
 - [ ] **T018** — Invoices: optimize PDF preview load time
 - [x] **T019** — Reports: format billed/cost columns as `$2,565.00` (currently `2565.0000`). **Done 2026-03-24:** `App\Support\ReportMoney` + monthly/year-end PDF blades (Billed/Cost cells + readable headers); CSV/JSON unchanged for tooling; `ReportMoneyTest`.
 - [ ] **T020** — Calls: add monthly + yearly aggregate reporting views
