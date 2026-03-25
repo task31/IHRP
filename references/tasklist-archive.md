@@ -58,10 +58,11 @@ _Do not reopen items in this file. Cross-reference by T0XX ID if needed._
 - [x] **T022** — Verify end-to-end deploy via `python deploy.py`. **Done 2026-03-25:** SSH fallback (`--step ssh-deploy`) confirmed as standard deploy path. cPanel UAPI deploy broken. 3 migrations applied on prod. Consultant 500 (duplicate method bug) found and fixed same session.
 - [x] **T023** — Enable `pdo_sqlite` in local PHP. **Done 2026-03-24** — same closure as T012.
 - [x] **T026** — Admin email inbox: Microsoft Graph sync, `email_inbox_*` tables, UI, `EmailHtmlSanitizer`; 145 tests pass. **Done 2026-03-25.**
-- [x] **T027** — Consultant contract file upload (unplanned — built by Cursor during T026 session). **Done 2026-03-25:** `contract_file_path` + `contract_on_file` columns added to `consultants`; `msa_contract` onboarding item seeded for all existing consultants; `contractUpload`, `contractPath`, `contractDelete` methods in `ConsultantController`; `uploads/contracts/` storage path. Migration `2026_03_26_120000_add_contract_file_to_consultants_table` applied on prod. Duplicate method bug introduced and fixed same session (fatal 500 on `/consultants` — resolved 2026-03-25).
+- [x] **T027** — Consultant contract file upload (unplanned — built by Cursor during T026 session). **Done 2026-03-25:** `contract_file_path` + `contract_on_file` columns added to `consultants`; `msa_contract` onboarding item seeded; `contractUpload/Path/Delete` methods in `ConsultantController`; migration applied on prod. Duplicate method bug introduced and fixed same session.
 
 ---
 
 ## ✅ P4 — Cleanup + Docs
 
 - [x] **T024** — Remove stale files from project root. **Done 2026-03-24.**
+- [x] **T025** — Consolidate all deploy knowledge. **Done 2026-03-25:** `references/deploy-learning-log.md` (full deploy incident history, append-only) + `references/deploy-preflight-checks.md` (reusable preflight checklist) committed to `origin/master`. All deploy knowledge captured — nothing in loose notes.
