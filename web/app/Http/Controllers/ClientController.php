@@ -17,7 +17,7 @@ class ClientController extends Controller
 {
     private const MUTABLE = [
         'name', 'billing_contact_name', 'billing_address',
-        'email', 'smtp_email', 'payment_terms', 'total_budget', 'po_number',
+        'email', 'smtp_email', 'payment_terms', 'total_budget',
         'account_manager_id',
     ];
 
@@ -82,7 +82,6 @@ class ClientController extends Controller
             'smtp_email' => ['nullable', 'email', 'max:255'],
             'payment_terms' => ['nullable', 'string', 'max:255'],
             'total_budget' => ['nullable', 'numeric'],
-            'po_number' => ['nullable', 'string', 'max:255'],
             'account_manager_id' => [
                 'nullable',
                 'integer',
@@ -98,7 +97,6 @@ class ClientController extends Controller
             'smtp_email' => isset($data['smtp_email']) ? trim((string) $data['smtp_email']) : null,
             'payment_terms' => $data['payment_terms'] ?? 'Net 30',
             'total_budget' => $data['total_budget'] ?? 0,
-            'po_number' => isset($data['po_number']) ? trim((string) $data['po_number']) : null,
             'account_manager_id' => $data['account_manager_id'] ?? null,
             'active' => true,
         ]);
@@ -124,7 +122,6 @@ class ClientController extends Controller
             'smtp_email' => ['nullable', 'email', 'max:255'],
             'payment_terms' => ['nullable', 'string', 'max:255'],
             'total_budget' => ['nullable', 'numeric'],
-            'po_number' => ['nullable', 'string', 'max:255'],
             'account_manager_id' => [
                 'nullable',
                 'integer',
@@ -142,7 +139,6 @@ class ClientController extends Controller
             'smtp_email' => isset($data['smtp_email']) ? trim((string) $data['smtp_email']) : null,
             'payment_terms' => $data['payment_terms'] ?? 'Net 30',
             'total_budget' => $data['total_budget'] ?? $client->total_budget,
-            'po_number' => isset($data['po_number']) ? trim((string) $data['po_number']) : null,
             'account_manager_id' => $data['account_manager_id'] ?? null,
         ]);
 

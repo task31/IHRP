@@ -136,7 +136,6 @@ class MigrateFromSqlite extends Command
                     'total_budget'               => $this->dec($r['total_budget']),
                     'budget_alert_warning_sent'  => $this->bool($warningSent),
                     'budget_alert_critical_sent' => $this->bool($criticalSent),
-                    'po_number'                  => $r['po_number'] ?? null,
                     'active'                     => $this->bool($r['active']),
                     'created_at'                 => $r['created_at'],
                     'updated_at'                 => $r['updated_at'],
@@ -144,7 +143,7 @@ class MigrateFromSqlite extends Command
                 ['id'],
                 ['name', 'billing_contact_name', 'billing_address', 'email', 'smtp_email',
                  'payment_terms', 'total_budget', 'budget_alert_warning_sent',
-                 'budget_alert_critical_sent', 'po_number', 'active', 'updated_at']
+                 'budget_alert_critical_sent', 'active', 'updated_at']
             );
             $n++;
         }

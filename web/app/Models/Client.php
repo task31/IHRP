@@ -18,7 +18,6 @@ class Client extends Model
         'total_budget',
         'budget_alert_warning_sent',
         'budget_alert_critical_sent',
-        'po_number',
         'active',
         'account_manager_id',
     ];

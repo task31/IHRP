@@ -156,7 +156,7 @@ class InvoiceController extends Controller
                 'bill_to_contact' => $client->billing_contact_name,
                 'bill_to_address' => $client->billing_address,
                 'payment_terms' => $payTerms,
-                'po_number' => $placementPo ?? $client->po_number,
+                'po_number' => $placementPo,
                 'subtotal' => round($subtotal, 4),
                 'total_amount_due' => round($subtotal, 4),
                 'status' => 'pending',

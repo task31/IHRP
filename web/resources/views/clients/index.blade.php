@@ -156,10 +156,6 @@
                         <label class="block text-xs font-medium text-gray-600">Total Budget</label>
                         <input type="number" step="0.01" x-model="form.total_budget" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600">Default PO #</label>
-                        <input type="text" x-model="form.po_number" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
-                    </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-2">
                     <button type="button" class="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100" @click="showModal = false">Cancel</button>
@@ -207,7 +203,6 @@
                     smtp_email: '',
                     payment_terms: 'Net 30',
                     total_budget: '',
-                    po_number: '',
                 },
                 confirmId: null,
                 openCreate() {
@@ -222,7 +217,6 @@
                         smtp_email: '',
                         payment_terms: 'Net 30',
                         total_budget: '',
-                        po_number: '',
                     };
                     this.showModal = true;
                 },
@@ -238,7 +232,6 @@
                         smtp_email: r.smtp_email ?? '',
                         payment_terms: r.payment_terms ?? 'Net 30',
                         total_budget: r.total_budget != null ? String(r.total_budget) : '',
-                        po_number: r.po_number ?? '',
                     };
                     this.isEdit = true;
                     this.showModal = true;
@@ -253,7 +246,6 @@
                         smtp_email: this.form.smtp_email || null,
                         payment_terms: this.form.payment_terms,
                         total_budget: this.form.total_budget === '' ? null : Number(this.form.total_budget),
-                        po_number: this.form.po_number || null,
                         account_manager_id:
                             this.form.account_manager_id === '' || this.form.account_manager_id === null
                                 ? null

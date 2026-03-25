@@ -1,6 +1,7 @@
 # Project Context — IHRP (Internal HR Portal)
 
 > This file is written once and never edited. It is the permanent brief for this project.
+> _Exception: factual corrections to stack/role decisions are noted inline with a dated note._
 
 ---
 
@@ -9,8 +10,7 @@
 A multi-user internal web HR application for Matchpointe Group, accessible at
 `hr.matchpointegroup.com`. It migrates all features from the existing single-user Electron
 payroll desktop app (19 sessions of work) to a browser-based app, and adds:
-- Employee logins to log daily call activity
-- Account Manager role for placement management
+- Account Manager role for placement management and payroll visibility
 - Role-based access control across all features
 
 ## Why We're Building It
@@ -22,8 +22,9 @@ browser without being on that machine.
 ## Who Uses It
 
 - **Admin** (boss/payroll manager): full access to all features
-- **Account Manager**: manage placements, read payroll data, submit + view call reports
-- **Employee**: submit daily call reports, view own stats and placement info
+- **Account Manager**: manage placements, read own payroll data, submit + view call reports
+
+_Note: An Employee role was initially planned but removed in Phase 4 (2026-03-20). All users are either admin or account_manager._
 
 ---
 
@@ -31,7 +32,7 @@ browser without being on that machine.
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Framework | Laravel 11 (PHP 8.2+) | Auth, ORM, mail, routing all built-in; runs natively on Bluehost |
+| Framework | Laravel 13 (PHP 8.3) | Auth, ORM, mail, routing all built-in; runs natively on Bluehost. _Note: planned as Laravel 11 — Composer resolved 13.x at scaffold time (2026-03-19)._ |
 | Frontend | Blade templates + Alpine.js | Pure PHP, no build pipeline, deploys directly to Bluehost |
 | Complex UI | Laravel Livewire | Timesheets wizard, real-time filtering — reactive without SPA complexity |
 | Database | MySQL (Bluehost included) | Free, already provisioned, cPanel managed |
@@ -40,7 +41,7 @@ browser without being on that machine.
 | Email | Laravel Mail + SMTP | Replaces nodemailer, same SMTP credentials |
 | File storage | storage/app/uploads/ | Bluehost disk, symlinked to public/storage |
 | Hosting | Bluehost Business Hosting | Already paid — 50GB disk, MySQL included, $0 extra |
-| Deploy | Bluehost cPanel Git Version Control | Push → auto pull |
+| Deploy | Bluehost cPanel Git Version Control + deploy.py | Push → cPanel pull via UAPI |
 
 ## Key Constraints
 
@@ -53,6 +54,7 @@ browser without being on that machine.
 ## Integrations
 
 - SMTP email (existing configuration, same credentials — configured in Settings)
+- Microsoft Graph API (email inbox sync — `AZURE_*` env vars, see T026)
 - Bluehost MySQL (cPanel managed)
 - Bluehost file storage (storage/app/uploads)
 
@@ -87,36 +89,4 @@ browser without being on that machine.
 
 _Generated: 2026-03-19_
 _Stack decisions made with: Claude (claude.ai) — manager confirmed PHP/Bluehost_
-
----
-
-<!-- handoff:start -->
-## SESSION HANDOFF — 2026-03-23 (~17:30)
-
-**Phase:** 5 — Deploy (production live at hr.matchpointegroup.com)
-**Branch:** master
-**Last commit:** 2cb78c2 — feat: add call activity analytics section to admin dashboard
-
-**What was fixed/built this session:**
-1. Alpine scope bug fixed on clients, consultants, timesheets pages — buttons in `x-slot="header"` moved into `x-data` div
-2. Placements `wire:click.self` (no method) fixed → `wire:click.self="cancelForm"`
-3. Timesheet template regenerated with proper biweekly structure + `GenerateTimesheetTemplate` artisan command added to deploy hook
-4. Parser `resolveDate()` added — accepts both Excel date serials and formatted date strings
-5. Call Activity analytics section added to admin dashboard (period picker, Chart.js trend, leaderboard, AM breakdown table)
-
-**To resume:**
-- All fixes are live on production after next cPanel deploy push
-- Call analytics section shows "No call data" until AMs log daily calls
-- 107 tests passing, working tree clean
-
-**Key files changed:**
-- `web/resources/views/clients/index.blade.php` — Alpine scope fix
-- `web/resources/views/consultants/index.blade.php` — Alpine scope fix
-- `web/resources/views/timesheets/index.blade.php` — Alpine scope fix
-- `web/resources/views/livewire/placement-manager.blade.php` — wire:click.self fix
-- `web/app/Services/TimesheetParseService.php` — resolveDate()
-- `web/app/Console/Commands/GenerateTimesheetTemplate.php` — new command
-- `web/app/Http/Controllers/DashboardController.php` — callsStats() endpoint
-- `web/resources/views/dashboard.blade.php` — call analytics section
-- `.cpanel.yml` — timesheets:generate-template added to deploy hook
-<!-- handoff:end -->
+_Last corrected: 2026-03-25 — Employee role removal noted; Laravel 13 runtime noted; stale session handoff removed_
