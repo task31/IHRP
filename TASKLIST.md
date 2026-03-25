@@ -6,14 +6,8 @@ _Completed tasks → `references/tasklist-archive.md`_
 ---
 
 ## Production Status
-**Production last verified: 2026-03-24 (Raf)** — admin + AM smoke complete. Phase 5 close criteria met (T001–T008 all `[x]`).
-**Pending:** `2026_03_25_210000_drop_po_number_from_clients_table` applied locally ✅ — run on prod via `python deploy.py --step deploy` (T022).
-
----
-
-## 🔵 P3 — Tech Debt / Infrastructure
-
-- [ ] **T022** — Fully wire and test `.cpanel.yml` end-to-end with GitHub push → auto-deploy (T005 was the prod fix; this is the verification step). **Next:** commit T021 changes, run `python deploy.py --step deploy`, confirm `.cpanel.yml` tasks execute + migration runs on prod. Optional follow-up: GitHub Action for push-triggered deploy.
+**Production last verified: 2026-03-25 (Raf)** — SSH deploy + all 3 pending migrations applied.
+All migrations current on prod. No pending migrations.
 
 ---
 
@@ -29,6 +23,6 @@ _Completed tasks → `references/tasklist-archive.md`_
 2. Mark it `[ → in progress]` when starting.
 3. Mark it `[x]` when confirmed done (not just coded — verified).
 4. If a task reveals new work, append it as a new `T0XX` item at the bottom of the correct section.
-5. **Production default path:** after **`git push`** (or when shipping), the **Architect** delegates to the **`ihrp-deploy-expert`** subagent (Cursor **Task** tool) to run **`deploy.py`** / the runbook in **`.cursor/rules/ihrp-deploy.mdc`** — not ad hoc shell from Chat. Migrations still need **explicit Raf confirmation** before `--force`.
-6. Deploy agent (`ihrp-deploy-expert`) owns execution of P0 deploy/production steps; Architect reviews output and DEVLOG.
+5. **Production default path:** after **`git push`**, use **`python deploy.py --step ssh-deploy`** (cPanel UAPI deploy path is broken — `repository_root` param rejected). Then run `python deploy.py --step migrate-status` and `python deploy.py --step run-migrations` if migrations are pending. Migrations need **explicit Raf confirmation** before `--force`.
+6. Deploy agent (`ihrp-deploy-expert`) owns execution of deploy/production steps; Architect reviews output and DEVLOG.
 7. Backend agent (`ihrp-backend-expert`) handles all backend/migration/service items.

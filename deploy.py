@@ -18,7 +18,7 @@ Requirements:
 Credentials (.deploy.env — gitignored):
   BLUEHOST_SSH_KEY=C:/Users/zobel/Downloads/id_rsa
   BLUEHOST_SSH_PASSWORD=...   # SSH key passphrase + fallback for cPanel UAPI
-  BLUEHOST_CPANEL_TOKEN=...   # optional; cPanel → Manage API Tokens — preferred for UAPI (port 2083)
+  BLUEHOST_CPANEL_TOKEN=...   # optional; cPanel -> Manage API Tokens -- preferred for UAPI (port 2083)
   # SSH key is used for SSH connections (Bluehost disables password SSH auth)
 """
 
@@ -44,7 +44,7 @@ except ImportError:
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# ─── Load local credentials from .deploy.env (gitignored) ───────────────────
+# --- Load local credentials from .deploy.env (gitignored) ---
 
 def _load_deploy_env() -> None:
     env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".deploy.env")
@@ -58,7 +58,7 @@ def _load_deploy_env() -> None:
 
 _load_deploy_env()
 
-# ─── Server Constants ────────────────────────────────────────────────────────
+# --- Server Constants ---
 
 HOST     = "sh00858.bluehost.com"
 USER     = "rbjwhhmy"
@@ -75,21 +75,20 @@ SSH_KEY  = os.environ.get(
 )
 
 # cPanel UAPI: prefer API token; else account password (port 2083 only)
-CPANEL_PASS = os.environ.get("BLUEHOST_SSH_PASSWORD", "")
+CPANEL_PASS  = os.environ.get("BLUEHOST_SSH_PASSWORD", "")
 CPANEL_TOKEN = os.environ.get("BLUEHOST_CPANEL_TOKEN", "").strip()
 
-# ─── SSH Helpers ─────────────────────────────────────────────────────────────
+# --- SSH Helpers ---
 
 def get_ssh() -> paramiko.SSHClient:
     """Open an SSH connection to Bluehost using key authentication."""
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # Normalize key path (handles forward/back slashes on Windows)
     key_path = os.path.normpath(SSH_KEY)
 
     if not os.path.exists(key_path):
-        print(f"❌ SSH key not found: {key_path}")
+        print(f"SSH key not found: {key_path}")
         print(f"   Set BLUEHOST_SSH_KEY in .deploy.env to the correct path.")
         sys.exit(1)
 
@@ -99,21 +98,21 @@ def get_ssh() -> paramiko.SSHClient:
             hostname=HOST,
             username=USER,
             key_filename=key_path,
-            passphrase=CPANEL_PASS,  # key was generated in cPanel; passphrase = cPanel password
+            passphrase=CPANEL_PASS,
             port=22,
             timeout=30,
-            look_for_keys=False,   # only use the specified key
-            allow_agent=False,     # don't try ssh-agent
+            look_for_keys=False,
+            allow_agent=False,
         )
-        print("✅ SSH connected (key auth)\n")
+        print("SSH connected (key auth)\n")
         return ssh
     except paramiko.AuthenticationException:
-        print("❌ SSH key authentication rejected by server.")
+        print("SSH key authentication rejected by server.")
         print("   Verify the public key is registered in Bluehost SSH Access panel.")
         print(f"   Key used: {key_path}")
         sys.exit(1)
     except paramiko.SSHException as e:
-        print(f"❌ SSH error: {e}")
+        print(f"SSH error: {e}")
         sys.exit(1)
 
 
@@ -126,7 +125,6 @@ def run(ssh: paramiko.SSHClient, cmd: str, timeout: int = 120):
     stdout = channel.makefile("r").read()
     stderr = channel.makefile_stderr("r").read()
     exit_code = channel.recv_exit_status()
-    # Decode bytes → str if paramiko returns bytes (Python 3 SSH channels)
     if isinstance(stdout, (bytes, bytearray)):
         stdout = stdout.decode("utf-8", errors="replace")
     if isinstance(stderr, (bytes, bytearray)):
@@ -138,11 +136,9 @@ def artisan(ssh: paramiko.SSHClient, cmd: str, timeout: int = 120):
     """Run an Artisan command on the server."""
     return run(ssh, f"{PHP} {ARTISAN} {cmd}", timeout=timeout)
 
+
 def resolve_composer_command(ssh: paramiko.SSHClient) -> str | None:
-    """
-    Resolve a Composer command that works on Bluehost jailshell.
-    Returns a shell-safe command string or None when not found.
-    """
+    """Resolve a Composer command that works on Bluehost jailshell."""
     candidates = [
         "composer",
         "/opt/cpanel/composer/bin/composer",
@@ -151,7 +147,6 @@ def resolve_composer_command(ssh: paramiko.SSHClient) -> str | None:
         "php /opt/cpanel/composer/bin/composer",
         "php ~/composer.phar",
     ]
-
     for candidate in candidates:
         out, _, code = run(
             ssh,
@@ -160,14 +155,12 @@ def resolve_composer_command(ssh: paramiko.SSHClient) -> str | None:
         )
         if code == 0 and "OK" in out:
             return candidate
-
     return None
 
 
-# ─── cPanel UAPI ─────────────────────────────────────────────────────────────
+# --- cPanel UAPI ---
 
 def _cpanel_uapi_secret() -> str | None:
-    """Credential after ``cpanel USER:`` — token preferred over account password."""
     if CPANEL_TOKEN:
         return CPANEL_TOKEN
     if CPANEL_PASS:
@@ -177,21 +170,17 @@ def _cpanel_uapi_secret() -> str | None:
 
 def _cpanel_request(method: str, url: str, **kwargs) -> dict:
     """
-    Make a cPanel UAPI request using the correct Authorization header format.
-    cPanel UAPI requires:  Authorization: cpanel username:password_or_api_token
-    NOT HTTP Basic auth (which is what requests.get(..., auth=(user, pass)) sends).
+    Make a cPanel UAPI request.
+    cPanel UAPI requires: Authorization: cpanel username:password_or_api_token
     """
     secret = _cpanel_uapi_secret()
     if not secret:
         print(
-            "⚠️  Set BLUEHOST_CPANEL_TOKEN (preferred) or BLUEHOST_SSH_PASSWORD in .deploy.env "
-            "— cPanel UAPI calls need one of these."
+            "Set BLUEHOST_CPANEL_TOKEN (preferred) or BLUEHOST_SSH_PASSWORD in .deploy.env"
         )
         return {"status": 0, "errors": ["no cpanel credentials"]}
 
-    headers = {
-        "Authorization": f"cpanel {USER}:{secret}",
-    }
+    headers = {"Authorization": f"cpanel {USER}:{secret}"}
     try:
         r = requests.request(method, url, headers=headers, verify=False, timeout=30, **kwargs)
         r.raise_for_status()
@@ -202,12 +191,12 @@ def _cpanel_request(method: str, url: str, **kwargs) -> dict:
         return {"status": 0, "errors": [str(e)]}
 
 
-# ─── Individual Steps ─────────────────────────────────────────────────────────
+# --- Individual Steps ---
 
 def step_migrate_status(ssh):
     """Step 2: Always check migration status before any deploy."""
     print("=" * 60)
-    print("STEP 2 — Migration Status")
+    print("STEP 2 -- Migration Status")
     print("=" * 60)
     out, err, code = artisan(ssh, "migrate:status")
     print(out)
@@ -216,47 +205,47 @@ def step_migrate_status(ssh):
 
     pending = [l for l in out.splitlines() if "Pending" in l]
     if pending:
-        print(f"\n⚠️  {len(pending)} pending migration(s) found:")
+        print(f"\n  {len(pending)} pending migration(s) found:")
         for p in pending:
             print(f"   {p.strip()}")
         print("\nThese must be run manually after deploy.")
         print("Confirm with Raf before running: python deploy.py --step run-migrations\n")
     else:
-        print("✅ No pending migrations.\n")
+        print("No pending migrations.\n")
     return pending
 
 
 def step_cpanel_deploy(ssh):
     """Step 4: Trigger cPanel Git pull + .cpanel.yml deployment."""
     print("=" * 60)
-    print("STEP 4 — cPanel Git Deploy")
+    print("STEP 4 -- cPanel Git Deploy")
     print("=" * 60)
 
-    # Git retrieve (pull latest from GitHub into cPanel's git clone)
+    # Git retrieve
     pull_url = f"https://{HOST}:2083/execute/VersionControl/retrieve"
     print("Triggering git retrieve...")
     result = _cpanel_request("GET", pull_url)
     if result.get("status") == 1:
-        print("✅ Git retrieve successful")
+        print("Git retrieve successful")
     else:
-        print(f"⚠️  Git retrieve response: {result}")
-        print("Manual fallback: cPanel → Git Version Control → IHRP → Deploy HEAD Commit")
+        print(f"Git retrieve response: {result}")
+        print("Manual fallback: cPanel -> Git Version Control -> IHRP -> Deploy HEAD Commit")
         _cpanel_manual_hint()
         return
 
-    # Deploy (runs .cpanel.yml tasks)
+    # Deploy — cPanel UAPI requires "repository_root", not "repository"
     deploy_url = f"https://{HOST}:2083/execute/VersionControlDeployment/create"
     print("Triggering deployment (.cpanel.yml tasks)...")
-    result = _cpanel_request("POST", deploy_url, data={"repository": REPO_DIR})
+    result = _cpanel_request("POST", deploy_url, data={"repository_root": REPO_DIR})
     if result.get("status") == 1:
-        print("✅ Deploy triggered successfully")
+        print("Deploy triggered successfully")
     else:
-        print(f"⚠️  Deploy response: {result}")
+        print(f"Deploy response: {result}")
         _cpanel_manual_hint()
         return
 
     print("\nWaiting 90 seconds for .cpanel.yml tasks to complete...")
-    print("  (cp -R web/ → public_html/hr/, composer install, config:cache, route:cache, view:cache)\n")
+    print("  (cp -R web/ -> public_html/hr/, composer install, config:cache, route:cache, view:cache)\n")
     for i in range(9):
         time.sleep(10)
         print(f"  {(i + 1) * 10}s elapsed...")
@@ -266,17 +255,17 @@ def step_cpanel_deploy(ssh):
 def _cpanel_manual_hint():
     print("\n  Manual deploy steps:")
     print("  1. Open: https://sh00858.bluehost.com:2083")
-    print("  2. Git Version Control → IHRP → Manage → Deploy HEAD Commit")
+    print("  2. Git Version Control -> IHRP -> Manage -> Deploy HEAD Commit")
     print()
 
 
 def step_ssh_deploy(ssh):
     """
-    SSH-based deploy fallback — mirrors .cpanel.yml exactly.
-    Used when cPanel UAPI VersionControl endpoints return 403.
+    SSH-based deploy fallback -- mirrors .cpanel.yml exactly.
+    Used when cPanel UAPI VersionControl endpoints fail.
 
     Steps:
-      1. Backup .env (protected — cp -R would overwrite it)
+      1. Backup .env (cp -R would overwrite it)
       2. git fetch + reset --hard in server repo
       3. cp -R web/. public_html/hr/
       4. Restore .env from backup
@@ -284,19 +273,19 @@ def step_ssh_deploy(ssh):
       6. php artisan config:cache + route:cache + view:cache + timesheets:generate-template
     """
     print("=" * 60)
-    print("STEP 4 — SSH Deploy (cPanel UAPI unavailable; SSH fallback)")
+    print("STEP 4 -- SSH Deploy (cPanel UAPI unavailable; SSH fallback)")
     print("=" * 60)
 
-    # --- 1. Backup .env ---
+    # 1. Backup .env
     print("Backing up .env to /tmp/ihrp_env_backup ...")
     out, err, code = run(ssh, f"cp {APP_DIR}/.env /tmp/ihrp_env_backup && echo BACKED_UP")
     if "BACKED_UP" not in out:
-        print(f"🚨 .env backup FAILED — aborting deploy to protect production .env")
+        print(f"FATAL: .env backup FAILED -- aborting deploy to protect production .env")
         print(f"   stdout: {out}  stderr: {err}")
         sys.exit(1)
-    print("✅ .env backed up\n")
+    print(".env backed up\n")
 
-    # --- 2. Git fetch + reset in server repo ---
+    # 2. Git fetch + reset
     print("Pulling latest code from GitHub into server repo ...")
     out, err, code = run(
         ssh,
@@ -305,42 +294,35 @@ def step_ssh_deploy(ssh):
     )
     print(out.strip())
     if code != 0:
-        print(f"🚨 git fetch/reset failed (exit {code})")
+        print(f"FATAL: git fetch/reset failed (exit {code})")
         print(err)
         sys.exit(1)
-    print("✅ Server repo updated\n")
+    print("Server repo updated\n")
 
-    # --- 3. cp -R web/ → public_html/hr/ ---
+    # 3. cp -R web/ -> public_html/hr/
     print("Copying web/ to public_html/hr/ ...")
-    out, err, code = run(
-        ssh,
-        f"cp -R {REPO_DIR}/web/. {APP_DIR}/ 2>&1",
-        timeout=120,
-    )
+    out, err, code = run(ssh, f"cp -R {REPO_DIR}/web/. {APP_DIR}/ 2>&1", timeout=120)
     if code != 0:
-        print(f"🚨 cp -R failed (exit {code}): {err}")
-        # Restore .env even if cp fails
+        print(f"FATAL: cp -R failed (exit {code}): {err}")
         run(ssh, f"cp /tmp/ihrp_env_backup {APP_DIR}/.env")
         sys.exit(1)
-    print("✅ Files copied\n")
+    print("Files copied\n")
 
-    # --- 4. Restore .env (CRITICAL — cp -R overwrites it) ---
+    # 4. Restore .env (CRITICAL)
     print("Restoring .env from backup ...")
     out, err, code = run(ssh, f"cp /tmp/ihrp_env_backup {APP_DIR}/.env && echo RESTORED")
     if "RESTORED" not in out:
-        print(f"🚨 .env RESTORE FAILED — production .env may be corrupted!")
+        print(f"FATAL: .env RESTORE FAILED -- production .env may be corrupted!")
         print(f"   stdout: {out}  stderr: {err}")
         sys.exit(1)
-    print("✅ .env restored\n")
+    print(".env restored\n")
 
-    # --- 5. Composer install ---
+    # 5. Composer install
     print("Resolving composer command ...")
     composer = resolve_composer_command(ssh)
     if not composer:
-        print("🚨 Composer not found in SSH shell.")
-        print("   Checked common locations and PATH, but none worked.")
+        print("FATAL: Composer not found in SSH shell.")
         print("   Add composer to PATH, or place composer.phar at ~/composer.phar.")
-        print("   Aborting SSH deploy to avoid partial/unsafe dependency state.")
         sys.exit(1)
 
     print(f"Using composer command: {composer}")
@@ -353,170 +335,166 @@ def step_ssh_deploy(ssh):
     last_lines = "\n".join(out.strip().splitlines()[-5:]) if out.strip() else err.strip()[:200]
     print(last_lines)
     if code != 0:
-        print(f"⚠️  Composer returned exit {code} — check output above")
+        print(f"  Composer returned exit {code} -- check output above")
     else:
-        print("✅ Composer install complete\n")
+        print("Composer install complete\n")
 
-    # --- 6. Artisan post-deploy commands ---
+    # 6. Artisan post-deploy
     print("Running artisan post-deploy commands ...")
     for cmd in ["config:cache", "route:cache", "view:cache", "timesheets:generate-template"]:
         out, err, code = artisan(ssh, cmd)
-        icon = "✅" if code == 0 else "❌"
+        icon = "OK" if code == 0 else "FAIL"
         msg = (out or err).strip().replace("\n", " ")[:80]
-        print(f"  {icon} {cmd}: {msg}")
+        print(f"  [{icon}] {cmd}: {msg}")
     print()
-    print("✅ SSH deploy complete\n")
+    print("SSH deploy complete\n")
 
 
 def step_verify_env(ssh):
     """Step 5: Verify .env survived the cp -R deploy."""
     print("=" * 60)
-    print("STEP 5 — Verify .env Integrity")
+    print("STEP 5 -- Verify .env Integrity")
     print("=" * 60)
     out, _, _ = run(ssh, f"head -6 {APP_DIR}/.env")
     print(out)
 
     checks = {
         "APP_ENV=production": "APP_ENV is production",
-        "APP_DEBUG=false": "APP_DEBUG is false",
-        "APP_NAME": "APP_NAME present",
+        "APP_DEBUG=false":    "APP_DEBUG is false",
+        "APP_NAME":           "APP_NAME present",
     }
     all_ok = True
     for key, label in checks.items():
         ok = key in out
-        icon = "✅" if ok else "🚨"
-        print(f"  {icon} {label}")
+        icon = "OK" if ok else "FAIL"
+        print(f"  [{icon}] {label}")
         if not ok:
             all_ok = False
 
     if not all_ok:
-        print("\n🚨 .env is MISSING or CORRUPTED. Stop and restore .env before proceeding.")
+        print("\nFATAL: .env is MISSING or CORRUPTED. Stop and restore .env before proceeding.")
         print(f"   Expected at: {APP_DIR}/.env")
-        print("   Restore from .env.production.example then SFTP to server.")
         sys.exit(1)
-    print("\n✅ .env intact\n")
+    print("\n.env intact\n")
 
 
 def step_storage_link(ssh):
     """Step 5b: Verify or recreate public/storage symlink."""
     print("=" * 60)
-    print("STEP 5b — Storage Symlink")
+    print("STEP 5b -- Storage Symlink")
     print("=" * 60)
     out, err, _ = run(ssh, f"ls -la {APP_DIR}/public/storage")
     print(out)
     if "->" not in out:
-        print("⚠️  Symlink missing. Recreating...")
+        print("Symlink missing. Recreating...")
         out2, err2, code = artisan(ssh, "storage:link")
         print(out2 or err2)
         if code == 0:
-            print("✅ Symlink created\n")
+            print("Symlink created\n")
         else:
-            print("🚨 Failed to create symlink\n")
+            print("FAIL: Failed to create symlink\n")
     else:
-        print("✅ Symlink intact\n")
+        print("Symlink intact\n")
 
 
 def step_safety_checks(ssh):
     """Step 5c: Check PHP handler, @vite, @livewireScripts."""
     print("=" * 60)
-    print("STEP 5c — Safety Checks")
+    print("STEP 5c -- Safety Checks")
     print("=" * 60)
 
-    # PHP handler
     out, _, _ = run(ssh, f"grep AddHandler {APP_DIR}/public/.htaccess")
     if "___lsphp" in out:
-        print("✅ PHP handler: application/x-httpd-ea-php83___lsphp (correct)")
+        print("PHP handler: application/x-httpd-ea-php83___lsphp (correct)")
     else:
-        print(f"🚨 PHP handler wrong or missing! Found: {out.strip()}")
+        print(f"FAIL: PHP handler wrong or missing! Found: {out.strip()}")
         print("   Expected: AddHandler application/x-httpd-ea-php83___lsphp .php")
 
-    # @vite check
     out, _, _ = run(ssh, f"grep -r '@vite' {APP_DIR}/resources/views/layouts/ 2>/dev/null")
     if out.strip():
-        print(f"🚨 @vite found in layouts — will cause 500!\n   {out.strip()}")
+        print(f"FAIL: @vite found in layouts -- will cause 500!\n   {out.strip()}")
     else:
-        print("✅ No @vite directives in layouts")
+        print("No @vite directives in layouts")
 
-    # @livewireScripts check (must be @livewireScriptConfig)
     out, _, _ = run(
         ssh,
         f"grep -rn 'livewireScripts[^C]' {APP_DIR}/resources/views/layouts/ 2>/dev/null",
     )
     if out.strip():
-        print(f"🚨 @livewireScripts found — must be @livewireScriptConfig!\n   {out.strip()}")
+        print(f"FAIL: @livewireScripts found -- must be @livewireScriptConfig!\n   {out.strip()}")
     else:
-        print("✅ Livewire script tag is @livewireScriptConfig (correct)\n")
+        print("Livewire script tag is @livewireScriptConfig (correct)\n")
 
 
 def step_run_migrations(ssh):
     """Step 6: Run pending migrations (with confirmation gate)."""
     print("=" * 60)
-    print("STEP 6 — Run Migrations")
+    print("STEP 6 -- Run Migrations")
     print("=" * 60)
 
     out, _, _ = artisan(ssh, "migrate:status")
     pending = [l for l in out.splitlines() if "Pending" in l]
 
     if not pending:
-        print("✅ No pending migrations — nothing to run.\n")
+        print("No pending migrations -- nothing to run.\n")
         return
 
-    print(f"⚠️  {len(pending)} pending migration(s):")
+    print(f"  {len(pending)} pending migration(s):")
     for p in pending:
         print(f"   {p.strip()}")
 
     confirm = input("\nConfirm: run these migrations on PRODUCTION? (yes/no): ").strip().lower()
     if confirm != "yes":
-        print("⏭️  Migration skipped. Run manually when ready.\n")
+        print("Migration skipped. Run manually when ready.\n")
         return
 
     print("\nRunning migrations...")
     out, err, code = artisan(ssh, "migrate --force", timeout=180)
     print(out)
     if code != 0:
-        print("🚨 Migration FAILED:")
+        print("FAIL: Migration FAILED:")
         print(err)
         return
 
     out2, _, _ = artisan(ssh, "migrate:status")
     remaining = [l for l in out2.splitlines() if "Pending" in l]
     if remaining:
-        print(f"⚠️  {len(remaining)} still pending after migrate run")
+        print(f"  {len(remaining)} still pending after migrate run")
     else:
-        print("✅ All migrations ran successfully\n")
+        print("All migrations ran successfully\n")
 
 
 def step_clear_cache(ssh):
     """Step 7: Clear and rebuild Laravel caches."""
     print("=" * 60)
-    print("STEP 7 — Rebuild Caches")
+    print("STEP 7 -- Rebuild Caches")
     print("=" * 60)
     for cmd in ["config:clear", "config:cache", "route:cache", "view:cache"]:
         out, err, code = artisan(ssh, cmd)
-        icon = "✅" if code == 0 else "❌"
+        icon = "OK" if code == 0 else "FAIL"
         msg = (out or err).strip().replace("\n", " ")[:80]
-        print(f"  {icon} {cmd}: {msg}")
+        print(f"  [{icon}] {cmd}: {msg}")
     print()
 
 
 def step_tail_log(ssh):
     """Step 8: Tail Laravel log for errors."""
     print("=" * 60)
-    print("STEP 8 — Laravel Log Check")
+    print("STEP 8 -- Laravel Log Check")
     print("=" * 60)
     out, _, _ = run(ssh, f"tail -50 {APP_DIR}/storage/logs/laravel.log")
     print(out)
     error_indicators = ["ERROR", "CRITICAL", "Exception", "Stack trace"]
     if any(x in out for x in error_indicators):
-        print("⚠️  Errors found in log — investigate before smoke test\n")
+        print("Errors found in log -- investigate before smoke test\n")
     else:
-        print("✅ No recent errors in Laravel log\n")
+        print("No recent errors in Laravel log\n")
 
 
 def step_smoke(ssh=None):
     """Step 9: HTTP smoke test."""
     print("=" * 60)
-    print("STEP 9 — HTTP Smoke Test")
+    print("STEP 9 -- HTTP Smoke Test")
     print("=" * 60)
 
     def check(url, expected_status=200, check_text=None):
@@ -528,16 +506,16 @@ def step_smoke(ssh=None):
                 ok = status == expected_status
                 if check_text:
                     ok = ok and check_text in body
-                icon = "✅" if ok else "❌"
-                print(f"  {icon} {url} → {status}")
+                icon = "OK" if ok else "FAIL"
+                print(f"  [{icon}] {url} -> {status}")
                 return ok
         except urllib.error.HTTPError as e:
             ok = e.code == expected_status
-            icon = "✅" if ok else "❌"
-            print(f"  {icon} {url} → {e.code}")
+            icon = "OK" if ok else "FAIL"
+            print(f"  [{icon}] {url} -> {e.code}")
             return ok
         except Exception as e:
-            print(f"  ❌ {url} → ERROR: {e}")
+            print(f"  [FAIL] {url} -> ERROR: {e}")
             return False
 
     check(f"{APP_URL}/login", check_text="IHRP")
@@ -545,63 +523,59 @@ def step_smoke(ssh=None):
 
     print()
     print("Manual verification needed (log in and check):")
-    print("  • Admin dashboard: 4 stat cards render")
-    print("  • Payroll page: charts render (not blank)")
-    print("  • AM login: redirects to /placements")
+    print("  - Admin dashboard: 4 stat cards render")
+    print("  - Payroll page: charts render (not blank)")
+    print("  - AM login: redirects to /placements")
     print()
 
 
 def step_diagnose():
     """Diagnose SSH and cPanel connectivity without a full deploy."""
     print("=" * 60)
-    print("DIAGNOSE — Connectivity Check")
+    print("DIAGNOSE -- Connectivity Check")
     print("=" * 60)
 
-    # 1. Check key file
     key_path = os.path.normpath(SSH_KEY)
     print(f"SSH key path: {key_path}")
     if os.path.exists(key_path):
-        print("✅ Key file exists")
+        print("Key file exists")
     else:
-        print("❌ Key file NOT found")
+        print("FAIL: Key file NOT found")
         return
 
-    # 2. Attempt SSH
     print(f"\nAttempting SSH to {HOST}...")
     try:
         ssh = get_ssh()
         out, _, _ = run(ssh, "echo 'SSH OK' && whoami")
-        print(f"✅ SSH works: {out.strip()}")
+        print(f"SSH works: {out.strip()}")
         ssh.close()
     except SystemExit:
-        print("❌ SSH failed (see error above)")
+        print("FAIL: SSH failed (see error above)")
         return
 
-    # 3. cPanel API
     print(f"\nTesting cPanel UAPI at https://{HOST}:2083...")
     if not _cpanel_uapi_secret():
-        print("⚠️  No BLUEHOST_CPANEL_TOKEN or BLUEHOST_SSH_PASSWORD — skipping cPanel UAPI test")
+        print("No BLUEHOST_CPANEL_TOKEN or BLUEHOST_SSH_PASSWORD -- skipping cPanel UAPI test")
     else:
         auth_label = "API token" if CPANEL_TOKEN else "account password"
         print(f"   Auth: {auth_label}")
         result = _cpanel_request("GET", f"https://{HOST}:2083/execute/Stats/get_bandwidth")
         if result.get("status") == 1:
-            print("✅ cPanel UAPI auth works (Stats/get_bandwidth)")
+            print("cPanel UAPI auth works (Stats/get_bandwidth)")
         else:
-            print(f"⚠️  Stats/get_bandwidth: {result.get('errors', result)}")
-            print("   (Some hosts restrict Stats; try VersionControl below.)")
+            print(f"Stats/get_bandwidth: {result.get('errors', result)}")
 
         vc = _cpanel_request("GET", f"https://{HOST}:2083/execute/VersionControl/retrieve")
         if vc.get("status") == 1:
-            print("✅ VersionControl/retrieve OK — `--step deploy` should work")
+            print("VersionControl/retrieve OK -- `--step deploy` should work")
         else:
-            print(f"❌ VersionControl/retrieve: {vc.get('errors', vc)}")
-            print("   If still 403, Bluehost may block Git UAPI for this account — use `--step ssh-deploy`.")
+            print(f"FAIL: VersionControl/retrieve: {vc.get('errors', vc)}")
+            print("   If 403, use `--step ssh-deploy` instead.")
 
     print()
 
 
-# ─── Full Deploy Flow ─────────────────────────────────────────────────────────
+# --- Full Deploy Flow ---
 
 def full_deploy():
     print("\n" + "=" * 60)
@@ -611,11 +585,11 @@ def full_deploy():
     ssh = get_ssh()
 
     try:
-        print("STEP 1 — Pre-Flight Reminder")
+        print("STEP 1 -- Pre-Flight Reminder")
         print("Before proceeding, confirm:")
-        print("  a) New .env keys? → update production .env via SFTP first")
-        print("  b) composer.json changed? → vendor/ rebuilt and committed?")
-        print("  c) Code pushed to GitHub? → git push origin master")
+        print("  a) New .env keys? -> update production .env via SFTP first")
+        print("  b) composer.json changed? -> vendor/ rebuilt and committed?")
+        print("  c) Code pushed to GitHub? -> git push origin master")
         print()
         input("Press Enter when ready to continue...")
         print()
@@ -630,7 +604,7 @@ def full_deploy():
             step_run_migrations(ssh)
             step_clear_cache(ssh)
         else:
-            print("STEP 6 — Migrations: None pending, skipped.\n")
+            print("STEP 6 -- Migrations: None pending, skipped.\n")
 
         step_tail_log(ssh)
         step_smoke(ssh)
@@ -638,10 +612,10 @@ def full_deploy():
     finally:
         ssh.close()
         print("SSH connection closed.")
-        print("\n✅ Deploy sequence complete.\n")
+        print("\nDeploy sequence complete.\n")
 
 
-# ─── CLI ──────────────────────────────────────────────────────────────────────
+# --- CLI ---
 
 STEP_MAP = {
     "diagnose":        lambda ssh: step_diagnose(),
@@ -657,7 +631,6 @@ STEP_MAP = {
     "ssh-deploy":      lambda ssh: step_ssh_deploy(ssh),
 }
 
-# Steps that don't need an SSH connection
 NO_SSH_STEPS = {"diagnose", "smoke"}
 
 
