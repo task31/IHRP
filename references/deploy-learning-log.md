@@ -104,3 +104,70 @@
 **Prevention:** Update `deploy.py` `step_cpanel_deploy` to pass cPanel-required `repository_root` (or use ssh-deploy when create fails). Document pattern in `DEPLOY.md` / `references/known-issues.md`.
 
 **Files changed (this session):** `references/deploy-learning-log.md` (this entry only).
+
+---
+
+## 2026-03-24 — T022 verification: deploy step blocked by repository_root
+
+**Trigger:** Raf requested T022 deploy verification with required command `python deploy.py --step deploy`, plus confirmation that migration `2026_03_25_210000_drop_po_number_from_clients_table` runs on production.
+
+**Diagnosis:**
+1. `python deploy.py --step diagnose` passed (SSH key auth OK, cPanel UAPI auth OK, `VersionControl/retrieve` OK).
+2. `python deploy.py --step deploy` failed at `VersionControlDeployment/create` with `Provide the "repository_root" argument.`
+3. Because the create/deploy call failed, `.cpanel.yml` tasks were not triggered by cPanel.
+4. Production `migrate:status` lists no pending migrations and does not include `2026_03_25_210000_drop_po_number_from_clients_table`, indicating the new migration was not yet deployed to production.
+
+**Fix applied:** No code/deploy fix applied in this run; verification-only execution completed and failure captured with evidence.
+
+**Prevention:** For production deploy verification requiring actual server-side deploy execution, use `python deploy.py --step ssh-deploy` as fallback when `--step deploy` returns `repository_root` error, then re-run `migrate-status` and execute migrations with explicit confirmation.
+
+**Files changed:** `references/deploy-learning-log.md`
+
+---
+
+## 2026-03-24 — T022 re-run after repository_root patch: invalid repository_root value
+
+**Trigger:** Raf requested rerun of T022 with `python deploy.py --step deploy`, then `--step migrate-status`, then `--step run-migrations` after a repository_root fix.
+
+**Diagnosis:**
+1. `--step deploy` reached `VersionControlDeployment/create` but failed with `“/home2/rbjwhhmy/repositories/IHRP” is not a valid “repository_root”.`
+2. This indicates parameter wiring changed from missing argument to invalid argument value, and cPanel deploy create still did not execute.
+3. `--step migrate-status` and `--step run-migrations` both reported no pending migrations.
+4. Migration `2026_03_25_210000_drop_po_number_from_clients_table` still does not appear in production migration status output.
+
+**Fix applied:** No code change in this run; verification executed and failure pattern captured.
+
+**Prevention:** For cPanel deploy create failures, inspect accepted `repository_root` format for this host/cPanel module before retrying; use `ssh-deploy` fallback when immediate production sync is required.
+
+**Files changed:** `references/deploy-learning-log.md`
+
+---
+
+## 2026-03-25 — T022 SSH fallback deploy + migrations applied
+**Trigger:** cPanel UAPI deploy path was broken due to `repository_root` mismatch; switched to SSH fallback for production sync.
+**Diagnosis:** `.cpanel.yml`-equivalent work via UAPI was not reliably triggered; production code push needed to be performed via `ssh-deploy`.
+**Fix applied:**
+1. Ran `python deploy.py --step ssh-deploy` from the IHRP project root.
+2. Ran `python deploy.py --step migrate-status` and identified 3 pending migrations.
+3. Ran `python deploy.py --step run-migrations` and auto-confirmed the interactive prompt with `yes`.
+**Prevention:**
+- When `--step deploy` fails at cPanel `VersionControlDeployment/create` with `repository_root` issues, use `python deploy.py --step ssh-deploy` for the code push.
+- Always re-check with `migrate-status` and run pending migrations via the confirmation-gated `run-migrations` step.
+**Files changed:** `references/deploy-learning-log.md`
+
+---
+## 2026-03-25 — Cache rebuild; fatal redeclare persists
+**Trigger:** Ran `python deploy.py --step clear-cache` followed immediately by `python deploy.py --step tail-log` on production.
+**Diagnosis:** `storage/logs/laravel.log` repeatedly reports a PHP fatal error:
+`Cannot redeclare App\Http\Controllers\ConsultantController::contractUpload()` at `app/Http/Controllers/ConsultantController.php:455`, indicating the controller contains a duplicate method definition in the deployed code. Cache rebuild does not resolve this kind of fatal redeclare.
+**Fix applied:** None beyond successful cache rebuild (`config`, `route`, `view` caches cleared/rebuilt).
+**Prevention:** Before deploying code changes touching `ConsultantController.php`, add a preflight/static check to ensure `contractUpload()` is declared exactly once (e.g., run PHP syntax/lint locally and verify unique method definitions).
+**Files changed:** none (production cache clear + log capture only).
+---
+## 2026-03-25 — SSH redeploy did not clear contractUpload redeclare
+**Trigger:** Ran `python deploy.py --step ssh-deploy` and then `python deploy.py --step tail-log` on production (no migrations executed in this request).
+**Diagnosis:** The latest `tail-log` output still shows the PHP fatal redeclare:
+`Cannot redeclare App\Http\Controllers\ConsultantController::contractUpload()` at `/home2/rbjwhhmy/public_html/hr/app/Http/Controllers/ConsultantController.php:455`.
+**Fix applied:** `--step ssh-deploy` connected via SSH, pulled `origin/master` on the server, copied `web/` → `public_html/hr/`, restored the backed-up `.env`, then ran `composer install --no-dev --optimize-autoloader` and artisan post-deploy cache/template commands.
+**Prevention:** Extend deploy preflight to verify `web/app/Http/Controllers/ConsultantController.php` contains exactly one `function contractUpload(` declaration before the production copy step (and fail/stop deploy if duplicates are detected).
+**Files changed:** none (log entry only)
