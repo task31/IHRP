@@ -1,0 +1,48 @@
+workbook_source,consultant_name,tax_class,pay_rate,bill_rate,spread_per_hour,commission_tier,status,source_am,db_id,db_current_bill_rate,db_current_pay_rate,spread_verified,notes
+Sibug,Alexander Len,W2,50.0000,73.0000,17.0000,,resolved_own,Sibug,,,,,
+Sibug,Alexis Mes (current),W2,44.0000,61.1500,11.8700,,resolved_own,Sibug,18,61.1500,44.0000,,
+Sibug,Alexis Mes (prior),W2,37.0000,50.0000,8.5600,,resolved_own,Sibug,18,61.1500,44.0000,,
+Dimarumba,Andrea Bercy,C2C,93.0000,107.0000,14.0000,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Dimarumba,Arman Ghazanchyan,W2,78.6800,107.8800,19.7584,,resolved_own,Dimarumba,1,107.8800,78.6800,,
+Dimarumba,Benjamin Castillo,W2,74.5500,99.7500,16.2540,,resolved_own,Dimarumba,,,,,
+Sibug,Benjamin Castillo,W2,74.5500,99.7500,16.2500,0.2000,resolved_cross,Dimarumba,,,,true,
+Sibug,Benjamin Picciano,,,,39.6000,0.2000,unresolved,,20,,,,Not found in AM workbooks
+Dimarumba,Charles Hanley,W2,59.1500,78.7500,12.5020,,resolved_own,Dimarumba,2,78.7500,59.1500,,
+Sibug,Charlotte Baker,,,,56.6000,0.2000,unresolved,,16,,,,Not found in AM workbooks
+Dimarumba,Davis Debard,C2C,89.0300,104.0800,15.0500,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Sibug,Davis Debard,C2C,89.0300,104.0800,15.0500,0.2000,resolved_cross,Dimarumba,,,,true,
+Sibug,Daxes Desai,1099,75.0000,98.0000,23.0000,,resolved_own,Sibug,14,,,,
+Sibug,Deanna DeBruin,1099,57.0000,75.0000,18.0000,,resolved_own,Sibug,,,,,
+Dimarumba,Dheeraj Bandaru,C2C,82.4000,99.9100,17.5100,,unresolved,,9,99.9100,82.4000,,Spread-only row (not cross-resolved)
+Sibug,Dheeraj Bandaru,C2C,82.4000,99.9100,17.5100,0.2000,resolved_cross,Dimarumba,9,99.9100,82.4000,true,
+Dimarumba,Emily Rivas,W2,55.0000,80.0000,18.4000,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Dimarumba,Eric Hibbler,W2,77.0000,105.0000,18.7600,,resolved_own,Dimarumba,,,,,
+Sibug,Gabriela Ibarra,W2,55.2800,80.4900,18.5800,0.2000,resolved_cross,Dimarumba,10,80.4900,55.2800,true,
+Dimarumba,Gabriela Ibarra (current),W2,55.2800,80.4900,18.5764,,resolved_own,Dimarumba,10,80.4900,55.2800,,
+Dimarumba,Gabriela Ibarra (prior),W2,38.0000,54.0000,11.4400,,resolved_own,Dimarumba,10,80.4900,55.2800,,
+Sibug,Gayle Soriano,,,,22.2000,0.2000,unresolved,,,,,,Not found in AM workbooks
+Dimarumba,George Reynoso,W2,91.0000,115.0000,13.0800,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Dimarumba,Gopinadh Kumar,C2C,84.0000,98.9000,14.9000,,unresolved,,7,98.9000,84.0000,,Spread-only row (not cross-resolved)
+Sibug,Haritha Burra,W2,89.0200,112.0000,12.2976,,resolved_own,Sibug,,,,,
+Sibug,Jacqueline Bendt,,,,7.1400,0.2000,unresolved,,,,,,Not found in AM workbooks
+Sibug,Jagan Rao,C2C,80.9600,97.4400,16.4800,0.2000,resolved_cross,Dimarumba,8,,,true,
+Dimarumba,Jagan Rao Alleni,C2C,80.9600,97.4400,16.4800,,unresolved,,8,,,,Spread-only row (not cross-resolved)
+Sibug,Jarod Malloy,W2,28.0000,33.9500,2.5900,,resolved_own,Sibug,,,,,
+Sibug,Judith Legaspi,,,,25.0000,0.2000,unresolved,,15,,,,Not found in AM workbooks
+Dimarumba,Kenny Lee,W2,47.0000,64.0000,11.3600,,resolved_own,Dimarumba,19,,,,
+Sibug,Kenny Lee,W2,47.0000,64.0000,11.3600,0.2000,resolved_cross,Dimarumba,19,,,true,
+Dimarumba,Linda Tracey (current),W2,52.8900,64.2400,5.0032,,resolved_own,Dimarumba,12,,,,
+Dimarumba,Linda Tracey (prior),W2,35.0000,44.2000,5.0000,,resolved_own,Dimarumba,12,,,,
+Dimarumba,Mitsukuni Shinohara,C2C,85.0000,104.0000,19.0000,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Dimarumba,Noosha Yousefpour,1099,60.0000,66.0000,6.0000,,unresolved,,,,,,Spread-only row (not cross-resolved)
+Dimarumba,Oleg Yevteyev,C2C,85.0000,105.0000,20.0000,,unresolved,,11,,,,Spread-only row (not cross-resolved)
+Sibug,Oleg Yevteyev,C2C,85.0000,105.0000,20.0000,0.2000,resolved_cross,Dimarumba,11,,,true,
+Dimarumba,Preeti Srivastava,C2C,84.9600,94.0300,9.0700,,unresolved,,5,94.0300,84.9600,,Spread-only row (not cross-resolved)
+Sibug,Preeti Srivastava,C2C,84.9600,94.0300,9.0700,0.2000,resolved_cross,Dimarumba,5,94.0300,84.9600,true,
+Dimarumba,Saleem Shaik,C2C,70.0000,85.0000,15.0000,,resolved_own,Dimarumba,3,85.0000,70.0000,,
+Dimarumba,Srinivas Depu,C2C,,,12.0000,,resolved_own,Dimarumba,,,,,
+Sibug,Srinivas Depu,1099,75.0000,87.0000,12.0000,,resolved_own,Sibug,,,,,
+Dimarumba,Tanseef Fahad,C2C,91.8100,102.8800,11.0700,,unresolved,,6,102.7200,91.8100,,Spread-only row (not cross-resolved)
+Sibug,Tanseef Fahad,C2C,91.8100,102.8800,11.0700,0.2000,resolved_cross,Dimarumba,6,102.7200,91.8100,true,
+Dimarumba,Torrance Mohammed,C2C,85.6000,102.7200,17.1200,,unresolved,,4,102.7200,85.6000,,Spread-only row (not cross-resolved)
+Sibug,Torrance Mohammed,C2C,85.6000,102.7200,17.1200,0.1000,resolved_cross,Dimarumba,4,102.7200,85.6000,true,

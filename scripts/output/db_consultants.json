@@ -1,0 +1,128 @@
+[
+  {
+    "id": 18,
+    "full_name": "Alexis Mes",
+    "bill_rate": "61.1500",
+    "pay_rate": "44.0000"
+  },
+  {
+    "id": 1,
+    "full_name": "Arman Ghazanchyan",
+    "bill_rate": "107.8800",
+    "pay_rate": "78.6800"
+  },
+  {
+    "id": 20,
+    "full_name": "Benjamin Picciano",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 21,
+    "full_name": "Catherine Council",
+    "bill_rate": "87.3600",
+    "pay_rate": "62.6000"
+  },
+  {
+    "id": 2,
+    "full_name": "Charles Hanley",
+    "bill_rate": "78.7500",
+    "pay_rate": "59.1500"
+  },
+  {
+    "id": 16,
+    "full_name": "Charlotte Baker",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 14,
+    "full_name": "Daxes Desai",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 9,
+    "full_name": "Dheeraj Bandaru",
+    "bill_rate": "99.9100",
+    "pay_rate": "82.4000"
+  },
+  {
+    "id": 10,
+    "full_name": "Gabriela Ibarra",
+    "bill_rate": "80.4900",
+    "pay_rate": "55.2800"
+  },
+  {
+    "id": 7,
+    "full_name": "Gopinadh Kumar",
+    "bill_rate": "98.9000",
+    "pay_rate": "84.0000"
+  },
+  {
+    "id": 17,
+    "full_name": "Jacquline Bendt",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 8,
+    "full_name": "Jagan Rao Alleni",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 15,
+    "full_name": "Judith Legaspi",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 19,
+    "full_name": "Kenny Lee",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 12,
+    "full_name": "Linda Tracey",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 11,
+    "full_name": "Oleg Yevteyev",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 5,
+    "full_name": "Preeti Srivastava",
+    "bill_rate": "94.0300",
+    "pay_rate": "84.9600"
+  },
+  {
+    "id": 13,
+    "full_name": "Randall Beck",
+    "bill_rate": null,
+    "pay_rate": null
+  },
+  {
+    "id": 3,
+    "full_name": "Saleem Shaik",
+    "bill_rate": "85.0000",
+    "pay_rate": "70.0000"
+  },
+  {
+    "id": 6,
+    "full_name": "Tanseef Fahad",
+    "bill_rate": "102.7200",
+    "pay_rate": "91.8100"
+  },
+  {
+    "id": 4,
+    "full_name": "Torrance Mohammed",
+    "bill_rate": "102.7200",
+    "pay_rate": "85.6000"
+  }
+]

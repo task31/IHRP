@@ -29,7 +29,7 @@ _Completed tasks → `references/tasklist-archive.md`_
 ## 🔲 Open Tasks
 
 - [x] **T028** — Commission tier + placement role overhaul. Done 2026-03-30.
-- [ ] **T029** — Rate resolution script: cross-workbook pay/bill lookup. See Cursor prompt below.
+- [x] **T029** — Rate resolution script: cross-workbook pay/bill lookup. Done 2026-03-30.
 
 ---
 

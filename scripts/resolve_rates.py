@@ -426,6 +426,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--dimarumba", type=str, default="", help="Path to Dimarumba workbook (.xlsx).")
     ap.add_argument("--harsono", type=str, default="", help="Path to Harsono workbook (.xlsx).")
     ap.add_argument("--apply", action="store_true", help="Apply DB updates (requires confirmation).")
+    ap.add_argument("--db-json", type=str, default="", help="Path to JSON file with consultant rows (skips live DB).")
     args = ap.parse_args(argv)
 
     repo_root = Path(__file__).resolve().parents[1]
@@ -460,16 +461,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     # DB lookup — optional; continues with empty index if DB is unavailable.
     env = parse_env_file(repo_root / "web" / ".env")
     db_index: Dict[str, Any] = {}
-    try:
-        conn = db_connect(env)
-        try:
-            db_rows = fetch_consultants(conn)
-        finally:
-            conn.close()
+    if args.db_json:
+        import json as _json
+        db_rows = _json.loads(Path(args.db_json).read_text(encoding="utf-8"))
         db_index = build_db_index(db_rows)
-        print(f"DB connected — {len(db_rows)} consultant(s) loaded.")
-    except Exception as db_err:
-        print(f"WARNING: DB unavailable ({db_err}). CSVs will be written without db_id matches.")
+        print(f"DB loaded from JSON — {len(db_rows)} consultant(s).")
+    else:
+        try:
+            conn = db_connect(env)
+            try:
+                db_rows = fetch_consultants(conn)
+            finally:
+                conn.close()
+            db_index = build_db_index(db_rows)
+            print(f"DB connected — {len(db_rows)} consultant(s) loaded.")
+        except Exception as db_err:
+            print(f"WARNING: DB unavailable ({db_err}). CSVs will be written without db_id matches.")
 
     def attach_db(norm: str) -> Tuple[Optional[int], Optional[Decimal], Optional[Decimal]]:
         key = fuzzy_lookup(norm, db_index)

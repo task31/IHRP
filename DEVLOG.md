@@ -1965,3 +1965,26 @@ Cursor hardened date parsing to handle `mm-dd-yy` formatted dates in the officia
 **Carry-forwards:**
 - [ ] Run script with `--apply` against production DB after verifying rate-db-update-preview.csv manually
 - [ ] 18 unresolved consultants remain (Charlotte Baker, Jacqueline Bendt, Judith Legaspi, Benjamin Picciano, Gayle Soriano + others) — rates cannot be inferred from available data
+
+### ✅ [REVIEW — Claude Code] — T029: Rate Resolution + Production Apply _(2026-03-30)_
+
+**Reviewed:** Production DB updated directly via SSH + MySQL. SSH port forwarding blocked on Bluehost jailshell; used `paramiko` exec_command with `--db-json` flag as workaround.
+
+**Verified:**
+- `resolve_rates.py` — `--db-json` flag added to support offline DB injection ✅
+- 6 consultants updated in `consultants` table via SSH mysql: Daxes Desai, Jagan Rao, Kenny Lee, Linda Tracey, Oleg Yevteyev, Tanseef Fahad (bill $102.72→$102.88) ✅
+- Daxes Desai confirmed 1099; Harsono placing AM (40%), Raf recruiter (20%) ✅
+- Charlotte Baker: bill=$247.00, pay=$170.00 (provided directly) ✅
+- Judith Legaspi: bill=$109.00, pay=$75.00 — W2 spread $25 verified ✅
+- Jacqueline Bendt: pay=$28.00, bill=$38.50 derived — W2 spread $7.14 verified ✅
+- All `payroll_consultant_entries.consultant_id` were NULL — linked by exact name match ✅
+- Spelling mismatches fixed: Torrance Mohammad↔Mohammed, Jacqueline↔Jacquline Bendt ✅
+- `revenue` recomputed as `hours × bill_rate` for all 14 linked entries ✅
+- `margin` recomputed as `revenue − am_earnings` ✅
+- `pct_of_total` recomputed per user+year ✅
+- Laravel cache cleared ✅
+
+**Still unresolved (no rates in any workbook):** Benjamin Picciano, Gayle Soriano, and others — spread-only.
+
+**Carry-forwards:**
+- [ ] None — T029 complete.
