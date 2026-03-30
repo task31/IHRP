@@ -65,7 +65,11 @@ final class PayrollParseService
         $warnings = [];
 
         $summary = $this->parseSummarySheet($spreadsheet, $stopName);
-        $consultantRows = $this->parseConsultantSheets($spreadsheet, $stopName);
+        $summaryYears = array_values(array_unique(array_map(
+            fn (array $r) => (int) substr($r['check_date'], 0, 4),
+            $summary['records']
+        )));
+        $consultantRows = $this->parseConsultantSheets($spreadsheet, $stopName, $summaryYears);
 
         return new PayrollParseResult(
             $summary['ownerName'],
@@ -161,10 +165,14 @@ final class PayrollParseService
     }
 
     /**
+     * @param list<int> $summaryYears Years extracted from payroll summary check dates (used as fallback for stale sheet dates)
+     *
      * @return list<array<string, mixed>>
      */
-    private function parseConsultantSheets(Spreadsheet $wb, string $stopName): array
+    private function parseConsultantSheets(Spreadsheet $wb, string $stopName, array $summaryYears = []): array
     {
+        $maxSummaryYear = $summaryYears !== [] ? max($summaryYears) : 0;
+
         /** @var array<int, array<string, array{am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}>> $byYear */
         $byYear = [];
 
@@ -173,7 +181,7 @@ final class PayrollParseService
             if (! $this->isPeriodSheet($title)) {
                 continue;
             }
-            $year = $this->getSheetYear($ws);
+            $year = $this->getSheetYear($ws, $maxSummaryYear);
             if ($year === null) {
                 continue;
             }
@@ -226,26 +234,35 @@ final class PayrollParseService
         return str_contains($name, '_') && (str_contains($name, '.') || str_contains($name, '-'));
     }
 
-    private function getSheetYear(Worksheet $ws): ?int
+    /**
+     * Return the most recent valid year found in the first 50 rows of the sheet.
+     * If the best year found is stale (>2 years before the most recent summary year),
+     * fall back to $maxSummaryYear — handles workbooks where timesheet date cells
+     * were copied from old templates (e.g. Harsono sheets showing 2023 dates for 2026 periods).
+     */
+    private function getSheetYear(Worksheet $ws, int $maxSummaryYear = 0): ?int
     {
-        // Primary: scan row 3 (works for newer-format sheets with dates in the header row)
-        $year = $this->extractYearFromRow($ws, 3);
-        if ($year !== null) {
-            return $year;
-        }
-
-        // Fallback: scan the first 50 rows (all columns) for any valid Excel date.
-        // Needed for older-format sheets (Harsono, Dimarumba, Sibug pre-2023) where row 3 is empty
-        // and dates appear mid-sheet in the timesheet grid (rows 20-35 typically).
+        $found = [];
         $maxRow = min((int) $ws->getHighestDataRow(), 50);
         for ($r = 1; $r <= $maxRow; $r++) {
             $year = $this->extractYearFromRow($ws, $r);
             if ($year !== null) {
-                return $year;
+                $found[] = $year;
             }
         }
 
-        return null;
+        if ($found === []) {
+            return null;
+        }
+
+        $maxFound = max($found);
+
+        // If extracted year is stale relative to the summary, use the summary year instead.
+        if ($maxSummaryYear > 0 && ($maxSummaryYear - $maxFound) > 2) {
+            return $maxSummaryYear;
+        }
+
+        return $maxFound;
     }
 
     private function extractYearFromRow(Worksheet $ws, int $row): ?int
@@ -296,6 +313,7 @@ final class PayrollParseService
     private function parsePayCalc(Worksheet $ws, string $stopName): array
     {
         $inPayCalc = false;
+        $activeTier = null; // set by numeric tier separator (Harsono-style) or trigger row
         /** @var list<array{name: string, spread_total: string, hours: string, spread_per_hour: string}> $buffer */
         $buffer = [];
         /** @var list<array{name: string, am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}> $results */
@@ -307,13 +325,30 @@ final class PayrollParseService
             if (! $inPayCalc) {
                 if (is_string($colE) && str_contains(strtoupper($colE), 'OT')) {
                     $inPayCalc = true;
+                    $activeTier = null;
+                    // Harsono second-section pattern: the OT-trigger row itself carries a numeric
+                    // tier in col A (e.g. 0.4 in col A, "OT" in col E) — capture it immediately.
+                    $triggerColA = $ws->getCell($this->cell(1, $r))->getCalculatedValue();
+                    if (is_numeric($triggerColA) && (float) $triggerColA > 0 && (float) $triggerColA < 1) {
+                        $activeTier = bcdiv((string) (float) $triggerColA, '1', 8);
+                    }
                 }
 
                 continue;
             }
 
             $colA = $ws->getCell($this->cell(1, $r))->getCalculatedValue();
+
+            // Numeric col A between (0,1): Harsono-style tier separator mid-section.
+            // Flush the current buffer as the preceding (implicit 50%) group, then
+            // set the active tier for the following consultant rows.
             if (! is_string($colA) || trim($colA) === '') {
+                if (is_numeric($colA) && (float) $colA > 0 && (float) $colA < 1) {
+                    $this->flushPayCalcBuffer($buffer, $activeTier ?? '0.50000000', $results);
+                    $buffer = [];
+                    $activeTier = bcdiv((string) (float) $colA, '1', 8);
+                }
+
                 continue;
             }
 
@@ -323,10 +358,16 @@ final class PayrollParseService
             $colAStripped = trim(preg_replace('/[\s\p{Z}]+/u', ' ', $colA) ?? trim($colA));
 
             // Stop-name or "Total" row signals end of this pay-calc section.
+            // Flush remaining buffer first (handles Harsono-style sections where the 50% group
+            // has no explicit tier row and terminates directly with "Total").
             // Use reset (not break) so multi-period sheets (e.g. Harsono with two bi-weekly
             // sections per tab) are fully captured — the next OT trigger re-enters pay-calc mode.
             if (str_starts_with($colAStripped, 'Total') || str_starts_with($colAStripped, $stopName)) {
+                if ($buffer !== []) {
+                    $this->flushPayCalcBuffer($buffer, $activeTier ?? '0.50000000', $results);
+                }
                 $inPayCalc = false;
+                $activeTier = null;
                 $buffer = [];
 
                 continue;
@@ -337,22 +378,14 @@ final class PayrollParseService
             //   "Commission 40% Subtotal"  (Sibug 2025+)
             //   "Commission Subttal 40%"   (typo variant)
             //   "50% Commission Subtotal"  (Dimarumba)
-            //   "SubTotal 40%"             (Harsono, Sibug pre-2023)
+            //   "SubTotal 40%"             (Sibug pre-2023)
             $lowerA = strtolower($colAStripped);
             $isTierRow = (str_contains($colAStripped, 'Commission') && (str_contains($lowerA, 'subtotal') || str_contains($lowerA, 'subttal')))
                 || (str_starts_with($lowerA, 'subtotal') && preg_match('/\d+\s*%/i', $colAStripped));
             if ($isTierRow) {
                 preg_match('/(\d+(?:\.\d+)?)\s*%/i', $colAStripped, $m);
                 $commissionPct = isset($m[1]) ? bcdiv($m[1], '100', 8) : '0.00000000';
-                foreach ($buffer as $entry) {
-                    $results[] = [
-                        'name'             => $entry['name'],
-                        'am_earnings'      => bcmul($entry['spread_total'], $commissionPct, 4),
-                        'hours'            => $entry['hours'],
-                        'spread_per_hour'  => $entry['spread_per_hour'],
-                        'commission_pct'   => $commissionPct,
-                    ];
-                }
+                $this->flushPayCalcBuffer($buffer, $commissionPct, $results);
                 $buffer = [];
 
                 continue;
@@ -366,11 +399,13 @@ final class PayrollParseService
             $colC = $ws->getCell($this->cell(3, $r))->getCalculatedValue();
             $colD = $ws->getCell($this->cell(4, $r))->getCalculatedValue();
 
-            $hours          = is_numeric($colB) ? $this->formatMoney((string) $colB) : '0.0000';
-            $spreadPerHour  = is_numeric($colC) ? $this->formatMoney((string) $colC) : '0.0000';
-            // col D = hours × spread (total spread for this consultant this period)
+            $hours         = is_numeric($colB) ? $this->formatMoney((string) $colB) : '0.0000';
+            $spreadPerHour = is_numeric($colC) ? $this->formatMoney((string) $colC) : '0.0000';
+            // col D = hours × spread (total spread earnings for this consultant this period).
+            // Only buffer rows where col B is numeric (actual hours) — this excludes rate-table
+            // rows at the top of Harsono-style sheets where col B holds "pay/bill" strings like "33/52".
             $spreadTotal = is_numeric($colD) ? (float) $colD : 0.0;
-            if ($spreadTotal > 0) {
+            if ($spreadTotal > 0 && is_numeric($colB)) {
                 $buffer[] = [
                     'name'            => $colAStripped,
                     'spread_total'    => $this->formatMoney((string) $spreadTotal),
@@ -381,6 +416,25 @@ final class PayrollParseService
         }
 
         return $results;
+    }
+
+    /**
+     * Flush buffered consultant rows into results with the given commission percentage.
+     *
+     * @param list<array{name: string, spread_total: string, hours: string, spread_per_hour: string}> $buffer
+     * @param list<array{name: string, am_earnings: string, hours: string, spread_per_hour: string, commission_pct: string}> $results
+     */
+    private function flushPayCalcBuffer(array $buffer, string $commissionPct, array &$results): void
+    {
+        foreach ($buffer as $entry) {
+            $results[] = [
+                'name'            => $entry['name'],
+                'am_earnings'     => bcmul($entry['spread_total'], $commissionPct, 4),
+                'hours'           => $entry['hours'],
+                'spread_per_hour' => $entry['spread_per_hour'],
+                'commission_pct'  => $commissionPct,
+            ];
+        }
     }
 
     /**
