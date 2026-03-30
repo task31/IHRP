@@ -2097,3 +2097,56 @@ Per `ihrp-deploy.mdc`, production must **never** be blindly overwritten for: `.e
 - [ ] Deploy to production when ready so the route and view are live (template file already deployed with `e5368af`).
 
 ---
+
+### 🔨 [BUILD — Cursor / ihrp-deploy-expert] — Production deploy: Invoice PDF redesign + Regenerate PDF (df26677) _(2026-03-30)_
+
+**Goal:** Deploy commit **df26677** (`feat(invoices): redesign PDF layout + add Regenerate PDF`) to **hr.matchpointegroup.com**. No migrations, no `.env` changes, no Composer dependency changes for this feature (deploy script still ran `composer install --no-dev` on server as part of **ssh-deploy**).
+
+**Scope shipped:**
+- `web/app/Http/Controllers/InvoiceController.php` — `regeneratePdf()`
+- `web/app/Services/PdfService.php` — `setPaper('letter', 'portrait')` on invoice generation
+- `web/resources/views/pdf/invoice.blade.php` — full visual redesign
+- `web/resources/views/invoices/index.blade.php` — Regen PDF button + Alpine method
+- `web/routes/web.php` — `POST invoices/{invoice}/regenerate-pdf`
+
+**Done:**
+- Confirmed `origin/master` at **df26677bd2f98a7d18e6dad81ef593a663c510eb**.
+- `python deploy.py --step diagnose` — **PASS** (SSH key auth + cPanel UAPI; git retrieve OK).
+- `python deploy.py --step migrate-status` — **PASS** — **no pending migrations.**
+- `python deploy.py --step deploy` — **FAIL** at cPanel `VersionControlDeployment/create`: `"/home2/rbjwhhmy/repositories/IHRP" is not a valid "repository_root"` (same pattern as prior prod deploys).
+- `python deploy.py --step ssh-deploy` — **PASS** — server repo fast-forward **e5368af..df26677**, **`HEAD` at df26677**; `web/` copied to `public_html/hr/`; `.env` backed up and restored; `composer install --no-dev --optimize-autoloader`; artisan post-deploy (caches, etc.).
+- `python deploy.py --step clear-cache` — **PASS** (`config:clear` → `config:cache`, `route:cache`, `view:cache`).
+- `python deploy.py --step smoke` — **PARTIAL** — `/login` **200 OK**; `/dashboard` step **FAIL** in script (expects **302** when unauthenticated; client follows redirect to login and ends on **200** — known false negative vs. [deploy-learning-log](references/deploy-learning-log.md)).
+- `python deploy.py --step tail-log` — **PASS** per step (no new recent errors reported).
+
+**Manual verification (post-deploy):**
+- Open **Preview** on an existing invoice → confirm new PDF layout (divider rule, due date, styled table header).
+- Click **Regen PDF** as admin → confirm toast + re-open **Preview** shows updated layout.
+- If anything errors, re-run `python deploy.py --step tail-log` and check timestamps for **500** stack traces.
+
+**Artifacts:**
+- `references/deploy-learning-log.md` — **2026-03-30 — Invoice PDF layout + Regenerate PDF (df26677)**.
+
+**Carry-forwards:**
+- [ ] Optional: fix or document cPanel **VersionControlDeployment** `repository_root` for hands-off **`--step deploy`** (until then **`ssh-deploy` remains the reliable fallback**).
+
+---
+
+### ✅ [REVIEW — Claude Code] — Production: Consultant active-status cleanup _(2026-03-30)_
+
+**What:** Direct production DB update — set `active` flag correctly across all 86 consultant records based on current Excel roster (`Contract Hourly Tracking_Sibug 03.26.2026.xlsx`, sheet `02.09_02.22`).
+
+**Result:**
+- **19 active** — current roster consultants
+- **67 inactive** — historical/off-roster consultants, phantom entry ("Commission 20% Total"), and duplicates (Torrance Mohammad id=51, Jacquline Bendt id=17, Liuquan Tong (6/20-7/03) id=72)
+
+**Active IDs (19):** 4, 5, 10, 15, 16, 18, 19, 30, 34, 50, 52, 53, 63, 64, 65, 70, 71, 74, 75
+
+**Notes:**
+- Name corrected in this session: Excel "Rachael Canales" = DB id=53 "Raquel Canales" (stays active)
+- Dheeraj Bandaru (id=9) marked inactive — was billing Dec 2025 but no longer on current roster
+- No code changes — DB-only update via SSH/MySQL
+
+**Carry-forwards:** None.
+
+---
