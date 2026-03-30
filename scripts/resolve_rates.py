@@ -21,7 +21,6 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import openpyxl
 import pymysql
-import requests
 
 
 Q4 = Decimal("0.0001")
@@ -290,6 +289,7 @@ def read_rate_sheet(workbook_path: Path, workbook_source: str) -> Tuple[Dict[str
 class LedgerRow:
     workbook_source: str
     consultant_name: str
+    normalized_name: str
     tax_class: Optional[str]
     pay_rate: Optional[Decimal]
     bill_rate: Optional[Decimal]
@@ -302,6 +302,8 @@ class LedgerRow:
     db_current_pay_rate: Optional[Decimal]
     spread_verified: Optional[bool]
     notes: str
+    ihrp_match_status: str
+    needs_manual_review: bool
 
 
 def db_connect(env: Dict[str, str]):
@@ -326,14 +328,15 @@ def fetch_consultants(conn) -> List[Dict[str, Any]]:
     return rows
 
 
-def build_db_index(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    idx: Dict[str, Dict[str, Any]] = {}
+def build_db_index(rows: List[Dict[str, Any]]) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, List[Dict[str, Any]]]]:
+    by_norm: Dict[str, List[Dict[str, Any]]] = {}
     for r in rows:
         norm = normalize_name(r.get("full_name") or "")
         if not norm:
             continue
-        idx[norm] = r
-    return idx
+        by_norm.setdefault(norm, []).append(r)
+    idx: Dict[str, Dict[str, Any]] = {norm: lst[0] for norm, lst in by_norm.items()}
+    return idx, by_norm
 
 
 def fmt_money(v: Optional[Decimal]) -> str:
@@ -355,6 +358,62 @@ def write_csv(path: Path, header: List[str], rows: List[Dict[str, Any]]) -> None
         w.writeheader()
         for r in rows:
             w.writerow({k: ("" if r.get(k) is None else r.get(k)) for k in header})
+
+
+def attach_db_match(
+    norm: str,
+    db_index: Dict[str, Dict[str, Any]],
+    db_rows_by_norm: Dict[str, List[Dict[str, Any]]],
+) -> Tuple[Optional[int], Optional[Decimal], Optional[Decimal], str]:
+    if not db_index:
+        return None, None, None, "no_match"
+    if len(db_rows_by_norm.get(norm, [])) > 1:
+        return None, None, None, "multiple_candidates"
+    key = fuzzy_lookup(norm, db_index)
+    if key is None:
+        return None, None, None, "no_match"
+    if len(db_rows_by_norm.get(key, [])) > 1:
+        return None, None, None, "multiple_candidates"
+    r = db_index[key]
+    ihrp = "exact_name_match" if key == norm else "mapped_name_match"
+    return (
+        int(r["id"]),
+        q4(dec(r.get("bill_rate"))),
+        q4(dec(r.get("pay_rate"))),
+        ihrp,
+    )
+
+
+def ledger_row_in_exception_report(r: LedgerRow) -> bool:
+    if r.status in ("unresolved", "spread_only", "spread_mismatch", "special_nonhourly", "ambiguous_match"):
+        return True
+    if r.needs_manual_review:
+        return True
+    return False
+
+
+def exception_suggested_next_action(r: LedgerRow) -> str:
+    if r.status == "special_nonhourly":
+        return "nonhourly_excluded"
+    if r.ihrp_match_status == "multiple_candidates":
+        return "need_manual_name_mapping"
+    if r.status == "spread_mismatch":
+        return "formula_conflict_review"
+    if r.db_id is None:
+        return "no_consultant_record_in_ihrp"
+    if r.status == "unresolved":
+        return "current_rate_unclear" if r.source_am else "need_external_client_contract"
+    if r.status == "spread_only":
+        return "need_external_client_contract"
+    if r.status == "ambiguous_match":
+        return "need_manual_name_mapping"
+    return "need_external_client_contract"
+
+
+def exception_reason_not_updated(r: LedgerRow) -> str:
+    if r.notes:
+        return f"{r.status} — {r.notes}"
+    return r.status
 
 
 def _verify_spread(bill: Decimal, pay: Decimal, tax_class: Optional[str], expected_spread: Decimal) -> Tuple[bool, str]:
@@ -431,7 +490,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     repo_root = Path(__file__).resolve().parents[1]
     payroll_dir = repo_root / "web" / "storage" / "app" / "private" / "uploads" / "payroll"
-    out_dir = repo_root / "scripts" / "output"
+    out_dir = repo_root / "references"
 
     sibug_path = Path(args.sibug) if args.sibug else (find_latest_workbook(payroll_dir, "sibug") or Path())
     dim_path = Path(args.dimarumba) if args.dimarumba else (find_latest_workbook(payroll_dir, "dimarumba") or Path())
@@ -460,11 +519,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # DB lookup — optional; continues with empty index if DB is unavailable.
     env = parse_env_file(repo_root / "web" / ".env")
-    db_index: Dict[str, Any] = {}
+    db_index: Dict[str, Dict[str, Any]] = {}
+    db_rows_by_norm: Dict[str, List[Dict[str, Any]]] = {}
     if args.db_json:
         import json as _json
         db_rows = _json.loads(Path(args.db_json).read_text(encoding="utf-8"))
-        db_index = build_db_index(db_rows)
+        db_index, db_rows_by_norm = build_db_index(db_rows)
         print(f"DB loaded from JSON — {len(db_rows)} consultant(s).")
     else:
         try:
@@ -473,30 +533,20 @@ def main(argv: Optional[List[str]] = None) -> int:
                 db_rows = fetch_consultants(conn)
             finally:
                 conn.close()
-            db_index = build_db_index(db_rows)
+            db_index, db_rows_by_norm = build_db_index(db_rows)
             print(f"DB connected — {len(db_rows)} consultant(s) loaded.")
         except Exception as db_err:
             print(f"WARNING: DB unavailable ({db_err}). CSVs will be written without db_id matches.")
-
-    def attach_db(norm: str) -> Tuple[Optional[int], Optional[Decimal], Optional[Decimal]]:
-        key = fuzzy_lookup(norm, db_index)
-        r = db_index.get(key) if key else None
-        if not r:
-            return None, None, None
-        return (
-            int(r["id"]),
-            q4(dec(r.get("bill_rate"))),
-            q4(dec(r.get("pay_rate"))),
-        )
 
     resolved_own = 0
     resolved_cross = 0
     unresolved = 0
     spread_mismatch = 0
+    spread_only_ct = 0
 
     def add_from_rate_row(rr: RateRow, status: str, source_am: Optional[str], spread_verified: Optional[bool], notes: str) -> None:
-        db_id, db_bill, db_pay = attach_db(rr.normalized_name)
-        nonlocal resolved_own, resolved_cross, unresolved, spread_mismatch
+        db_id, db_bill, db_pay, ihrp_status = attach_db_match(rr.normalized_name, db_index, db_rows_by_norm)
+        nonlocal resolved_own, resolved_cross, unresolved, spread_mismatch, spread_only_ct
         if status == "resolved_own":
             resolved_own += 1
         elif status == "resolved_cross":
@@ -505,10 +555,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             spread_mismatch += 1
         elif status == "unresolved":
             unresolved += 1
+        elif status == "spread_only":
+            spread_only_ct += 1
+        needs_manual_review = ihrp_status == "multiple_candidates" or status == "ambiguous_match"
         ledger.append(
             LedgerRow(
                 workbook_source=rr.workbook_source,
                 consultant_name=rr.consultant_name,
+                normalized_name=rr.normalized_name,
                 tax_class=rr.tax_class,
                 pay_rate=rr.pay_rate,
                 bill_rate=rr.bill_rate,
@@ -521,6 +575,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 db_current_pay_rate=db_pay,
                 spread_verified=spread_verified,
                 notes=notes,
+                ihrp_match_status=ihrp_status,
+                needs_manual_review=needs_manual_review,
             )
         )
 
@@ -529,13 +585,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         if rr.section == "fully_known":
             add_from_rate_row(rr, "resolved_own", "Dimarumba", None, "")
         else:
-            add_from_rate_row(rr, "unresolved", None, None, "Spread-only row (not cross-resolved)")
+            add_from_rate_row(rr, "spread_only", None, None, "Spread-only row (not cross-resolved)")
 
     for rr in har_all:
         if rr.section == "fully_known":
             add_from_rate_row(rr, "resolved_own", "Harsono", None, "")
         else:
-            add_from_rate_row(rr, "unresolved", None, None, "Spread-only row (not cross-resolved)")
+            add_from_rate_row(rr, "spread_only", None, None, "Spread-only row (not cross-resolved)")
 
     # Sibug: fully-known rows are tier=0.5 per spec; spread-only rows are cross-resolved.
     for rr in sib_all:
@@ -581,30 +637,65 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "db_current_pay_rate": fmt_money(r.db_current_pay_rate),
                 "spread_verified": ("" if r.spread_verified is None else ("true" if r.spread_verified else "false")),
                 "notes": r.notes,
+                "ihrp_match_status": r.ihrp_match_status,
             }
         )
 
     ledger_rows.sort(key=lambda x: (x["consultant_name"].lower(), x["workbook_source"]))
-    write_csv(
-        out_dir / "rate-resolution-ledger.csv",
-        [
-            "workbook_source",
-            "consultant_name",
-            "tax_class",
-            "pay_rate",
-            "bill_rate",
-            "spread_per_hour",
-            "commission_tier",
-            "status",
-            "source_am",
-            "db_id",
-            "db_current_bill_rate",
-            "db_current_pay_rate",
-            "spread_verified",
-            "notes",
-        ],
-        ledger_rows,
-    )
+    ledger_header = [
+        "workbook_source",
+        "consultant_name",
+        "tax_class",
+        "pay_rate",
+        "bill_rate",
+        "spread_per_hour",
+        "commission_tier",
+        "status",
+        "source_am",
+        "db_id",
+        "db_current_bill_rate",
+        "db_current_pay_rate",
+        "spread_verified",
+        "notes",
+        "ihrp_match_status",
+    ]
+    write_csv(out_dir / "rate-resolution-ledger.csv", ledger_header, ledger_rows)
+
+    exception_rows: List[Dict[str, Any]] = []
+    for r in ledger:
+        if not ledger_row_in_exception_report(r):
+            continue
+        exception_rows.append(
+            {
+                "workbook": r.workbook_source,
+                "consultant": r.consultant_name,
+                "normalized_name": r.normalized_name,
+                "tax_class": r.tax_class or "",
+                "known_spread": fmt_money(r.spread_per_hour),
+                "known_pay_rate": fmt_money(r.pay_rate),
+                "known_bill_rate": fmt_money(r.bill_rate),
+                "reason_not_updated": exception_reason_not_updated(r),
+                "source_tabs_checked": "Rate Sheet",
+                "ihrp_match_status": r.ihrp_match_status,
+                "suggested_next_action": exception_suggested_next_action(r),
+            }
+        )
+
+    exception_header = [
+        "workbook",
+        "consultant",
+        "normalized_name",
+        "tax_class",
+        "known_spread",
+        "known_pay_rate",
+        "known_bill_rate",
+        "reason_not_updated",
+        "source_tabs_checked",
+        "ihrp_match_status",
+        "suggested_next_action",
+    ]
+    exception_rows.sort(key=lambda x: (str(x["consultant"]).lower(), str(x["workbook"]).lower()))
+    write_csv(out_dir / "rate-resolution-exceptions.csv", exception_header, exception_rows)
 
     # Build DB update preview (one row per DB id; pick best available resolved row)
     best_by_db_id: Dict[int, LedgerRow] = {}
@@ -659,11 +750,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
 
     print(f"Wrote: {out_dir / 'rate-resolution-ledger.csv'}")
+    print(f"Wrote: {out_dir / 'rate-resolution-exceptions.csv'}")
     print(f"Wrote: {out_dir / 'rate-db-update-preview.csv'}")
     print("Summary:")
     print(f"  resolved_own: {resolved_own}")
     print(f"  resolved_cross: {resolved_cross}")
     print(f"  unresolved: {unresolved}")
+    print(f"  spread_only: {spread_only_ct}")
     print(f"  spread_mismatch: {spread_mismatch}")
 
     if not args.apply:
@@ -736,16 +829,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     finally:
         conn.close()
 
-    # Trigger recompute margins (best-effort; endpoint is admin-only in-app)
-    app_url = env.get("APP_URL", "").rstrip("/")
-    if app_url:
-        try:
-            resp = requests.post(f"{app_url}/payroll/recompute-margins", timeout=30)
-            with log_path.open("a", encoding="utf-8") as log:
-                log.write(f"[{dt.datetime.now().isoformat(timespec='seconds')}] recompute-margins: {resp.status_code}\n")
-        except Exception as e:
-            with log_path.open("a", encoding="utf-8") as log:
-                log.write(f"[{dt.datetime.now().isoformat(timespec='seconds')}] recompute-margins failed: {e}\n")
+    with log_path.open("a", encoding="utf-8") as log:
+        log.write(
+            f"[{dt.datetime.now().isoformat(timespec='seconds')}] "
+            "Recompute payroll margins per AM: php artisan payroll:recompute-am {user_id}\n"
+        )
 
     print(f"Applied updates. Log: {log_path}")
     return 0
