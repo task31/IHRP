@@ -22,17 +22,46 @@ final class TimesheetParseService
      */
     public static function detectFormat(array $rows): string
     {
-        $r0 = $rows[0] ?? [];
-        $r8 = $rows[8] ?? [];
-        $cell8_6 = isset($r8[6]) ? strtoupper((string) $r8[6]) : '';
+        $titleFound = false;
+        $dateHeaderFound = false;
+        foreach (array_slice($rows, 0, 20) as $r) {
+            if (! is_array($r)) {
+                continue;
+            }
 
-        if (($r0[0] ?? null) === 'BI-WEEKLY TIMESHEET'
-            && ($r8[0] ?? null) === 'DATE'
-            && str_contains($cell8_6, 'HOURS')
-        ) {
+            $rowHasDate = false;
+            $rowHasHours = false;
+
+            foreach ($r as $cell) {
+                $s = strtoupper(trim((string) $cell));
+                if ($s === '') {
+                    continue;
+                }
+
+                $norm = preg_replace('/[^A-Z]/', '', $s) ?? '';
+                if (str_contains($norm, 'BIWEEKLY') && str_contains($norm, 'TIMESHEET')) {
+                    $titleFound = true;
+                }
+
+                if ($s === 'DATE') {
+                    $rowHasDate = true;
+                }
+
+                if (str_contains($s, 'HOURS')) {
+                    $rowHasHours = true;
+                }
+            }
+
+            if ($rowHasDate && $rowHasHours) {
+                $dateHeaderFound = true;
+            }
+        }
+
+        if ($titleFound && $dateHeaderFound) {
             return 'biweekly-template';
         }
 
+        $r0 = $rows[0] ?? [];
         if (is_array($r0) && count($r0) > 0) {
             foreach ($r0 as $cell) {
                 if (is_string($cell) && trim($cell) !== '') {
@@ -58,6 +87,13 @@ final class TimesheetParseService
             if ($ts !== false) {
                 return gmdate('Y-m-d', $ts);
             }
+
+            foreach (['m-d-y', 'm/d/y', 'm-d-Y', 'm/d/Y'] as $fmt) {
+                $dt = \DateTime::createFromFormat($fmt, $value);
+                if ($dt instanceof \DateTime) {
+                    return $dt->format('Y-m-d');
+                }
+            }
         }
         throw new \InvalidArgumentException("Cannot parse date value: {$value}");
     }
@@ -68,15 +104,50 @@ final class TimesheetParseService
      */
     public static function parseTemplate(array $rows): array
     {
-        $startVal = $rows[5][5] ?? null;
-        $endVal   = $rows[6][5] ?? null;
+        $toHours = fn ($val): float => (is_float($val) || is_int($val)) ? (float) $val : 0.0;
+
+        // Prefer current official template layout (generator: GenerateTimesheetTemplate).
+        try {
+            $startVal = $rows[10][0] ?? null; // A11
+            $endVal   = $rows[23][0] ?? null; // A24
+            if ($startVal === null || $startVal === '' || $endVal === null || $endVal === '') {
+                throw new \InvalidArgumentException('Missing date values in template (A11/A24)');
+            }
+
+            $consultantName = trim((string) ($rows[2][1] ?? '')); // B3
+            $payPeriodStart = self::resolveDate($startVal);
+            $payPeriodEnd   = self::resolveDate($endVal);
+
+            $week1Hours = [];
+            foreach ([10, 11, 12, 13, 14, 15, 16] as $i) {
+                $week1Hours[] = $toHours($rows[$i][6] ?? 0);
+            }
+            $week2Hours = [];
+            foreach ([17, 18, 19, 20, 21, 22, 23] as $i) {
+                $week2Hours[] = $toHours($rows[$i][6] ?? 0);
+            }
+
+            $totalHours = array_sum($week1Hours) + array_sum($week2Hours);
+
+            return [
+                'consultantName' => $consultantName,
+                'payPeriodStart' => $payPeriodStart,
+                'payPeriodEnd' => $payPeriodEnd,
+                'week1Hours' => $week1Hours,
+                'week2Hours' => $week2Hours,
+                'totalHours' => $totalHours,
+            ];
+        } catch (\Throwable) {
+            // Fall back to legacy official template layout (older template positions).
+        }
+
+        $startVal = $rows[5][5] ?? null; // F6
+        $endVal   = $rows[6][5] ?? null; // F7
         if ($startVal === null || $startVal === '' || $endVal === null || $endVal === '') {
             throw new \InvalidArgumentException('Missing date values in template (F6/F7)');
         }
 
-        $toHours = fn ($val): float => (is_float($val) || is_int($val)) ? (float) $val : 0.0;
-
-        $consultantName = trim((string) ($rows[1][1] ?? ''));
+        $consultantName = trim((string) ($rows[1][1] ?? '')); // B2
         $payPeriodStart = self::resolveDate($startVal);
         $payPeriodEnd   = self::resolveDate($endVal);
 
@@ -144,6 +215,14 @@ final class TimesheetParseService
             }
         } catch (\Throwable) {
             $format = 'unknown';
+        }
+        if ($format !== 'biweekly-template') {
+            try {
+                $parsedRows = [self::parseTemplate($allRows)];
+                $format = 'biweekly-template';
+            } catch (\Throwable) {
+                // ignore
+            }
         }
 
         $columns = $format === 'flat-csv' ? array_map('strval', $allRows[0]) : [];

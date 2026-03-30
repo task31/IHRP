@@ -1905,3 +1905,18 @@ These are two separate things — normal setup. We only need to add one line to 
 **156 tests, 416 assertions, 0 failures** (at commit time).
 
 **Deploy:** run migration `2026_03_26_120000_add_contract_file_to_consultants_table`; preserve `storage/app/uploads/contracts/` like other uploads.
+
+---
+
+### 🔨 [BUILD — Cursor] — T028: Commission Tier + Placement Role _(2026-03-30)_
+
+**Goal:** Fix payroll consultant tier badge to use stored `commission_pct` (not revenue share) and add derived `placement_role` for each consultant row.
+
+**Done:**
+- `PayrollDataService::getConsultants()` now derives `tier` from `commission_pct` and includes `placement_role` (`own_placement` when `commission_pct == 0.5000`, else `recruiter_commission`).
+- `payroll/index.blade.php` consultant drawer shows a second badge next to tier: **Own Client** (green) vs **Recruiter Cut** (blue).
+- `TimesheetParseService` hardened date parsing for official timesheet template dates formatted like `mm-dd-yy` (keeps inbox template import tests green).
+
+**Tests:** `php artisan test` — **156 passed (416 assertions)**.
+
+**Files modified:** `web/app/Services/PayrollDataService.php`, `web/resources/views/payroll/index.blade.php`, `web/app/Services/TimesheetParseService.php`, `DEVLOG.md`

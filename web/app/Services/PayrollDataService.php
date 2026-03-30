@@ -269,12 +269,7 @@ final class PayrollDataService
         $consultants = [];
         foreach ($rows as $row) {
             $pct = round((float) $row->pct_of_total, 1);
-            $tier = match (true) {
-                $pct >= 25.0 => '50%',
-                $pct >= 15.0 => '35%',
-                $pct >= 10.0 => '20%',
-                default      => '10%',
-            };
+            $tier = round((float) $row->commission_pct * 100, 0) . '%';
             $hasRates = bccomp((string) $row->hours, '0', 4) > 0;
             $hasAmEarnings = bccomp((string) $row->am_earnings, '0', 4) > 0;
             $consultants[] = [
@@ -287,6 +282,9 @@ final class PayrollDataService
                 'hours'          => $this->money($row->hours),
                 'periods_active' => $periodCount,
                 'tier'           => $tier,
+                'placement_role' => bccomp((string) $row->commission_pct, '0.5000', 4) === 0
+                    ? 'own_placement'
+                    : 'recruiter_commission',
                 'pct_of_total'   => $pct,
             ];
         }
