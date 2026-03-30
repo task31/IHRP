@@ -1937,3 +1937,31 @@ Cursor hardened date parsing to handle `mm-dd-yy` formatted dates in the officia
 
 **Carry-forwards:**
 - [ ] T028 scope complete. Rate resolution script (cross-workbook pay/bill lookup) remains — not yet assigned a task number.
+
+### 🔨 [BUILD — Cursor + Claude Code] — T029: Rate Resolution Script _(2026-03-30)_
+
+**Goal:** Standalone Python script that reads all 3 AM payroll workbooks, resolves pay/bill rates using the cross-workbook ownership rule, and outputs preview CSVs before any DB writes.
+
+**Done:**
+- `scripts/resolve_rates.py` — 749 lines. Parses FULLY KNOWN RATES + SPREAD ONLY sections from all three Rate Sheets using openpyxl data_only=True.
+- Cross-workbook lookup for Sibug spread-only entries: Dimarumba first → Harsono fallback.
+- Spread verification handles both W2 (`bill − pay × 1.12`) and C2C/1099 (`bill − pay`).
+- Fuzzy name matching for variants (e.g. "Jagan Rao" ↔ "Jagan Rao Alleni").
+- DB connection is optional — CSVs generate cleanly even when local MySQL is unavailable.
+- Section terminators prevent Formula Legend rows from polluting data rows.
+- Outputs: `scripts/output/rate-resolution-ledger.csv`, `scripts/output/rate-db-update-preview.csv`.
+- `--apply` flag prompts for confirmation, never overwrites non-zero pay_rate, logs to `rate-update-log.txt`, posts to `/payroll/recompute-margins` best-effort.
+
+**Verified output (against real workbooks, no DB):**
+- resolved_own: 19 | resolved_cross: 10 | unresolved: 18 | spread_mismatch: 0
+
+**Fixes applied during review (Cursor bugs caught):**
+- DB connect before workbook parse → moved to optional, wrapped in try/except
+- `_is_section_header` used exact match → changed to `startswith`
+- Spread verifier used C2C formula only → added W2 branch (`bill − pay × 1.12`)
+- Cross-workbook lookup skipped AM spread-only rows even when pay/bill was populated → fixed
+- Fuzzy name matching added for "Jagan Rao" vs "Jagan Rao Alleni"
+
+**Carry-forwards:**
+- [ ] Run script with `--apply` against production DB after verifying rate-db-update-preview.csv manually
+- [ ] 18 unresolved consultants remain (Charlotte Baker, Jacqueline Bendt, Judith Legaspi, Benjamin Picciano, Gayle Soriano + others) — rates cannot be inferred from available data
