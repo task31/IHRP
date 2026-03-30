@@ -1920,3 +1920,20 @@ These are two separate things — normal setup. We only need to add one line to 
 **Tests:** `php artisan test` — **156 passed (416 assertions)**.
 
 **Files modified:** `web/app/Services/PayrollDataService.php`, `web/resources/views/payroll/index.blade.php`, `web/app/Services/TimesheetParseService.php`, `DEVLOG.md`
+
+### ✅ [REVIEW — Claude Code] — T028: Commission Tier + Placement Role _(2026-03-30)_
+
+**Reviewed:** 05a11ab — fix: use commission_pct for tier badge + add placement_role to payroll consultant rows (T028)
+
+**Verified:**
+- `tier` now derived from `commission_pct` directly (`round(commission_pct * 100, 0) . '%'`) ✅
+- `placement_role` added with `bccomp` against `'0.5000'` — consistent with codebase decimal pattern ✅
+- `pct_of_total` preserved in payload (not removed) — still used elsewhere in dashboard ✅
+- Frontend badge renders correctly next to tier badge; `tierColor()` untouched ✅
+- 156 tests, 416 assertions — all pass ✅
+
+**Deviation — `TimesheetParseService` (unplanned, ~91 lines added):**
+Cursor hardened date parsing to handle `mm-dd-yy` formatted dates in the official timesheet template. Added a try/catch fallback between new and legacy template row positions. Tests pass and no existing behaviour was removed. Low risk — additive only. ⚠️
+
+**Carry-forwards:**
+- [ ] T028 scope complete. Rate resolution script (cross-workbook pay/bill lookup) remains — not yet assigned a task number.
