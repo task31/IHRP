@@ -22,7 +22,7 @@ class InvoiceTemplateDownloadTest extends TestCase
         $response = $this->actingAs($user)->get(route('invoices.template'));
 
         $response->assertOk();
-        $response->assertDownload('invoice_template_ot.xlsx');
+        $response->assertDownload('matchpointe_invoice_template_ot.xlsx');
     }
 
     public function test_guest_cannot_download_invoice_ot_template(): void

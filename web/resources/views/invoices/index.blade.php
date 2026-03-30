@@ -6,7 +6,11 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <h2 class="text-xl font-semibold text-gray-800">Invoices</h2>
-            <a href="{{ route('invoices.template') }}"
+            @php
+                $invoiceOtTemplate = storage_path('app/templates/invoice_template_ot.xlsx');
+                $invoiceOtTemplateVer = is_file($invoiceOtTemplate) ? (string) filemtime($invoiceOtTemplate) : (string) time();
+            @endphp
+            <a href="{{ route('invoices.template') }}?v={{ $invoiceOtTemplateVer }}"
                 class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
                 Download template
             </a>

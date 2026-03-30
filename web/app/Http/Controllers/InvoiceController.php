@@ -87,7 +87,12 @@ class InvoiceController extends Controller
             return response()->json(['error' => 'Template not installed at storage/app/templates/invoice_template_ot.xlsx'], 404);
         }
 
-        return response()->download($path, 'invoice_template_ot.xlsx');
+        // Avoid stale CDN/browser copies of an older prefilled workbook; filename distinct from legacy downloads.
+        return response()->download($path, 'matchpointe_invoice_template_ot.xlsx', [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
     }
 
     public function show(string $id): JsonResponse
