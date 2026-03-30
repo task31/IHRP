@@ -175,18 +175,14 @@
                     >✕</button>
                 </div>
 
-                <div class="mb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="mb-5 grid grid-cols-3 gap-3">
                     <div class="rounded-lg p-3" style="background:#1e293b">
                         <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Active Consultants</p>
                         <p class="text-2xl font-bold" style="color:#f8fafc;margin:0" x-text="consultants.length"></p>
                     </div>
                     <div class="rounded-lg p-3" style="background:#1e293b">
-                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Total Agency Revenue</p>
-                        <p class="text-xl font-bold" style="color:#f8fafc;margin:0" x-text="fmtMoney(consultantMeta?.total_revenue)"></p>
-                    </div>
-                    <div class="rounded-lg p-3" style="background:#1e293b">
-                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Total Agency Gross Profit</p>
-                        <p class="text-xl font-bold" style="color:#22c55e;margin:0" x-text="fmtMoney(consultantMeta?.total_margin)"></p>
+                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Total Commissions</p>
+                        <p class="text-xl font-bold" style="color:#22c55e;margin:0" x-text="fmtMoney(consultantMeta?.total_am_earnings)"></p>
                     </div>
                     <div class="rounded-lg p-3" style="background:#1e293b">
                         <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Top Earner</p>
@@ -199,10 +195,8 @@
                         <thead>
                             <tr style="border-bottom:1px solid #334155">
                                 <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:left">Consultant</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:left">Tier</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:right">Agency Revenue</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:right">AM Earnings</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:right">Agency Gross Profit</th>
+                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:left">Commission</th>
+                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:right">Earned for You</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -223,11 +217,8 @@
                                             ></span>
                                         </div>
                                     </td>
-                                    <td style="padding:10px 12px 10px 0;font-size:13px;font-weight:600;text-align:right;color:#f8fafc" x-text="fmtMoney(c.revenue)"></td>
-                                    <td style="padding:10px 12px 10px 0;font-size:13px;text-align:right;color:#94a3b8" x-text="c.am_earnings !== null ? fmtMoney(c.am_earnings) : '—'"></td>
-                                    <td style="padding:10px 12px 10px 0;font-size:13px;font-weight:600;text-align:right"
-                                        :style="c.margin === null ? 'color:#475569' : (parseFloat(c.margin.replace(/[$,]/g,'')) >= 0 ? 'color:#22c55e' : 'color:#ef4444')"
-                                        x-text="c.margin !== null ? fmtMoney(c.margin) : '—'">
+                                    <td style="padding:10px 12px 10px 0;font-size:13px;font-weight:600;text-align:right;color:#22c55e"
+                                        x-text="c.am_earnings !== null ? fmtMoney(c.am_earnings) : '—'">
                                     </td>
                                 </tr>
                             </template>
@@ -690,7 +681,7 @@
                     if (!res.ok) { this.consultants = []; this.consultantMeta = null; return; }
                     const data = await res.json();
                     this.consultants = data.consultants || [];
-                    this.consultantMeta = { total_revenue: data.total_revenue, total_margin: data.total_margin, top_earner: data.top_earner, total_periods: data.total_periods };
+                    this.consultantMeta = { total_am_earnings: data.total_am_earnings, top_earner: data.top_earner, total_periods: data.total_periods };
                 },
                 async loadAggregate() {
                     const res = await fetch('/payroll/api/aggregate?year=' + this.year, { headers: { Accept: 'application/json' } });
