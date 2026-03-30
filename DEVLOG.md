@@ -1988,3 +1988,112 @@ Cursor hardened date parsing to handle `mm-dd-yy` formatted dates in the officia
 
 **Carry-forwards:**
 - [ ] None — T029 complete.
+
+---
+
+### 🔨 [BUILD — Cursor] — Production deploy via ssh-deploy (f734452) _(2026-03-30)_
+
+**Goal:** Push the two ready commits and deploy production with no migrations (PHP/Blade-only). Commit message text: **"deploy: Harsono parse fix + consultant breakdown UI simplification (f734452)"**.
+
+**Done:**
+- Pushed `master` to `origin/master` (range `899ea27..f734452`).
+- Deployed via `python deploy.py --step ssh-deploy` (SSH key auth, server repo fast-forward, `web/` copy to `public_html/hr/`, `.env` backup/restore, composer install, artisan cache/template commands).
+- Commits in this deploy wave:
+  - `7ce9d45` — fix: repair Harsono payroll parsing (year detection + numeric tier support)
+  - `f734452` — feat: simplify consultant breakdown panel to personal commission view
+
+**Verified:**
+- `git push` succeeded without force.
+- `ssh-deploy` completed successfully with `HEAD is now at f734452`.
+- Production/server repo commit check via SSH confirms:
+  - `git rev-parse --short HEAD` → `f734452`
+  - `git log -1 --oneline --no-decorate` → `f734452 feat: simplify consultant breakdown panel to personal commission view`
+
+**Carry-forwards:**
+- [ ] No migrations executed by design in this deploy (PHP/Blade-only scope).
+
+---
+
+### 🔨 [BUILD — Claude Code] — Invoice OT template replacement _(2026-03-30)_
+
+**Goal:** Make the app's overtime invoice workbook template match the provided BridgeBio Excel template exactly.
+
+**Done:**
+- Replaced `web/storage/app/templates/invoice_template_ot.xlsx` with the provided workbook `Bridgebio Invoice Template w OT  BBSI-013696 Davison.xlsx`.
+- Used a direct file copy instead of regenerating the workbook so layout, formatting, formulas, merged cells, and embedded assets remain byte-identical to the source template.
+
+**Verified:**
+- Destination SHA-256 matches source exactly: `B3B26FD548987BAB031CE34E1A12C69C824182CEC0364E0FD479071D52D2B410` ✅
+- Destination file size updated from `20,387` bytes to `206,937` bytes ✅
+- Destination timestamp matches source workbook: `2026-03-08 16:39:16` ✅
+
+**Files modified:**
+- `web/storage/app/templates/invoice_template_ot.xlsx`
+
+---
+
+### 🔨 [BUILD — Cursor / ihrp-deploy-expert] — Production deploy: `invoice_template_ot.xlsx` (e5368af) _(2026-03-30)_
+
+**Goal:** Ship the overtime invoice Excel template at `web/storage/app/templates/invoice_template_ot.xlsx` to production (`hr.matchpointegroup.com`) so the live app reads the same workbook as local/dev.
+
+**Problem — why git was involved:**  
+`web/storage/app/.gitignore` ignores all immediate children with `*` except `private/`, `public/`, and `.gitignore`. That hides `templates/` from normal `git add`. The timesheet template is already in the repo via historical `git add -f`. Until this change, **`invoice_template_ot.xlsx` was not tracked**, so cPanel git retrieve / server `git pull` would never copy it to `public_html/hr/` during deploy.
+
+**Done (local repo):**
+- `git add -f web/storage/app/templates/invoice_template_ot.xlsx` — force-track without changing `.gitignore` policy (same pattern as `timesheet_template.xlsx`).
+- Commit: **`e5368af`** — `Track invoice_template_ot.xlsx for production deploy`
+- `git push origin master` — `d6b838f..e5368af` to `https://github.com/task31/IHRP.git`
+
+**Done (production — ihrp-deploy-expert run):**
+1. **`python deploy.py --step migrate-status`** — **PASS.** Full `migrate:status` output reviewed; **no pending migrations**; script summary: `No pending migrations.` **Did not run** `migrate --force` (not needed; policy: confirm with Raf before any prod migrate).
+2. **`python deploy.py --step deploy` (cPanel UAPI)** — **FAIL on deploy task.** Git **retrieve** succeeded. **VersionControlDeployment/create** responded with error that **`/home2/rbjwhhmy/repositories/IHRP` is not a valid `repository_root`** (UAPI parameter mismatch — known fragility documented in prior deploy notes).
+3. **Fallback: `python deploy.py --step ssh-deploy`** — **PASS.** Sequence per `deploy.py`: backup `public_html/hr/.env` → `git fetch` + `git reset --hard origin/master` in server repo → **`HEAD` at `e5368af`** → `cp -R {REPO_DIR}/web/. {APP_DIR}/` → restore `.env` → `composer install --no-dev --optimize-autoloader` → artisan `config:cache`, `route:cache`, `view:cache`, **`timesheets:generate-template`**.
+4. **`python deploy.py --step verify-env`** — **PASS.** `APP_ENV=production`, `APP_DEBUG=false`, `APP_NAME` present.
+5. **`python deploy.py --step storage-link`** — **PASS.** `public/storage` symlink present.
+6. **`python deploy.py --step safety-checks`** — **PASS.** PHP 8.3 handler, no forbidden `@vite`, Livewire script checks OK.
+7. **`python deploy.py --step tail-log`** — **PASS** per script (no blocking recent errors reported in tail).
+8. **`python deploy.py --step smoke`** — **PARTIAL.** `/login` **200** with “IHRP” string **OK.** `/dashboard` check flagged **FAIL** because automated client may follow redirects to login and see **200** instead of expected **302** — treat as smoke qu limitation; manual logged-in check if needed.
+
+**Verified on server (SSH):**
+```text
+ls -la /home2/rbjwhhmy/public_html/hr/storage/app/templates/invoice_template_ot.xlsx
+-rw-r--r-- 1 rbjwhhmy rbjwhhmy 206937 Mar 30 11:11 .../invoice_template_ot.xlsx
+```
+- Size **206,937** bytes matches local workbook (same as post–BridgeBio replacement build note).
+- File owned `rbjwhhmy:rbjwhhmy`, permissions `0644`.
+
+**Deploy runbook note — protected paths:**  
+Per `ihrp-deploy.mdc`, production must **never** be blindly overwritten for: `.env`, `storage/app/uploads/`, **`storage/app/templates/timesheet_template.xlsx`**, and `public/storage` symlink. **`invoice_template_ot.xlsx` is not** on that protected list (unlike the timesheet template), so standard `cp -R web/.` deploys **will** refresh it from the repo when it changes — intentional for shipping template updates.
+
+**Artifacts / side effects:**
+- Subagent appended **`references/deploy-learning-log.md`** with entry **2026-03-30 — Invoice OT template deploy (e5368af)** (UAPI `repository_root` failure, `ssh-deploy` success, smoke caveat).
+
+**Carry-forwards:**
+- [ ] Optionally fix or document cPanel **VersionControlDeployment** `repository_root` value for hands-off deploy (until then, **`ssh-deploy` remains the reliable fallback**).
+- [ ] Optional: quick manual prod smoke — login as admin, open a flow that uses the OT invoice template if exposed in UI.
+
+---
+
+### 🔨 [BUILD — Cursor] — Invoices: Download OT invoice template _(2026-03-30)_
+
+**Goal:** On the **Invoices** page, add a **Download template** control in the header (upper right), matching the **Timesheets** page pattern, so admin and account managers can download `invoice_template_ot.xlsx` without using the repo or SFTP.
+
+**Done:**
+- **Route:** `GET /invoices/template/download` → `InvoiceController::downloadTemplate`, named **`invoices.template`**. Registered **before** `invoices/{invoice}/preview` so `template` is not captured as an invoice id.
+- **Controller:** `downloadTemplate()` — `$this->authorize('account_manager')` (same gate as invoices index: admin + AM); `response()->download` from `storage/app/templates/invoice_template_ot.xlsx` as `invoice_template_ot.xlsx`; JSON **404** with message if file missing (mirrors `TimesheetController::downloadTemplate`).
+- **UI:** `resources/views/invoices/index.blade.php` — header slot uses `flex flex-wrap items-center justify-between gap-3`; title left; link right with same classes as Timesheets **Download template** (`rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50`).
+- **Tests:** `tests/Feature/InvoiceTemplateDownloadTest.php` — AM receives **200** + `assertDownload('invoice_template_ot.xlsx')` when file present (skipped if workbook absent); guest redirected to login.
+
+**Verified:**
+- `php artisan test --filter=InvoiceTemplateDownloadTest` — **2 passed** (4 assertions).
+
+**Files touched:**
+- `web/routes/web.php`
+- `web/app/Http/Controllers/InvoiceController.php`
+- `web/resources/views/invoices/index.blade.php`
+- `web/tests/Feature/InvoiceTemplateDownloadTest.php`
+
+**Carry-forwards:**
+- [ ] Deploy to production when ready so the route and view are live (template file already deployed with `e5368af`).
+
+---

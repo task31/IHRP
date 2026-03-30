@@ -4,7 +4,13 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">Invoices</h2>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-xl font-semibold text-gray-800">Invoices</h2>
+            <a href="{{ route('invoices.template') }}"
+                class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+                Download template
+            </a>
+        </div>
     </x-slot>
 
     <div class="space-y-4" x-data="invoicesPage()">

@@ -79,6 +79,17 @@ class InvoiceController extends Controller
         ]);
     }
 
+    public function downloadTemplate(): BinaryFileResponse|JsonResponse
+    {
+        $this->authorize('account_manager');
+        $path = storage_path('app/templates/invoice_template_ot.xlsx');
+        if (! is_file($path)) {
+            return response()->json(['error' => 'Template not installed at storage/app/templates/invoice_template_ot.xlsx'], 404);
+        }
+
+        return response()->download($path, 'invoice_template_ot.xlsx');
+    }
+
     public function show(string $id): JsonResponse
     {
         $this->authorize('account_manager');

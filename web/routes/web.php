@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:admin,account_manager'])->group(function () {
     Route::resource('timesheets', TimesheetController::class)->only(['index', 'show']);
 
     Route::post('invoices/generate', [InvoiceController::class, 'generate'])->name('invoices.generate');
+    Route::get('invoices/template/download', [InvoiceController::class, 'downloadTemplate'])->name('invoices.template');
     Route::get('invoices/{invoice}/preview', [InvoiceController::class, 'preview'])->name('invoices.preview');
     Route::get('invoices/{invoice}/export', [InvoiceController::class, 'export'])->name('invoices.export');
     Route::patch('invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('invoices.status');
