@@ -204,18 +204,11 @@
                                 <tr style="border-bottom:1px solid #1e293b">
                                     <td style="padding:10px 12px 10px 0;font-size:13px;color:#e2e8f0;font-weight:500" x-text="c.name"></td>
                                     <td style="padding:10px 12px 10px 0">
-                                        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                                            <span
-                                                style="border-radius:9999px;padding:2px 8px;font-size:11px;font-weight:600;display:inline-block"
-                                                :style="'background:' + tierColor(c.tier) + '22;color:' + tierColor(c.tier)"
-                                                x-text="c.tier || '—'"
-                                            ></span>
-                                            <span
-                                                style="border-radius:9999px;padding:2px 8px;font-size:11px;font-weight:600;display:inline-block"
-                                                :style="(() => { const clr = (c.placement_role === 'own_placement') ? '#22c55e' : '#3b82f6'; return 'background:' + clr + '22;color:' + clr; })()"
-                                                x-text="c.placement_role === 'own_placement' ? 'Own Client' : 'Recruiter Cut'"
-                                            ></span>
-                                        </div>
+                                        <span
+                                            style="border-radius:9999px;padding:2px 8px;font-size:11px;font-weight:600;display:inline-block"
+                                            :style="'background:' + tierColor(c.tier) + '22;color:' + tierColor(c.tier)"
+                                            x-text="c.tier || '—'"
+                                        ></span>
                                     </td>
                                     <td style="padding:10px 12px 10px 0;font-size:13px;font-weight:600;text-align:right;color:#22c55e"
                                         x-text="c.am_earnings !== null ? fmtMoney(c.am_earnings) : '—'">
