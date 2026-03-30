@@ -318,6 +318,20 @@ class InvoiceController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function regeneratePdf(string $id): JsonResponse
+    {
+        $this->authorize('admin');
+        $invoice = Invoice::query()->with(['lineItems', 'consultant', 'client', 'timesheet'])->findOrFail($id);
+
+        $this->persistInvoicePdf($invoice);
+
+        AppService::auditLog('invoices', (int) $id, 'PDF_REGENERATED', [], [
+            'pdf_path' => $invoice->fresh()->pdf_path,
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         return response()->json(['error' => 'Use POST /invoices/generate'], 405);

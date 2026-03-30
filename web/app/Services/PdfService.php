@@ -68,7 +68,7 @@ final class PdfService
             'agency' => $agency,
             'invoice' => $inv,
             'lineItems' => $lineItems,
-        ])->output();
+        ])->setPaper('letter', 'portrait')->output();
     }
 
     /**

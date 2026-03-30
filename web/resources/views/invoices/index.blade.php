@@ -113,6 +113,7 @@
                                 <button type="button" class="text-xs text-indigo-600 hover:underline" @click="openPreview({{ $inv->id }})">Preview</button>
                                 <button type="button" class="ml-1 text-xs text-gray-600 hover:underline" @click="exportPdf({{ $inv->id }})">Export</button>
                                 @can('admin')
+                                    <button type="button" class="ml-1 text-xs text-gray-500 hover:underline" @click="regeneratePdf({{ $inv->id }})">Regen PDF</button>
                                     <button
                                         type="button"
                                         class="ml-1 text-xs text-gray-600 hover:underline"
@@ -270,6 +271,14 @@
                         window.location.reload();
                     } else {
                         window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Update failed', type: 'error' } }));
+                    }
+                },
+                async regeneratePdf(id) {
+                    const res = await apiFetch(`/invoices/${id}/regenerate-pdf`, { method: 'POST' });
+                    if (res.ok) {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'PDF regenerated' } }));
+                    } else {
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Regen failed', type: 'error' } }));
                     }
                 },
                 async sendEmail() {
