@@ -2693,3 +2693,21 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 **Sign-off:** Raf Zobel — explicit confirmation received 2026-03-30
 
 **Authorized:** proceed with `python deploy.py --step ssh-deploy`
+
+---
+
+### 🔨 [BUILD — Cursor] — Admin + Payroll Run SOP _(2026-03-31)_
+
+**Assigned workstream:** Docs (SOP)
+
+**Todos completed:**
+- [x] Read SSOT references: `CLAUDE.md`, `BUSINESS_MODEL.md`, `web/app/Http/Controllers/PayrollController.php`, `web/app/Http/Controllers/AdminUserController.php`, `web/resources/views/payroll/index.blade.php`, and route paths in `web/routes/web.php`.
+- [x] Generated a single self-contained SOP HTML page with two tabs, per-tab reset, localStorage-backed checkboxes, and print-to-PDF support (no external dependencies).
+
+**Files created/modified:**
+- `docs/sop.html` ✅
+- `DEVLOG.md` ✅
+
+**Verification notes:**
+- Checklist persistence uses `localStorage["sop_checks"]`.
+- Print behavior expands all sections and hides UI buttons.

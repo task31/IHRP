@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IHRP SOP — Admin Operations & Payroll Run</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c162b;
+      --text:#e6edf7;
+      --muted:#9fb0c7;
+      --border:rgba(255,255,255,.10);
+      --accent:#60a5fa;
+      --accent2:#34d399;
+      --warn:#fbbf24;
+      --danger:#fb7185;
+      --shadow:0 12px 40px rgba(0,0,0,.35);
+      --mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background:
+        radial-gradient(1200px 800px at 20% -10%, rgba(96,165,250,.25), transparent 60%),
+        radial-gradient(900px 700px at 100% 10%, rgba(52,211,153,.18), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      line-height:1.35;
+    }
+    a{color:inherit}
+    .wrap{max-width:980px;margin:24px auto;padding:0 18px 80px}
+    header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:18px;
+      margin:22px 0 14px;
+    }
+    .title h1{margin:0;font-size:22px;letter-spacing:.2px}
+    .title p{margin:8px 0 0;color:var(--muted);max-width:66ch}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      color:var(--muted);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      background:rgba(255,255,255,.04);
+      white-space:nowrap;
+    }
+    .pill code{font-family:var(--mono);font-size:11px;color:rgba(230,237,247,.92)}
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin:16px 0 14px;
+      flex-wrap:wrap;
+    }
+    .tabbtn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.03);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    .tabbtn[aria-selected="true"]{
+      background:linear-gradient(135deg, rgba(96,165,250,.28), rgba(52,211,153,.14));
+      border-color:rgba(96,165,250,.55);
+      box-shadow:0 10px 30px rgba(96,165,250,.08);
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 18px;
+    }
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:9px 11px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    .btn.primary{
+      background:rgba(96,165,250,.16);
+      border-color:rgba(96,165,250,.45);
+    }
+    .btn.danger{
+      background:rgba(251,113,133,.12);
+      border-color:rgba(251,113,133,.35);
+    }
+    .hint{color:var(--muted);font-size:12px}
+    .panel{
+      border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      border-radius:16px;
+      padding:16px;
+      box-shadow:var(--shadow);
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:12px;
+    }
+    details{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background:rgba(0,0,0,.14);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none;
+      cursor:pointer;
+      padding:12px 14px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      user-select:none;
+    }
+    summary::-webkit-details-marker{display:none}
+    .sum-left{display:flex;flex-direction:column;gap:4px}
+    .sum-title{font-weight:750;letter-spacing:.15px}
+    .sum-sub{
+      color:var(--muted);
+      font-size:12px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .tag{
+      font-family:var(--mono);
+      font-size:11px;
+      color:rgba(230,237,247,.92);
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.03);
+      padding:2px 7px;
+      border-radius:999px;
+    }
+    .chev{
+      margin-top:2px;
+      color:var(--muted);
+      font-size:12px;
+      font-family:var(--mono);
+    }
+    details[open] .chev{color:rgba(230,237,247,.78)}
+    .content{padding:0 14px 14px}
+    .kvs{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;margin:10px 0 12px}
+    .kvs .k{color:var(--muted);font-size:12px}
+    .kvs .v{font-size:13px}
+    .kvs code{font-family:var(--mono);font-size:12px;color:rgba(230,237,247,.96)}
+    .checklist{
+      margin:10px 0 0;
+      padding:0;
+      list-style:none;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:10px 10px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+    }
+    .check input{
+      margin-top:2px;
+      width:16px;height:16px;
+      accent-color:var(--accent2);
+    }
+    .check label{cursor:pointer}
+    .check .line1{font-weight:650}
+    .check .line2{color:var(--muted);font-size:12px;margin-top:3px}
+    .callout{
+      margin:12px 0 0;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(251,191,36,.35);
+      background:rgba(251,191,36,.10);
+      color:rgba(255,245,214,.95);
+      font-size:13px;
+    }
+    .callout strong{font-weight:800}
+    .callout code{font-family:var(--mono);font-size:12px}
+    .mini{
+      margin-top:10px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .progress{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .footer{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .hidden{display:none !important}
+
+    @media print{
+      body{background:#fff;color:#000}
+      .wrap{max-width:none;margin:0;padding:0 0 0}
+      header{padding:10px 0 0;margin:0 0 8px}
+      .panel{box-shadow:none;border-color:#ddd;background:#fff}
+      details{break-inside:avoid;border-color:#ddd;background:#fff}
+      summary{padding:10px 12px}
+      .sum-sub{color:#333}
+      .tag{border-color:#ddd;background:#fff;color:#000}
+      .check{border-color:#ddd;background:#fff}
+      .check .line2{color:#333}
+      .callout{border-color:#cc9a06;background:#fff7db;color:#000}
+      .no-print{display:none !important}
+      .hidden{display:block !important}
+      a{color:#000;text-decoration:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>IHRP SOP</h1>
+        <p>Single-page checklist for admin tasks and end-to-end payroll runs. Checkboxes persist on this device via <span class="pill"><code>localStorage["sop_checks"]</code></span>.</p>
+      </div>
+      <div class="pill no-print">
+        Print-ready
+        <span style="opacity:.7">•</span>
+        <code>window.print()</code>
+      </div>
+    </header>
+
+    <div class="tabs no-print" role="tablist" aria-label="SOP Tabs">
+      <button class="tabbtn" id="tab-admin" role="tab" aria-selected="true" aria-controls="panel-admin">Admin Operations</button>
+      <button class="tabbtn" id="tab-payroll" role="tab" aria-selected="false" aria-controls="panel-payroll">Payroll Run Procedure</button>
+    </div>
+
+    <div class="panel">
+      <div class="topbar no-print">
+        <div class="hint" id="tab-hint">Tip: Expand sections, then check items as you go.</div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="btn-print">Print / Save as PDF</button>
+          <button class="btn danger" type="button" id="btn-reset">Reset Checklist</button>
+        </div>
+      </div>
+
+      <section id="panel-admin" role="tabpanel" aria-labelledby="tab-admin">
+        <div class="grid">
+          <details open>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">1) Upload a new payroll file</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">POST /payroll/upload</span>
+                  <span class="tag">Admin only</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Where to find</div>
+                <div class="v">Export the AM’s payroll spreadsheet from the source system as an <code>.xlsx</code> file (Excel).</div>
+                <div class="k">Format</div>
+                <div class="v">Must be <code>.xlsx</code> (validated by MIME type). Upload limit is 50MB.</div>
+                <div class="k">What upload does</div>
+                <div class="v">
+                  Parses the spreadsheet, stores the file in <code>storage/app/uploads/payroll</code>, upserts pay period records, replaces consultant entry rows for affected years, and logs an audit entry.
+                  It also auto-creates consultant records if a name doesn’t exist yet, and creates/updates raw-name → consultant mappings per AM.
+                </div>
+              </div>
+
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="admin.upload.1" data-sop />
+                  <label for="admin.upload.1">
+                    <div class="line1">Open Payroll dashboard and confirm you’re logged in as an admin.</div>
+                    <div class="line2">Success looks like: you can see the <strong>Upload payroll file</strong> button on <code>/payroll</code>.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.upload.2" data-sop />
+                  <label for="admin.upload.2">
+                    <div class="line1">Click <strong>Upload payroll file</strong> and select the AM + the <code>.xlsx</code> file.</div>
+                    <div class="line2">Success looks like: the modal shows “Upload payroll (.xlsx)” and your chosen file is attached.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.upload.3" data-sop />
+                  <label for="admin.upload.3">
+                    <div class="line1">Confirm “Stop reading at row starting with…” is correct for that file.</div>
+                    <div class="line2">Success looks like: it is auto-filled from the selected AM name and matches the file’s stop row label.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.upload.4" data-sop />
+                  <label for="admin.upload.4">
+                    <div class="line1">Click <strong>Upload</strong> and wait for success.</div>
+                    <div class="line2">Success looks like: the UI reports “Imported X periods. Years: …” and the dashboard KPIs refresh.</div>
+                  </label>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <strong>⚠️ Gotchas</strong>
+                <ul style="margin:8px 0 0 18px;padding:0">
+                  <li><strong>Wrong AM selected</strong>: upload is stored under that AM and replaces entries for the affected years for that AM.</li>
+                  <li><strong>Stop name mismatch</strong>: if the “stop reading at…” value doesn’t match what’s in the file, parsing can include/exclude unintended rows.</li>
+                  <li><strong>Missing bill rates</strong>: upload will store <code>revenue = 0.0000</code> and <code>margin = 0.0000</code> when a consultant lacks <code>bill_rate</code>.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">2) Recompute margins</div>
+                <div class="sum-sub">
+                  <span class="tag">POST /payroll/recompute-margins</span>
+                  <span class="tag">Admin only</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Where</div>
+                <div class="v">From <code>/payroll</code> → open the upload modal (admin) → click <strong>Recompute Margins</strong>.</div>
+                <div class="k">When to use</div>
+                <div class="v">After adding or correcting consultant <code>bill_rate</code> values, especially after fixing multiple consultants or mappings.</div>
+                <div class="k">What success looks like</div>
+                <div class="v">Message: “Margins recomputed for N consultant entries.” Dashboard KPIs reflect updated revenue/margin.</div>
+              </div>
+
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="admin.recompute.1" data-sop />
+                  <label for="admin.recompute.1">
+                    <div class="line1">In the upload modal, set the target AM (the recompute runs for that AM’s entries).</div>
+                    <div class="line2">Success looks like: the AM dropdown is set to the correct person before recomputing.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.recompute.2" data-sop />
+                  <label for="admin.recompute.2">
+                    <div class="line1">Click <strong>Recompute Margins</strong> and confirm it completes.</div>
+                    <div class="line2">Success looks like: “Margins recomputed…” and the year dashboard refreshes without errors.</div>
+                  </label>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <strong>⚠️ Gotchas</strong>
+                <ul style="margin:8px 0 0 18px;padding:0">
+                  <li><strong>Admin-only</strong>: non-admins cannot run this; use an admin account.</li>
+                  <li><strong>Does not change AM earnings</strong>: <code>am_earnings</code> is treated as immutable source-of-truth from the uploaded Excel file.</li>
+                  <li><strong>Bill rate required</strong>: entries with missing <code>bill_rate</code> remain at <code>revenue = 0.0000</code> until the consultant record is updated.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">3) Add / edit a user</div>
+                <div class="sum-sub">
+                  <span class="tag">/admin/users</span>
+                  <span class="tag">Admin only</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Create user</div>
+                <div class="v"><code>GET /admin/users/create</code> then submit to create.</div>
+                <div class="k">Edit user</div>
+                <div class="v"><code>GET /admin/users/{id}/edit</code> then save changes.</div>
+                <div class="k">Roles</div>
+                <div class="v">
+                  <ul style="margin:6px 0 0 18px;padding:0">
+                    <li><code>admin</code>: full access (settings, backups, audit log, payroll uploads/recompute, etc.)</li>
+                    <li><code>account_manager</code>: day-to-day views; payroll dashboard scoped to their own data; cannot upload payroll or recompute margins.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="admin.users.1" data-sop />
+                  <label for="admin.users.1">
+                    <div class="line1">Open <code>/admin/users</code> and confirm you see the user list.</div>
+                    <div class="line2">Success looks like: paginated list of users; you can click into edit pages.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.users.2" data-sop />
+                  <label for="admin.users.2">
+                    <div class="line1">Create or edit user with the correct role and active state.</div>
+                    <div class="line2">Success looks like: “User created successfully.” or “User updated successfully.”</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.users.3" data-sop />
+                  <label for="admin.users.3">
+                    <div class="line1">If deactivating a user, confirm it’s not your own account.</div>
+                    <div class="line2">Success looks like: the target user becomes inactive; you remain able to administer the system.</div>
+                  </label>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <strong>⚠️ Gotchas</strong>
+                <ul style="margin:8px 0 0 18px;padding:0">
+                  <li><strong>You can’t deactivate yourself</strong>: the app blocks self-deactivation from the admin UI.</li>
+                  <li><strong>Role controls visibility</strong>: payroll uploads and margin recompute are admin-only; AMs won’t see those buttons on <code>/payroll</code>.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">4) Update consultant-to-AM mappings</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">GET /payroll/api/mappings</span>
+                  <span class="tag">PUT /payroll/api/mappings</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Where</div>
+                <div class="v">On <code>/payroll</code> (admin) there is a mappings panel/table for unresolved raw names (loaded via <code>/payroll/api/mappings</code>).</div>
+                <div class="k">Purpose</div>
+                <div class="v">Maps raw consultant names found in uploads to an actual consultant record, per AM. Prevents duplicates and fixes mismatches.</div>
+                <div class="k">What success looks like</div>
+                <div class="v">The unresolved name disappears from the list after Save (panel refreshes).</div>
+              </div>
+
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="admin.mappings.1" data-sop />
+                  <label for="admin.mappings.1">
+                    <div class="line1">Open <code>/payroll</code> and find unresolved name mappings (admin view).</div>
+                    <div class="line2">Success looks like: a table of raw names with an AM name and a consultant dropdown.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.mappings.2" data-sop />
+                  <label for="admin.mappings.2">
+                    <div class="line1">Select the correct consultant for the raw name and click <strong>Save</strong>.</div>
+                    <div class="line2">Success looks like: row disappears after refresh; future uploads resolve to the mapped consultant.</div>
+                  </label>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <strong>⚠️ Gotchas</strong>
+                <ul style="margin:8px 0 0 18px;padding:0">
+                  <li><strong>Per-AM mapping</strong>: the same raw name can exist under different AMs; map within the correct AM context.</li>
+                  <li><strong>Bill rate still required</strong>: even with correct mapping, missing consultant <code>bill_rate</code> still yields <code>revenue = 0.0000</code>.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">5) Settings (SMTP, logo, backups)</div>
+                <div class="sum-sub">
+                  <span class="tag">/settings</span>
+                  <span class="tag">/backups</span>
+                  <span class="tag">Admin only</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">SMTP config</div>
+                <div class="v"><code>GET /settings</code> and use the SMTP test action (<code>POST /settings/test-smtp</code>) after updates.</div>
+                <div class="k">Logo upload</div>
+                <div class="v">From Settings, upload a logo (<code>POST /settings/logo</code>) used in PDFs/emails where applicable.</div>
+                <div class="k">Backup download</div>
+                <div class="v"><code>GET /backups</code> to create and download backups (<code>POST /backups</code> then <code>GET /backups/{backup}</code>).</div>
+              </div>
+
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="admin.settings.1" data-sop />
+                  <label for="admin.settings.1">
+                    <div class="line1">Open <code>/settings</code> and confirm you can save changes + run SMTP test.</div>
+                    <div class="line2">Success looks like: SMTP test reports success and emails deliver as expected.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.settings.2" data-sop />
+                  <label for="admin.settings.2">
+                    <div class="line1">Upload a new logo when branding changes.</div>
+                    <div class="line2">Success looks like: logo preview updates and newly generated PDFs use it.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="admin.settings.3" data-sop />
+                  <label for="admin.settings.3">
+                    <div class="line1">Create and download a backup from <code>/backups</code> before major changes.</div>
+                    <div class="line2">Success looks like: a new backup entry appears and the download completes.</div>
+                  </label>
+                </li>
+              </ul>
+
+              <div class="callout">
+                <strong>⚠️ Gotchas</strong>
+                <ul style="margin:8px 0 0 18px;padding:0">
+                  <li><strong>Admin-only</strong>: settings and backups are restricted to admins.</li>
+                  <li><strong>SMTP failures</strong>: after changing SMTP creds, always run the test action before relying on invoice sends.</li>
+                </ul>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="panel-payroll" role="tabpanel" aria-labelledby="tab-payroll" class="hidden">
+        <div class="grid">
+          <details open>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">1) Pre-run checklist (bill rates)</div>
+                <div class="sum-sub">
+                  <span class="tag">/consultants</span>
+                  <span class="tag">Bill rate required</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Goal</div>
+                <div class="v">Ensure every active consultant that will appear in payroll has a <code>bill_rate</code> set.</div>
+                <div class="k">Why</div>
+                <div class="v">Agency revenue is computed as <code>hours × bill_rate</code>. Missing bill rate yields <code>revenue = 0.0000</code>.</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.prerun.1" data-sop />
+                  <label for="run.prerun.1">
+                    <div class="line1">Open <code>/consultants</code> and review active consultants for missing bill rates.</div>
+                    <div class="line2">Success looks like: for active consultants, bill rate fields are populated before upload.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> If bill rates are missing, the payroll dashboard will show consultants with <code>revenue = 0.0000</code> until corrected and margins are recomputed.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">2) Export payroll spreadsheet from source system</div>
+                <div class="sum-sub">
+                  <span class="tag">.xlsx</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">What to export</div>
+                <div class="v">Export the AM payroll spreadsheet for the run as an <code>.xlsx</code> file.</div>
+                <div class="k">What success looks like</div>
+                <div class="v">The file opens in Excel and contains the full pay period rows for the run.</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.export.1" data-sop />
+                  <label for="run.export.1">
+                    <div class="line1">Save the export as <code>.xlsx</code> (not CSV) and name it clearly (AM + date).</div>
+                    <div class="line2">Success looks like: you have a single upload-ready file per AM.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> Upload only accepts <code>.xlsx</code>. If you export as another format, convert to <code>.xlsx</code> first.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">3) Upload via IHRP</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">Upload button (admin)</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Where</div>
+                <div class="v"><code>GET /payroll</code> → <strong>Upload payroll file</strong> (admin) → submit to <code>POST /payroll/upload</code>.</div>
+                <div class="k">What success looks like</div>
+                <div class="v">“Imported X periods. Years: …” and dashboards update for the selected year/AM.</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.upload.1" data-sop />
+                  <label for="run.upload.1">
+                    <div class="line1">On <code>/payroll</code>, select the correct year and (admin) the correct AM.</div>
+                    <div class="line2">Success looks like: you’re viewing the correct AM data before/after upload.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="run.upload.2" data-sop />
+                  <label for="run.upload.2">
+                    <div class="line1">Upload the new <code>.xlsx</code> and confirm import message appears.</div>
+                    <div class="line2">Success looks like: KPIs refresh and the pay period detail table reflects the new run.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> If the wrong AM is selected in the upload modal, the import will apply to that AM’s records.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">4) Verify dashboard KPIs look correct</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">KPIs + pay periods</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">What to look for</div>
+                <div class="v">
+                  KPIs (YTD net/gross, taxes, projection), pay period table updates, and charts rendering without errors.
+                </div>
+                <div class="k">Success looks like</div>
+                <div class="v">Numbers move in the expected direction compared to the previous run; pay period list includes the new check date(s).</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.verify.1" data-sop />
+                  <label for="run.verify.1">
+                    <div class="line1">Confirm the latest pay period(s) appear in the Pay Period Detail section.</div>
+                    <div class="line2">Success looks like: new check date row(s) present and totals updated.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="run.verify.2" data-sop />
+                  <label for="run.verify.2">
+                    <div class="line1">Open Consultant breakdown and spot-check top earners and totals.</div>
+                    <div class="line2">Success looks like: consultant list populated for the year and totals are plausible.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> If something looks off after upload, re-check AM selection and the “stop reading at…” value used during parsing.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">5) Check for ⚠️ consultants with revenue = 0</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">Meaning: bill_rate missing</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">What it means</div>
+                <div class="v"><code>revenue = 0.0000</code> indicates missing consultant <code>bill_rate</code> (or zero hours). Revenue requires bill rate.</div>
+                <div class="k">Success looks like</div>
+                <div class="v">No active consultants with meaningful hours show revenue = 0 (unless legitimately zero hours).</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.rev0.1" data-sop />
+                  <label for="run.rev0.1">
+                    <div class="line1">In Consultant breakdown, scan for entries showing revenue = 0 while hours/earnings exist.</div>
+                    <div class="line2">Success looks like: any revenue=0 cases are explained (truly 0 hours) or immediately triaged.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> Missing bill rate does <em>not</em> break the upload; it silently stores revenue/margin as zero until corrected.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">6) If revenue = 0 found: mappings → bill_rate → recompute</div>
+                <div class="sum-sub">
+                  <span class="tag">/payroll</span>
+                  <span class="tag">/consultants</span>
+                  <span class="tag">POST /payroll/recompute-margins</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Fix sequence</div>
+                <div class="v">Ensure name mapping is correct (if needed), then set consultant <code>bill_rate</code>, then recompute margins for the AM.</div>
+                <div class="k">Success looks like</div>
+                <div class="v">After recompute, consultant revenue/margin populate and KPIs update.</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.fixrev0.1" data-sop />
+                  <label for="run.fixrev0.1">
+                    <div class="line1">If the consultant name looks mismatched, fix the mapping on <code>/payroll</code> (admin).</div>
+                    <div class="line2">Success looks like: the raw name is mapped to the intended consultant record.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="run.fixrev0.2" data-sop />
+                  <label for="run.fixrev0.2">
+                    <div class="line1">Go to <code>/consultants</code> and set the missing <code>bill_rate</code> for that consultant.</div>
+                    <div class="line2">Success looks like: bill rate saved and visible on the consultant record.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="run.fixrev0.3" data-sop />
+                  <label for="run.fixrev0.3">
+                    <div class="line1">Return to <code>/payroll</code> and run <strong>Recompute Margins</strong> for the impacted AM.</div>
+                    <div class="line2">Success looks like: revenue no longer zero and consultant row values recalc.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> Recompute operates per-AM selection. Make sure the recompute target AM matches where the revenue=0 appeared.
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>
+              <div class="sum-left">
+                <div class="sum-title">7) Send invoices / run reports</div>
+                <div class="sum-sub">
+                  <span class="tag">/invoices</span>
+                  <span class="tag">/reports</span>
+                </div>
+              </div>
+              <div class="chev">[open]</div>
+            </summary>
+            <div class="content">
+              <div class="kvs">
+                <div class="k">Invoices</div>
+                <div class="v">Use <code>/invoices</code> to generate/preview/send invoices (and exports as needed).</div>
+                <div class="k">Reports</div>
+                <div class="v">Use <code>/reports</code> for monthly and year-end outputs.</div>
+                <div class="k">Success looks like</div>
+                <div class="v">Invoices generate without errors, previews look correct, emails send (SMTP ok), and reports download as expected.</div>
+              </div>
+              <ul class="checklist">
+                <li class="check">
+                  <input type="checkbox" id="run.finish.1" data-sop />
+                  <label for="run.finish.1">
+                    <div class="line1">Generate/preview invoices and confirm amounts and formatting.</div>
+                    <div class="line2">Success looks like: previews render, numbers align with expectations, and status updates correctly.</div>
+                  </label>
+                </li>
+                <li class="check">
+                  <input type="checkbox" id="run.finish.2" data-sop />
+                  <label for="run.finish.2">
+                    <div class="line1">Run/download required reports from <code>/reports</code>.</div>
+                    <div class="line2">Success looks like: CSV/PDF downloads complete and reflect the current period.</div>
+                  </label>
+                </li>
+              </ul>
+              <div class="callout">
+                <strong>⚠️ Gotcha</strong> If invoices won’t send, verify SMTP first at <code>/settings</code> using the test action before retrying.
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <div class="mini no-print">
+        <div class="progress" id="progress">—</div>
+        <div class="hint">Print hides buttons and expands all sections automatically.</div>
+      </div>
+
+      <div class="footer">
+        <div><strong>Reference routes (SSOT):</strong> <span style="font-family:var(--mono)">/payroll</span>, <span style="font-family:var(--mono)">/payroll/upload</span>, <span style="font-family:var(--mono)">/payroll/recompute-margins</span>, <span style="font-family:var(--mono)">/payroll/api/mappings</span>, <span style="font-family:var(--mono)">/admin/users</span>, <span style="font-family:var(--mono)">/settings</span>, <span style="font-family:var(--mono)">/backups</span>, <span style="font-family:var(--mono)">/invoices</span>, <span style="font-family:var(--mono)">/reports</span>.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "sop_checks";
+
+      /** @type {Record<string, boolean>} */
+      let state = {};
+      try { state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {}; } catch { state = {}; }
+
+      const tabs = [
+        { id: "admin", tab: document.getElementById("tab-admin"), panel: document.getElementById("panel-admin"), hint: "Admin tasks: upload, recompute, users, mappings, settings." },
+        { id: "payroll", tab: document.getElementById("tab-payroll"), panel: document.getElementById("panel-payroll"), hint: "Run procedure: pre-check bill rates, export, upload, verify, fix revenue=0, invoices/reports." },
+      ];
+
+      const btnPrint = document.getElementById("btn-print");
+      const btnReset = document.getElementById("btn-reset");
+      const hintEl = document.getElementById("tab-hint");
+      const progressEl = document.getElementById("progress");
+
+      const allChecks = Array.from(document.querySelectorAll('input[type="checkbox"][data-sop]'));
+      const detailsEls = Array.from(document.querySelectorAll("details"));
+
+      function save() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+      }
+
+      function applyState() {
+        for (const cb of allChecks) cb.checked = !!state[cb.id];
+        updateProgress();
+      }
+
+      function updateProgress() {
+        const activeTabId = tabs.find(t => t.tab.getAttribute("aria-selected") === "true")?.id || "admin";
+        const activePanel = tabs.find(t => t.id === activeTabId)?.panel;
+        if (!activePanel) return;
+        const visibleChecks = Array.from(activePanel.querySelectorAll('input[type="checkbox"][data-sop]'));
+        const done = visibleChecks.filter(c => c.checked).length;
+        const total = visibleChecks.length;
+        progressEl.textContent = total ? `Checked ${done} / ${total} in this tab` : "—";
+      }
+
+      function setTab(id) {
+        for (const t of tabs) {
+          const on = t.id === id;
+          t.tab.setAttribute("aria-selected", on ? "true" : "false");
+          t.panel.classList.toggle("hidden", !on);
+        }
+        hintEl.textContent = tabs.find(t => t.id === id)?.hint || "";
+        updateProgress();
+      }
+
+      function resetCurrentTab() {
+        const activeTabId = tabs.find(t => t.tab.getAttribute("aria-selected") === "true")?.id || "admin";
+        const activePanel = tabs.find(t => t.id === activeTabId)?.panel;
+        if (!activePanel) return;
+
+        const ids = Array.from(activePanel.querySelectorAll('input[type="checkbox"][data-sop]')).map(x => x.id);
+        for (const id of ids) delete state[id];
+        save();
+        applyState();
+      }
+
+      // Checkbox events
+      for (const cb of allChecks) {
+        cb.addEventListener("change", () => {
+          state[cb.id] = !!cb.checked;
+          save();
+          updateProgress();
+        });
+      }
+
+      // Tabs
+      for (const t of tabs) {
+        t.tab.addEventListener("click", () => setTab(t.id));
+      }
+
+      // Actions
+      btnReset.addEventListener("click", resetCurrentTab);
+      btnPrint.addEventListener("click", () => window.print());
+
+      // Print behavior: open all <details>, then restore
+      let priorOpen = null;
+      function openAllDetails() {
+        priorOpen = detailsEls.map(d => d.hasAttribute("open"));
+        for (const d of detailsEls) d.setAttribute("open", "");
+      }
+      function restoreDetails() {
+        if (!priorOpen) return;
+        for (let i = 0; i < detailsEls.length; i++) {
+          if (priorOpen[i]) detailsEls[i].setAttribute("open", "");
+          else detailsEls[i].removeAttribute("open");
+        }
+        priorOpen = null;
+      }
+      window.addEventListener("beforeprint", openAllDetails);
+      window.addEventListener("afterprint", restoreDetails);
+
+      // Init
+      applyState();
+      setTab("admin");
+    })();
+  </script>
+</body>
+</html>
