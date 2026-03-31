@@ -2737,3 +2737,129 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
 **Carry-forwards:**
 - [ ] None required. SOP is complete and accurate against current app state.
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Resume Redaction Tool _(2026-03-31)_
+
+**Goal:** Add a resume redaction + MPG branding tool for account managers. AMs upload a
+candidate's PDF resume; the tool strips contact info and returns a branded PDF ready to
+send to clients.
+
+**Mode:** SEQUENTIAL
+
+**Dependency diagram:**
+[Phase 0] ✅ → [Phase 12] ⏳ (auth + sidebar required, already exist)
+[Phase 2] ✅ → [Phase 12] ⏳ (layout/sidebar required, already exist)
+No downstream phases depend on this.
+
+**Decisions made:**
+
+- **Stateless design** — no DB table. Upload → process → stream download. No files
+  persist in storage after the response.
+- **smalot/pdfparser** for text extraction (new Composer dep). DomPDF already installed
+  handles PDF output.
+- **Name preserved intentionally** — clients need to evaluate the candidate; only
+  contact vectors (email, phone, address, LinkedIn, URLs) are redacted.
+- **Sub-link placement** — indented `↳ Resume Redact` below Calls in the sidebar, no
+  role gate (Calls itself is visible to all authenticated users).
+- **Logo source** — pulled from `AppService::getSetting('agency_logo_base64')`, the
+  same base64 data URI used by the invoice PDF. Zero extra config for end users.
+- **Audit log** — every `process()` call writes an entry so there's a record of which
+  user redacted which file.
+
+**Risks flagged:**
+
+- smalot/pdfparser extracts text only — complex multi-column resume layouts may
+  produce garbled line order. Output quality depends on how the source PDF was built.
+  Warn users in the UI that scanned/image-only PDFs will produce an empty result.
+- Address detection via regex is heuristic; unusual international formats may not be
+  caught. Considered acceptable for the MPG use-case (NA candidates).
+
+**Files planned:**
+- `app/Services/ResumeRedactionService.php` (new)
+- `app/Http/Controllers/ResumeRedactionController.php` (new)
+- `resources/views/resume-redact/index.blade.php` (new)
+- `resources/views/resume-redact/pdf.blade.php` (new)
+- `tests/Unit/ResumeRedactionServiceTest.php` (new)
+- `tests/Feature/ResumeRedactionControllerTest.php` (new)
+- `tests/fixtures/sample-resume.pdf` (new)
+- `routes/web.php` (modified — 2 routes)
+- `resources/views/layouts/app.blade.php` (modified — sub-link)
+- `composer.json` / `composer.lock` (modified — smalot/pdfparser)
+
+---
+
+### 📝 [ARCHITECT UPDATE — Claude Code] — Phase 12 two-header-mode revision _(2026-03-31)_
+
+Revised phase-12-plan.md to support two output modes based on user requirement:
+
+**Option 1 — Text Header**: "MatchPointe Group" in red (#c0392b), top-left.
+**Option 2 — Logo Header**: MPG logo image (`agency_logo_base64`), top-left.
+
+Both options: candidate name centered below header in large small-caps, thin HR
+divider, then resume body. Contact info stripped identically in both modes.
+
+**UX decision**: Two radio cards on the upload form. Option 2 disabled if no logo
+is set in Settings, with a tooltip directing the user to Settings → Logo.
+
+**Template decision**: Single `pdf.blade.php` with `@if($headerMode === 'logo')`
+conditional — no need for two separate templates.
+
+**Filename**: `mpg-[candidate-name-slug].pdf` so the download is identifiable.
+
+**Test count updated**: 13 new tests (7 unit + 6 feature), pass gate = 175.
+
+---
+
+### 🔨 [BUILD — Claude Code] — Resume Redaction Tool _(2026-03-31)_
+
+**Assigned workstream:** Backend + UI + Tests
+
+**Todos completed:**
+- [x] [Phase 12] Installed `smalot/pdfparser` in `web/` (`composer.json` + `composer.lock` updated).
+- [x] [Phase 12] Added `ResumeRedactionService` with extract/redact/build flow:
+  - `extractLines()` parses PDF text lines with `smalot/pdfparser`.
+  - `redactContactInfo()` applies ordered redaction and line-drop rules.
+  - `buildPdf()` renders branded output via `resume-redact/pdf.blade.php` + DomPDF.
+- [x] [Phase 12] Added `ResumeRedactionController`:
+  - `index()` returns upload UI and logo availability.
+  - `process()` validates `resume` + `header_mode`, extracts candidate name, removes it from body, generates branded PDF, writes audit log, streams `mpg-[candidate-name-slug].pdf`.
+- [x] [Phase 12] Added routes inside `auth` group:
+  - `GET /resume-redact` (`resume.redact.index`)
+  - `POST /resume-redact` (`resume.redact.process`)
+- [x] [Phase 12] Added upload page `resources/views/resume-redact/index.blade.php`:
+  - PDF-only file input.
+  - Two radio-card modes (`text` default, `logo` optional).
+  - Logo mode disabled with tooltip when `agency_logo_base64` is missing.
+- [x] [Phase 12] Added branded PDF template `resources/views/resume-redact/pdf.blade.php`:
+  - Text-or-logo conditional header.
+  - Centered small-caps candidate name + divider.
+  - Redacted resume lines rendered below.
+- [x] [Phase 12] Updated sidebar in `resources/views/layouts/app.blade.php` with indented `↳ Resume Redact` link under Calls (no role gate).
+- [x] [Phase 12] Added tests:
+  - `tests/Unit/ResumeRedactionServiceTest.php` (7 unit tests).
+  - `tests/Feature/ResumeRedactionControllerTest.php` (6 feature tests).
+  - `tests/fixtures/sample-resume.pdf` fixture placeholder.
+- [x] [Phase 12] Ran pass gate `php artisan test` and reached `175` passing tests.
+
+**Files created/modified:**
+- `web/app/Services/ResumeRedactionService.php` ✅
+- `web/app/Http/Controllers/ResumeRedactionController.php` ✅
+- `web/resources/views/resume-redact/index.blade.php` ✅
+- `web/resources/views/resume-redact/pdf.blade.php` ✅
+- `web/routes/web.php` ✅
+- `web/resources/views/layouts/app.blade.php` ✅
+- `web/tests/Unit/ResumeRedactionServiceTest.php` ✅
+- `web/tests/Feature/ResumeRedactionControllerTest.php` ✅
+- `web/tests/fixtures/sample-resume.pdf` ✅
+- `web/composer.json` ✅
+- `web/composer.lock` ✅
+- `DEVLOG.md` ✅
+
+**Verification:**
+- `php artisan test --filter=ResumeRedaction` → PASS (13 tests)
+- `php artisan test` → PASS (`175` tests, `471` assertions)
+
+**Notes:**
+- Feature tests intentionally mock `ResumeRedactionService` so controller behavior (validation, headers, download response, auth) is isolated from parser internals.

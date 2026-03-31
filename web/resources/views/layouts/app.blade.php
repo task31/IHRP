@@ -53,6 +53,11 @@
                         'bg-gray-800 font-medium text-white' => request()->routeIs('calls.*'),
                         'text-gray-300 hover:bg-gray-800' => ! request()->routeIs('calls.*'),
                     ])>Calls</a>
+                    <a href="{{ route('resume.redact.index') }}" @class([
+                        'block rounded px-3 py-2 pl-7 text-xs',
+                        'bg-gray-800 font-medium text-white' => request()->routeIs('resume.redact.*'),
+                        'text-gray-400 hover:bg-gray-800 hover:text-white' => ! request()->routeIs('resume.redact.*'),
+                    ])>↳ Resume Redact</a>
 
                     @can('admin')
                         <a href="{{ route('clients.index') }}" @class([

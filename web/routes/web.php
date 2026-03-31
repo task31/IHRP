@@ -16,6 +16,7 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PlacementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ResumeRedactionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TimesheetController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/calls/report/monthly', [DailyCallReportController::class, 'reportMonthly'])->name('calls.report.monthly');
     Route::get('/calls/report/yearly', [DailyCallReportController::class, 'reportYearly'])->name('calls.report.yearly');
     Route::get('/calls/report', [DailyCallReportController::class, 'aggregate'])->name('calls.report');
+    Route::get('/resume-redact', [ResumeRedactionController::class, 'index'])->name('resume.redact.index');
+    Route::post('/resume-redact', [ResumeRedactionController::class, 'process'])->name('resume.redact.process');
 
     // Placements
     Route::get('/placements', [PlacementController::class, 'index'])->name('placements.index');
