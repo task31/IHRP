@@ -2440,3 +2440,28 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 **Carry-forwards**
 - None.
 
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 9: P0 Auth + P1 Correctness Fixes _(2026-03-30)_
+
+**Reviewed:** `b5dcd98` — fix(auth): placement ownership scoping + consultant SQL correctness (Phase 9)
+
+**Verified:**
+- `PlacementPolicy::view()` — `admin || placed_by === user->id` ✅
+- `PlacementPolicy::update()` — `admin || placed_by === user->id` ✅
+- `PlacementController@index` JSON — `where('placed_by', $user->id)` for non-admin ✅
+- `ConsultantController@index` — `GROUP BY c.id, cl.id, cl.name` ✅
+- `ConsultantController@endDateAlerts` — PHP `$cutoff`, plain `<=` bind, no MySQL functions ✅
+- `ConsultantController@w9Path` JSON — `['fileName' => ...]` only, no absolute path ✅
+- `ConsultantController@contractPath` JSON — same fix confirmed ✅
+- New tests: `test_am_json_index_returns_only_own_placements` + `test_am_cannot_update_another_ams_placement` ✅
+- Factories (Client, Consultant, Placement) + `HasFactory` on all three models ✅
+- Test suite: **160 passed, 424 assertions, 0 failures** ✅
+
+**Notable:** Cursor added `(int)` cast on `placed_by` in the ownership assertion — correct, JSON decodes integers as strings in some paths.
+
+**Phase 9 — CLOSED ✅**
+
+**Carry-forwards:**
+- None. Remaining `improvements.md` items (payroll semantics, float math, controller-to-service refactor) are P2 and can be a future phase if prioritised.
+

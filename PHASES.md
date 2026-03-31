@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-30 (Phase 8 built + reviewed)_
+_Last updated: 2026-03-30 (Phase 9 architected)_
 
 ## Phase Map
 
@@ -80,3 +80,4 @@ _Last updated: 2026-03-30 (Phase 8 built + reviewed)_
 - [Phase 6] ✅ Complete _(2026-03-22)_
 - [Phase 7] ✅ Complete _(2026-03-23)_
 - [Phase 8] ✅ Complete _(2026-03-30)_
+- [Phase 9] ✅ Complete _(2026-03-30)_

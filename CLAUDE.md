@@ -124,6 +124,17 @@ Remaining open work: T021 (decision), T022 (deploy verification), T025 (docs con
 
 ---
 
+### Phase 9 — Bug Fixes: P0 Auth + P1 Correctness ✅ _(closed 2026-03-30)_
+
+- **Placement authorization** — `PlacementPolicy::view()` + `update()` now enforce ownership (`admin || placed_by === user->id`); `PlacementController@index` JSON scoped to own placements for AMs
+- **ConsultantController GROUP BY** — `GROUP BY c.id, cl.id, cl.name` — safe under MySQL `ONLY_FULL_GROUP_BY`
+- **endDateAlerts SQL** — removed MySQL-specific `DATE_ADD/CURDATE`, replaced with PHP `now()->addDays()->toDateString()`
+- **Server path info leak** — W9 + contract JSON responses now return only `fileName`, not absolute server path
+- **Factories** — Client, Consultant, Placement factories added; `HasFactory` enabled on all three models
+- **160 tests, 424 assertions, 0 failures**
+
+---
+
 ### Phase 5 — Deploy ✅ _(closed 2026-03-24)_
 
 - All 8 P0 blockers (T001–T008) resolved — see `references/tasklist-archive.md` for details
