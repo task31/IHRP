@@ -108,13 +108,15 @@ class DailyCallReportControllerTest extends TestCase
 
         $response->assertOk();
         $reports = $response->viewData('reports');
-        $this->assertSame(52, $reports->total());
-        $this->assertCount(50, $reports);
+        // AMs only see their own records — u1 has 26, u2's records are not visible
+        $this->assertSame(26, $reports->total());
+        $this->assertCount(26, $reports);
+        $this->assertTrue($reports->getCollection()->every(fn ($r) => $r->user_id === $u1->id));
 
         $page2 = $this->actingAs($u1)->get(route('calls.index', ['page' => 2]));
         $page2->assertOk();
         $p2 = $page2->viewData('reports');
-        $this->assertCount(2, $p2);
+        $this->assertCount(0, $p2);
     }
 
     public function test_index_rejects_invalid_period(): void

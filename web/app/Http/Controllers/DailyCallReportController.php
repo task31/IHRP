@@ -41,7 +41,14 @@ class DailyCallReportController extends Controller
         ]);
         $period = $filters['period'] ?? '30';
 
+        $isAdmin = $user->role === 'admin';
+
         $query = DailyCallReport::query()->with('user')->orderByDesc('report_date')->orderByDesc('id');
+
+        if (! $isAdmin) {
+            $query->where('user_id', $user->id);
+        }
+
         [$rangeStart, $rangeEnd] = $this->historyPeriodBounds($period);
         if ($rangeStart !== null && $rangeEnd !== null) {
             $query
@@ -92,7 +99,7 @@ class DailyCallReportController extends Controller
             'historyRangeLabel' => $historyRangeLabel,
             'myReportsByDate' => $myReportsPayload,
             'todayDate' => now()->toDateString(),
-            'showEmployeeColumn' => true,
+            'showEmployeeColumn' => $isAdmin,
             'monthlyStats' => $monthlyStats,
         ]);
     }
