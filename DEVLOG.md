@@ -1,3 +1,39 @@
+### 🚀 [DEPLOY] — Phases 9, 10, 11 to production _(2026-03-30)_
+
+**Commit deployed:** `61fd0c2` (docs: QA sign-off — authorize deploy of Phases 9-11)
+**Commits included:**
+- `61fd0c2` docs: QA sign-off — authorize deploy of Phases 9-11
+- `2a0a698` docs(phase-11): review + close — missing bill_rate revenue fallback fix
+- `55e7fc7` fix(payroll): missing bill_rate yields revenue=0 not am_earnings (Phase 11)
+- `f609577` docs(phase-11): architect plan — fix missing bill_rate revenue fallback
+- `192092c` docs(phase-10): review + close — dead code removal, whereBetween, bcmath timesheet aggregates
+- `327beeb` fix(dashboard): remove dead AM branch + replace DATE_FORMAT; fix(timesheet): bcmath for aggregate money totals (Phase 10)
+- `2230980` docs(phase-9): review + close — P0 auth + P1 correctness fixes
+- `b5dcd98` fix(auth): placement ownership scoping + consultant SQL correctness (Phase 9)
+
+**Steps run:**
+1. `git push origin master` — pushed `2230980..61fd0c2` to remote PASS
+2. `python deploy.py --step ssh-deploy` — server repo fast-forwarded `aa2c6ec..61fd0c2`; web/ copied; .env backed up/restored; composer install; config:cache, route:cache, view:cache, timesheets:generate-template — all PASS
+3. `python deploy.py --step migrate-status` — 37/37 Ran, 0 Pending PASS
+4. `python deploy.py --step verify-env` — APP_ENV=production, APP_DEBUG=false, APP_NAME present PASS
+5. `python deploy.py --step smoke` — /login 200 PASS; /dashboard FAIL (known urllib redirect false negative — not a real failure)
+6. `python deploy.py --step tail-log` — last log entries at 20:52:52 (pre-deploy, payroll namespace CLI errors from prior session); no new errors post-deploy PASS
+
+**Migrations:** None run — zero pending migrations across Phases 9, 10, 11 (confirmed).
+
+**Protected files:**
+- `.env` — backed up and restored by ssh-deploy PASS
+- `storage/app/uploads/` — not touched by deploy PASS
+- `public/storage` symlink — not modified PASS
+
+**Smoke check result:** /login returns 200. No new Laravel errors since deploy. App is live and running.
+
+**Warnings / notes:**
+- Pre-existing log errors at 20:52:50–52 from `payroll:recompute` CLI calls in prior session — these predate this deploy and are not caused by Phases 9/10/11 code.
+- `/dashboard` smoke FAIL is the known urllib redirect-follow false negative (documented in deploy-learning-log.md 2026-03-24 entry).
+
+---
+
 ### ✅ [REVIEW — Claude Code] — Phase 8 deploy + recompute _(2026-03-30)_
 
 **Reviewed:** BUILD block above — `python deploy.py --step ssh-deploy` + 4× `php artisan payroll:recompute-am`

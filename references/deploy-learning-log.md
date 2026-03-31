@@ -171,3 +171,60 @@
 **Fix applied:** `--step ssh-deploy` connected via SSH, pulled `origin/master` on the server, copied `web/` → `public_html/hr/`, restored the backed-up `.env`, then ran `composer install --no-dev --optimize-autoloader` and artisan post-deploy cache/template commands.
 **Prevention:** Extend deploy preflight to verify `web/app/Http/Controllers/ConsultantController.php` contains exactly one `function contractUpload(` declaration before the production copy step (and fail/stop deploy if duplicates are detected).
 **Files changed:** none (log entry only)
+
+---
+
+## 2026-03-30 — Invoice OT template deploy (e5368af)
+
+**Trigger:** Production deploy for force-tracked `web/storage/app/templates/invoice_template_ot.xlsx`; commit `e5368af` on `origin/master`; no new migrations expected.
+
+**Diagnosis:**
+- `migrate-status`: all migrations **Ran**, **No pending migrations**.
+- `deploy` (cPanel UAPI): **Git retrieve successful**; **Deploy HEAD** returned UAPI error: `"/home2/rbjwhhmy/repositories/IHRP" is not a valid "repository_root"` (data null). Same class of cPanel deploy task failure as prior logs — **ssh-deploy** required for reliable file sync.
+- `ssh-deploy`: server repo updated `d6b838f..e5368af`, `web/` copied to `public_html/hr/`, `.env` backed up and restored, `composer install --no-dev`, artisan caches + template command completed.
+
+**Fix applied:** Ran `python deploy.py --step ssh-deploy` after failed automated deploy step; continued with verify-env, storage-link, safety-checks, tail-log, smoke.
+
+**Verification:** `invoice_template_ot.xlsx` present on server (`ls -la` ≈206937 bytes, Mar 30 11:11). Smoke: `/login` OK; `/dashboard` reported FAIL (expects 302) — consistent with **urllib redirect follow** returning final **200** from login, not necessarily an app bug.
+
+**Prevention:** When `--step deploy` reports `repository_root` invalid for UAPI deploy, use `--step ssh-deploy` without delay; keep `migrate-status` as first gate.
+
+**Files changed:** `references/deploy-learning-log.md` (this entry)
+
+---
+
+## 2026-03-30 — Invoice PDF layout + Regenerate PDF (df26677)
+
+**Trigger:** Deploy `df26677` to production (`InvoiceController::regeneratePdf`, `PdfService` letter portrait, invoice Blade redesign, invoices index + route).
+
+**Diagnosis:** `python deploy.py --step deploy` — Git retrieve successful; deployment step returned UAPI error: `"/home2/rbjwhhmy/repositories/IHRP" is not a valid "repository_root"` (same pattern as e5368af same session).
+
+**Fix applied:** `python deploy.py --step ssh-deploy` — server repo fast-forward `e5368af..df26677`, `HEAD` at `df26677`; `web/` copied to `public_html/hr/`; `.env` backed up/restored; `composer install --no-dev`; artisan config/route/view cache + post-deploy commands.
+
+**Verification:** `migrate-status` showed **No pending migrations** before deploy. `--step clear-cache` OK. Smoke: `/login` 200 OK; `/dashboard` marked FAIL (script expects 302 unauthenticated; client follows redirect → 200 — known false negative). `tail-log`: no new errors reported by step.
+
+**Prevention:** Use `--step ssh-deploy` when UAPI deploy rejects `repository_root`.
+
+**Files changed:** `references/deploy-learning-log.md` (this entry)
+
+---
+
+## 2026-03-30 — Phases 9, 10, 11 deploy (61fd0c2)
+
+**Trigger:** Deploy commits `b5dcd98..61fd0c2` (Phases 9/10/11 — placement auth scoping, consultant SQL, dashboard dead code, DATE_FORMAT portability, bcmath timesheet aggregates, missing bill_rate revenue fallback). Zero migrations across all three phases.
+
+**Diagnosis:** Skipped `--step deploy` (UAPI repository_root known broken). Went directly to `--step ssh-deploy`.
+
+**Fix applied:**
+1. `git push origin master` — pushed 8 commits (`2230980..61fd0c2`) to remote successfully.
+2. `--step ssh-deploy` — server repo fast-forwarded `aa2c6ec..61fd0c2`; web/ copied; .env backed up/restored; composer install; artisan caches all OK.
+3. `--step migrate-status` — 37 Ran, 0 Pending confirmed.
+4. `--step verify-env` — APP_ENV=production, APP_DEBUG=false confirmed.
+5. `--step smoke` — /login 200 OK; /dashboard FAIL (known false negative).
+6. `--step tail-log` — last log entry at 20:52:52 predates this deploy; no new errors.
+
+**Prevention:** Zero-migration deploys: skip `--step deploy`, go straight to `--step ssh-deploy`. Always verify log timestamps are pre-deploy when tail-log shows errors.
+
+**Outcome:** Success
+
+**Files changed:** `references/deploy-learning-log.md`, `DEVLOG.md`
