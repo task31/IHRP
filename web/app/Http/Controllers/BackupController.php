@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Backup;
 use App\Services\AppService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -50,19 +51,21 @@ class BackupController extends Controller
             ]);
 
         if (! $result->successful()) {
+            $errorDetail = $result->errorOutput() ?: $result->output();
+            Log::error('Backup mysqldump failed', ['detail' => $errorDetail]);
+
             Backup::query()->create([
                 'created_at' => now(),
                 'file_path' => $name,
                 'file_size' => 0,
                 'backup_type' => 'manual',
                 'status' => 'failed',
-                'notes' => $result->errorOutput() ?: $result->output(),
+                'notes' => $errorDetail,
             ]);
 
             return response()->json([
                 'ok' => false,
-                'error' => 'mysqldump failed — set services.mysql.dump_path if mysqldump is not on PATH',
-                'detail' => $result->errorOutput() ?: $result->output(),
+                'error' => 'Backup failed — check server logs.',
             ], 500);
         }
 
@@ -94,6 +97,10 @@ class BackupController extends Controller
         $b = Backup::query()->find($id);
         if (! $b) {
             return response()->json(['error' => 'Not found'], 404);
+        }
+
+        if (! str_starts_with($b->file_path, 'backups/')) {
+            return response()->json(['error' => 'Invalid backup path'], 422);
         }
 
         $path = storage_path('app/'.$b->file_path);

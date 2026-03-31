@@ -147,7 +147,7 @@ class PlacementController extends Controller
             'pay_rate' => ['required', 'numeric', 'min:0'],
             'bill_rate' => ['required', 'numeric', 'min:0'],
             'status' => ['required', Rule::in(['active', 'ended', 'cancelled'])],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ]);
 
         return [

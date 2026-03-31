@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
@@ -39,7 +40,23 @@ class SettingsController extends Controller
     {
         $this->authorize('admin');
         $data = $request->validate([
-            'key' => ['required', 'string', 'max:191'],
+            'key' => ['required', 'string', Rule::in([
+                'agency_name',
+                'agency_address',
+                'agency_city',
+                'agency_email',
+                'agency_phone',
+                'smtp_host',
+                'smtp_port',
+                'smtp_user',
+                'smtp_password',
+                'smtp_from_address',
+                'smtp_from_name',
+                'smtp_encryption',
+                'budget_alert_threshold_warning',
+                'budget_alert_threshold_critical',
+                'timesheet_import_column_mapping',
+            ])],
             'value' => ['nullable'],
         ]);
 
@@ -127,7 +144,8 @@ class SettingsController extends Controller
 
             return response()->json(['ok' => true]);
         } catch (\Throwable $e) {
-            return response()->json(['ok' => false, 'error' => $e->getMessage()]);
+            Log::error('SMTP test failed', ['user' => $request->user()->email, 'error' => $e->getMessage()]);
+            return response()->json(['ok' => false, 'error' => 'SMTP connection failed — check server logs.']);
         }
     }
 }
