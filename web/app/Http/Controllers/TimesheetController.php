@@ -338,10 +338,12 @@ class TimesheetController extends Controller
             'hireDate' => $hireDate,
         ]);
 
-        $totalConsultantCost = (float) $week1Result['totalConsultantCost'] + (float) $week2Result['totalConsultantCost'];
-        $totalClientBillable = (float) $week1Result['totalClientBillable'] + (float) $week2Result['totalClientBillable'];
-        $grossMarginDollars = $totalClientBillable - $totalConsultantCost;
-        $grossMarginPercent = $totalClientBillable > 0 ? ($grossMarginDollars / $totalClientBillable) * 100 : 0;
+        $totalConsultantCost = bcadd((string) $week1Result['totalConsultantCost'], (string) $week2Result['totalConsultantCost'], 10);
+        $totalClientBillable = bcadd((string) $week1Result['totalClientBillable'], (string) $week2Result['totalClientBillable'], 10);
+        $grossMarginDollars = bcsub($totalClientBillable, $totalConsultantCost, 10);
+        $grossMarginPercent = bccomp($totalClientBillable, '0', 10) > 0
+            ? bcdiv(bcmul($grossMarginDollars, '100', 10), $totalClientBillable, 10)
+            : '0';
         $otRuleApplied = (string) $week1Result['otRuleApplied'];
 
         return [
@@ -367,11 +369,11 @@ class TimesheetController extends Controller
             'total_regular_hours' => $week1Result['regularHours'] + $week2Result['regularHours'],
             'total_ot_hours' => $week1Result['otHours'] + $week2Result['otHours'],
             'total_dt_hours' => $week1Result['doubleTimeHours'] + $week2Result['doubleTimeHours'],
-            'total_consultant_cost' => round($totalConsultantCost, 4),
-            'total_client_billable' => round($totalClientBillable, 4),
-            'gross_revenue' => round($totalClientBillable, 4),
-            'gross_margin_dollars' => round($grossMarginDollars, 4),
-            'gross_margin_percent' => round($grossMarginPercent, 4),
+            'total_consultant_cost' => round((float) $totalConsultantCost, 4),
+            'total_client_billable' => round((float) $totalClientBillable, 4),
+            'gross_revenue' => round((float) $totalClientBillable, 4),
+            'gross_margin_dollars' => round((float) $grossMarginDollars, 4),
+            'gross_margin_percent' => round((float) $grossMarginPercent, 4),
         ];
     }
 

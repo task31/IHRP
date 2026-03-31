@@ -2465,3 +2465,48 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 **Carry-forwards:**
 - None. Remaining `improvements.md` items (payroll semantics, float math, controller-to-service refactor) are P2 and can be a future phase if prioritised.
 
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 10: P2 Bug Fixes (Dead Code + SQL Portability + Float Math) _(2026-03-30)_
+
+**Goal:** Fix two P2 correctness issues carried forward from Phase 9 REVIEW.
+**Mode:** SEQUENTIAL
+**Dependency diagram:**
+[Phase 9] ✅ → [Phase 10] 🔨
+
+**Decisions made:**
+- Dead AM branch in `DashboardController::index()` is removed entirely (not converted to a working AM path). Dashboard is admin-only by design; `page()` already enforces this via `abort_if`. No product change.
+- `DATE_FORMAT` replaced with `whereBetween(startOfMonth, endOfMonth)` — identical semantics, driver-agnostic.
+- bcmath scale=10 for intermediate accumulation, then `round((float), 4)` on write-out — consistent with bcmath usage in `PayrollDataService`.
+- No new tests required. These are internal correctness fixes; existing 160-test suite is the regression gate.
+
+**Risks flagged:**
+- None. Both changes are additive-restriction or precision-improvement with no behavior change observable from outside the method.
+
+**Files planned:**
+- `web/app/Http/Controllers/DashboardController.php`
+- `web/app/Http/Controllers/TimesheetController.php`
+
+---
+
+### 🔨 [BUILD — Cursor] — Phase 10: P2 Bug Fixes _(2026-03-30)_
+
+**Assigned workstream:** [Phase 10]
+
+**Todos completed:**
+- [x] [Phase 10] `DashboardController::index()` — removed unreachable `account_manager` branch; added `$mtdStart` / `$mtdEnd` from `startOfMonth` / `endOfMonth`; MTD revenue uses `whereBetween('pay_period_start', [$mtdStart, $mtdEnd])` instead of `DATE_FORMAT` + `$mtdMonth`; dropped unused `$mtdMonth`.
+- [x] [Phase 10] `TimesheetController::computeTimesheetAggregates()` — replaced float `+`/`-`/`/` on money totals with `bcadd` / `bcsub` / `bcmul` / `bcdiv` / `bccomp` (scale 10); return array money keys use `round((float) $…, 4)`.
+
+**Deviations from plan:**
+- None.
+
+**Unplanned additions:**
+- None.
+
+**Files actually created/modified:**
+- `web/app/Http/Controllers/DashboardController.php` ✅
+- `web/app/Http/Controllers/TimesheetController.php` ✅
+
+**Verification notes:**
+- `php artisan test` — **160 passed** (424 assertions), **0 failures**.
