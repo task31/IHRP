@@ -503,4 +503,93 @@ class PayrollControllerTest extends TestCase
         $am = User::factory()->create(['role' => 'account_manager']);
         $this->actingAs($am)->getJson('/payroll/api/aggregate?year=2026')->assertForbidden();
     }
+
+    public function test_upload_missing_bill_rate_stores_zero_revenue(): void
+    {
+        // Consultant exists but has no bill_rate
+        $consultant = Consultant::query()->create([
+            'full_name' => 'Alice Adams',
+            'active'    => true,
+            'bill_rate' => null,
+            'pay_rate'  => null,
+        ]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $am    = User::factory()->create(['role' => 'account_manager']);
+
+        // Pre-create mapping so the upload finds the consultant
+        PayrollConsultantMapping::query()->create([
+            'raw_name'       => 'Alice Adams',
+            'user_id'        => $am->id,
+            'consultant_id'  => $consultant->id,
+            'created_by'     => $admin->id,
+        ]);
+
+        $file = $this->uploadedPayrollFile(withAlice: true);
+        $this->actingAs($admin)
+            ->post(route('payroll.upload'), [
+                'file'      => $file,
+                'user_id'   => $am->id,
+                'stop_name' => 'Rafael',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $entry = PayrollConsultantEntry::query()
+            ->where('user_id', $am->id)
+            ->where('consultant_name', 'Alice Adams')
+            ->first();
+
+        $this->assertNotNull($entry, 'Consultant entry should exist after upload');
+        $this->assertSame('0.0000', $entry->revenue,
+            'revenue must be 0.0000 when bill_rate is missing — not am_earnings');
+        $this->assertSame('0.0000', $entry->margin,
+            'margin must be 0.0000 when bill_rate is missing');
+    }
+
+    public function test_recompute_margins_missing_bill_rate_leaves_revenue_zero(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $am    = User::factory()->create(['role' => 'account_manager']);
+
+        // Consultant with no bill_rate
+        $consultant = Consultant::query()->create([
+            'full_name' => 'Bob Builder',
+            'active'    => true,
+            'bill_rate' => null,
+            'pay_rate'  => null,
+        ]);
+
+        // Entry pre-seeded with wrong revenue (simulates old corrupted state)
+        PayrollConsultantEntry::query()->create([
+            'user_id'         => $am->id,
+            'consultant_name' => 'Bob Builder',
+            'consultant_id'   => $consultant->id,
+            'year'            => 2026,
+            'hours'           => '10.0000',
+            'spread_per_hour' => '5.0000',
+            'commission_pct'  => '0.50000000',
+            'am_earnings'     => '250.0000',
+            'revenue'         => '250.0000',   // wrong — was set to am_earnings
+            'cost'            => '250.0000',
+            'margin'          => '0.0000',
+            'pct_of_total'    => '100.0000',
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('payroll.recompute.margins'), ['user_id' => $am->id])
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $entry = PayrollConsultantEntry::query()
+            ->where('user_id', $am->id)
+            ->where('consultant_name', 'Bob Builder')
+            ->first();
+
+        $this->assertNotNull($entry);
+        $this->assertSame('0.0000', $entry->revenue,
+            'revenue must be 0.0000 after recompute when bill_rate is still missing');
+        $this->assertSame('0.0000', $entry->margin,
+            'margin must be 0.0000 after recompute when bill_rate is still missing');
+    }
 }

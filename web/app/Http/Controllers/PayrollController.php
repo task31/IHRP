@@ -149,7 +149,7 @@ class PayrollController extends Controller
                     }
                 }
             } else {
-                $revenue = $amEarnings;
+                $revenue = '0.0000';
                 $margin  = '0.0000';
             }
 
@@ -486,7 +486,7 @@ class PayrollController extends Controller
                                 ->update(['pay_rate' => $payRate]);
                         }
                     } else {
-                        $revenue = $amEarnings;
+                        $revenue = '0.0000';
                         $margin  = '0.0000';
                     }
 

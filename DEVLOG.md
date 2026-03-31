@@ -2591,3 +2591,32 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
 **Verification notes:**
 - Status-only documentation update; no code changes or test-impacting changes were made.
+
+---
+
+### 🔨 [BUILD — Cursor] — Phase 11: Missing bill_rate revenue fallback fix _(2026-03-30)_
+
+**Assigned workstream:** [Phase 11]
+
+**Todos completed:**
+- [x] [Phase 11] Added `test_upload_missing_bill_rate_stores_zero_revenue()` to `web/tests/Feature/PayrollControllerTest.php`.
+- [x] [Phase 11] Added `test_recompute_margins_missing_bill_rate_leaves_revenue_zero()` to `web/tests/Feature/PayrollControllerTest.php`.
+- [x] [Phase 11] Ran targeted TDD gate: `php artisan test --filter "test_upload_missing_bill_rate_stores_zero_revenue|test_recompute_margins_missing_bill_rate_leaves_revenue_zero"` (2 FAILED pre-fix, both asserting actual revenue was `250.0000` instead of expected `0.0000`).
+- [x] [Phase 11] Updated `PayrollController::upload()` null-`bill_rate` else fallback from `$revenue = $amEarnings;` to `$revenue = '0.0000';`.
+- [x] [Phase 11] Updated `PayrollController::recomputeMargins()` null-`bill_rate` else fallback from `$revenue = $amEarnings;` to `$revenue = '0.0000';`.
+- [x] [Phase 11] Re-ran targeted tests (2 passed), then full suite via `php artisan test` (162 passed, 0 failures).
+
+**Deviations from plan:**
+- None.
+
+**Unplanned additions:**
+- None.
+
+**Files actually modified:**
+- `web/tests/Feature/PayrollControllerTest.php` ✅
+- `web/app/Http/Controllers/PayrollController.php` ✅
+- `DEVLOG.md` ✅
+
+**Verification notes:**
+- Targeted pre-fix failure confirmed bug in both paths (`upload()` and `recomputeMargins()`) with `revenue` incorrectly persisted as `am_earnings` when `bill_rate` was missing.
+- Post-fix behavior matches `BUSINESS_MODEL.md` semantics: missing `bill_rate` now yields `revenue = 0.0000` and `margin = 0.0000`.
