@@ -135,6 +135,15 @@ Remaining open work: T021 (decision), T022 (deploy verification), T025 (docs con
 
 ---
 
+### Phase 11 — Payroll Semantics: Fix Missing Bill-Rate Revenue Fallback ✅ _(closed 2026-03-30)_
+
+- `PayrollController::upload()` + `recomputeMargins()` — missing `bill_rate` now yields `revenue = 0.0000` instead of `revenue = am_earnings`
+- Two new feature tests (TDD): red→green sequence confirmed both paths
+- `am_earnings` is cost; `revenue` requires `bill_rate`. Aligns both methods with `BUSINESS_MODEL.md`
+- 162 tests, 434 assertions, 0 failures
+
+---
+
 ### Phase 10 — P2 Bug Fixes: Dead Code + SQL Portability + Float Math ✅ _(closed 2026-03-30)_
 
 - `DashboardController::index()` dead AM branch removed (unreachable after `abort_unless(..., 403)`)

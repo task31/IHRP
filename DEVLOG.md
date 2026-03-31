@@ -2620,3 +2620,23 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 **Verification notes:**
 - Targeted pre-fix failure confirmed bug in both paths (`upload()` and `recomputeMargins()`) with `revenue` incorrectly persisted as `am_earnings` when `bill_rate` was missing.
 - Post-fix behavior matches `BUSINESS_MODEL.md` semantics: missing `bill_rate` now yields `revenue = 0.0000` and `margin = 0.0000`.
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 11: Missing bill_rate revenue fallback fix _(2026-03-30)_
+
+**Reviewed:** `55e7fc7` — fix(payroll): missing bill_rate yields revenue=0 not am_earnings (Phase 11)
+
+**Verified:**
+- `PayrollController::upload()` else branch — `$revenue = '0.0000'` at line 152 ✅
+- `PayrollController::recomputeMargins()` else branch — `$revenue = '0.0000'` at line 489 ✅
+- `test_upload_missing_bill_rate_stores_zero_revenue` — entry.revenue = '0.0000', entry.margin = '0.0000' ✅
+- `test_recompute_margins_missing_bill_rate_leaves_revenue_zero` — post-recompute revenue = '0.0000', margin = '0.0000' ✅
+- TDD sequence: 2 failed pre-fix (revenue was '250.0000' = am_earnings), 2 passed post-fix ✅
+- `php artisan test` (Claude Code run): **162 passed, 434 assertions, 0 failures** ✅
+- Deviations from plan: none.
+
+**Phase 11 — CLOSED ✅**
+
+**Carry-forwards:**
+- None. `improvements.md` Tracks 2 (controller-to-service refactor) and 3 (site speed) remain deferred.
