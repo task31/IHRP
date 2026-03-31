@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-30 (Phase 11 complete)_
+_Last updated: 2026-03-31 (Phase 12 planned)_
 
 ## Phase Map
 
@@ -68,6 +68,17 @@ _Last updated: 2026-03-30 (Phase 11 complete)_
   └─ Task 3: Fix recomputeMargins() else branch — $revenue = '0.0000'
   └─ Task 4: php artisan test (162 pass gate)
 
+[Phase 12] — Resume Redaction Tool | SEQUENTIAL
+  └─ Step 1: composer require smalot/pdfparser
+  └─ Step 2: ResumeRedactionService (extractLines, redactContactInfo, buildPdf)
+  └─ Step 3: PDF Blade template (resources/views/resume-redact/pdf.blade.php)
+  └─ Step 4: ResumeRedactionController (index + process)
+  └─ Step 5: Routes (GET + POST /resume-redact)
+  └─ Step 6: Upload view (resources/views/resume-redact/index.blade.php)
+  └─ Step 7: Sidebar sub-link below Calls
+  └─ Step 8: Tests (7 unit + 4 feature, fixtures/sample-resume.pdf)
+  └─ Step 9: php artisan test (173 pass gate)
+
 ## Dependency Rules
 
 - [Phase 1] requires [Phase 0] complete (auth + DB must exist)
@@ -94,3 +105,4 @@ _Last updated: 2026-03-30 (Phase 11 complete)_
 - [Phase 9] ✅ Complete _(2026-03-30)_
 - [Phase 10] ✅ Complete _(2026-03-30)_
 - [Phase 11] ✅ Complete _(2026-03-30)_
+- [Phase 12] ✅ Complete _(2026-03-31)_
