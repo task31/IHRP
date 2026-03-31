@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-30 (Phase 9 architected)_
+_Last updated: 2026-03-30 (Phase 10 complete)_
 
 ## Phase Map
 
@@ -57,6 +57,11 @@ _Last updated: 2026-03-30 (Phase 9 architected)_
   └─ Step 9: PayrollControllerTest (feature tests)
   └─ Step 10: Manual smoke test (upload 3 AM files, verify AM #4 empty state, verify all charts + scoping)
 
+[Phase 10] — P2 Bug Fixes: Dead Code + SQL Portability + Float Math | SEQUENTIAL
+  └─ Task 1: DashboardController — remove dead AM branch, replace DATE_FORMAT with whereBetween
+  └─ Task 2: TimesheetController — bcmath for computeTimesheetAggregates money totals
+  └─ Task 3: php artisan test (160 pass gate)
+
 ## Dependency Rules
 
 - [Phase 1] requires [Phase 0] complete (auth + DB must exist)
@@ -81,3 +86,4 @@ _Last updated: 2026-03-30 (Phase 9 architected)_
 - [Phase 7] ✅ Complete _(2026-03-23)_
 - [Phase 8] ✅ Complete _(2026-03-30)_
 - [Phase 9] ✅ Complete _(2026-03-30)_
+- [Phase 10] ✅ Complete _(2026-03-30)_

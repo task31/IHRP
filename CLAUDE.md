@@ -135,6 +135,15 @@ Remaining open work: T021 (decision), T022 (deploy verification), T025 (docs con
 
 ---
 
+### Phase 10 — P2 Bug Fixes: Dead Code + SQL Portability + Float Math ✅ _(closed 2026-03-30)_
+
+- `DashboardController::index()` dead AM branch removed (unreachable after `abort_unless(..., 403)`)
+- `DATE_FORMAT` MySQL-only calls replaced with `whereBetween('pay_period_start', [$mtdStart, $mtdEnd])`
+- `TimesheetController::computeTimesheetAggregates()` money accumulation via bcmath (scale=10) + `round((float), 4)` on write-out; eliminates float drift on five money fields
+- 160 tests, 424 assertions, 0 failures
+
+---
+
 ### Phase 5 — Deploy ✅ _(closed 2026-03-24)_
 
 - All 8 P0 blockers (T001–T008) resolved — see `references/tasklist-archive.md` for details

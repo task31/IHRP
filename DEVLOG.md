@@ -2510,3 +2510,23 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
 **Verification notes:**
 - `php artisan test` — **160 passed** (424 assertions), **0 failures**.
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 10: P2 Bug Fixes _(2026-03-30)_
+
+**Reviewed:** `327beeb` — fix(dashboard): remove dead AM branch + replace DATE_FORMAT; fix(timesheet): bcmath for aggregate money totals (Phase 10)
+
+**Verified:**
+- `DashboardController::index()` — no `if ($role === 'account_manager')` branch ✅
+- `DashboardController::index()` — no `DATE_FORMAT` call ✅
+- `whereBetween('pay_period_start', [$mtdStart, $mtdEnd])` used for MTD revenue ✅
+- `TimesheetController::computeTimesheetAggregates()` — bcadd/bcsub/bcmul/bcdiv/bccomp (scale=10); float `+`/`-`/`/` on money vars eliminated ✅
+- Return array money keys use `round((float) $…, 4)` on all five: `total_consultant_cost`, `total_client_billable`, `gross_revenue`, `gross_margin_dollars`, `gross_margin_percent` ✅
+- `php artisan test` (Claude Code run): **160 passed, 424 assertions, 0 failures** ✅
+- Deviations from plan: none.
+
+**Phase 10 — CLOSED ✅**
+
+**Carry-forwards:**
+- None. Remaining `improvements.md` items (controller-to-service refactor, deeper payroll semantics cleanup) are deferred as P3/post-phase work.
