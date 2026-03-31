@@ -1,5 +1,5 @@
 # PHASES — IHRP (Internal HR Portal)
-_Last updated: 2026-03-30 (Phase 10 complete)_
+_Last updated: 2026-03-30 (Phase 11 architected)_
 
 ## Phase Map
 
@@ -62,6 +62,12 @@ _Last updated: 2026-03-30 (Phase 10 complete)_
   └─ Task 2: TimesheetController — bcmath for computeTimesheetAggregates money totals
   └─ Task 3: php artisan test (160 pass gate)
 
+[Phase 11] — Payroll Semantics: Fix Missing Bill-Rate Revenue Fallback | SEQUENTIAL
+  └─ Task 1: Write 2 failing tests (upload + recompute, missing bill_rate → revenue=0.0000)
+  └─ Task 2: Fix upload() else branch — $revenue = '0.0000'
+  └─ Task 3: Fix recomputeMargins() else branch — $revenue = '0.0000'
+  └─ Task 4: php artisan test (162 pass gate)
+
 ## Dependency Rules
 
 - [Phase 1] requires [Phase 0] complete (auth + DB must exist)
@@ -87,3 +93,4 @@ _Last updated: 2026-03-30 (Phase 10 complete)_
 - [Phase 8] ✅ Complete _(2026-03-30)_
 - [Phase 9] ✅ Complete _(2026-03-30)_
 - [Phase 10] ✅ Complete _(2026-03-30)_
+- [Phase 11] 🔨 In Progress

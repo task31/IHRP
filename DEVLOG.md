@@ -2530,3 +2530,64 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
 **Carry-forwards:**
 - None. Remaining `improvements.md` items (controller-to-service refactor, deeper payroll semantics cleanup) are deferred as P3/post-phase work.
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 11: Payroll Semantics — Fix Missing Bill-Rate Revenue Fallback _(2026-03-30)_
+
+**Goal:** Fix two identical one-line bugs in `PayrollController` where a missing `bill_rate` causes `revenue` to be set to `am_earnings` instead of `0.0000`.
+**Mode:** SEQUENTIAL
+**Dependency diagram:**
+[Phase 10] ✅ → [Phase 11] 🔨
+
+**The bug (same pattern in two methods):**
+```php
+// CURRENT — WRONG (upload() line ~152 and recomputeMargins() line ~489)
+} else {
+    $revenue = $amEarnings;   // am_earnings is cost, not revenue
+    $margin  = '0.0000';
+}
+// CORRECT
+} else {
+    $revenue = '0.0000';
+    $margin  = '0.0000';
+}
+```
+
+**Decisions made:**
+- Fix both `upload()` and `recomputeMargins()` in one pass — they share identical semantics.
+- TDD: write two failing tests first, then apply the one-line fix in each method.
+- No schema change, no migration, no new routes. Purely a semantics correction.
+- `pct_of_total` recomputation in both methods already guards on `bccomp($grandRevenue, '0', 4) > 0`, so rows with zero revenue will correctly produce `pct_of_total = 0.0000` — no additional change needed there.
+- Existing entries with corrupted `revenue = am_earnings` will be corrected on next `recomputeMargins` run (no data patch needed).
+
+**Risks flagged:**
+- Test gate rises from 160 → 162. Cursor must confirm the new count, not just "0 failures".
+
+**Files planned:**
+- `web/app/Http/Controllers/PayrollController.php` (2 one-line edits)
+- `web/tests/Feature/PayrollControllerTest.php` (2 new test methods)
+
+---
+
+### 🔨 [BUILD — Cursor] — Post-Phase 10 status check _(2026-03-30)_
+
+**Assigned workstream:** Post-close triage (no active phase)
+
+**Todos completed:**
+- [x] Read `CLAUDE.md` and confirmed Phase 10 is closed; no active phase is currently open.
+- [x] Read latest `### ✅ [REVIEW — Claude Code] — Phase 10: P2 Bug Fixes` block in `DEVLOG.md` and verified closure state + no carry-forwards for Phase 10.
+- [x] Reviewed `TASKLIST.md` for open items: no unchecked urgent tasks; production status shows no open tasks.
+- [x] Reviewed `improvements.md` for deferred work: outstanding items are non-urgent improvement tracks (controller-to-service refactor, payroll semantics hardening, performance/speed plan).
+
+**Deviations from plan:**
+- None.
+
+**Unplanned additions:**
+- None.
+
+**Files actually created/modified:**
+- `DEVLOG.md` ✅
+
+**Verification notes:**
+- Status-only documentation update; no code changes or test-impacting changes were made.
