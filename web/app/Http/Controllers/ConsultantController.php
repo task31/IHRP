@@ -43,7 +43,7 @@ class ConsultantController extends Controller
             LEFT JOIN clients cl ON cl.id = c.client_id
             LEFT JOIN consultant_onboarding_items oi ON oi.consultant_id = c.id
             WHERE c.active = 1
-            GROUP BY c.id
+            GROUP BY c.id, cl.id, cl.name
             ORDER BY c.full_name
         ');
 
@@ -279,6 +279,7 @@ class ConsultantController extends Controller
     {
         $this->authorize('account_manager');
         $days = (int) $request->query('days', 30);
+        $cutoff = now()->addDays($days)->toDateString();
 
         $rows = DB::select('
             SELECT c.*, cl.name AS client_name
@@ -286,9 +287,9 @@ class ConsultantController extends Controller
             LEFT JOIN clients cl ON cl.id = c.client_id
             WHERE c.active = 1
               AND c.project_end_date IS NOT NULL
-              AND c.project_end_date <= DATE_ADD(CURDATE(), INTERVAL ? DAY)
+              AND c.project_end_date <= ?
             ORDER BY c.project_end_date ASC
-        ', [$days]);
+        ', [$cutoff]);
 
         return response()->json($rows);
     }
@@ -359,7 +360,7 @@ class ConsultantController extends Controller
             ]);
         }
 
-        return response()->json(['path' => $full, 'fileName' => $consultant->w9_file_path]);
+        return response()->json(['fileName' => $consultant->w9_file_path]);
     }
 
     public function w9Delete(string $id): JsonResponse
@@ -430,7 +431,7 @@ class ConsultantController extends Controller
             ]);
         }
 
-        return response()->json(['path' => $full, 'fileName' => $consultant->contract_file_path]);
+        return response()->json(['fileName' => $consultant->contract_file_path]);
     }
 
     public function contractDelete(string $id): JsonResponse

@@ -14,7 +14,7 @@ class PlacementPolicy
 
     public function view(User $user, Placement $placement): bool
     {
-        return in_array($user->role, ['admin', 'account_manager'], true);
+        return $user->role === 'admin' || $placement->placed_by === $user->id;
     }
 
     public function create(User $user): bool
@@ -24,7 +24,7 @@ class PlacementPolicy
 
     public function update(User $user, Placement $placement): bool
     {
-        return in_array($user->role, ['admin', 'account_manager'], true);
+        return $user->role === 'admin' || $placement->placed_by === $user->id;
     }
 
     public function delete(User $user, Placement $placement): bool

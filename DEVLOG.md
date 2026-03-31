@@ -1,3 +1,27 @@
+### ✅ [REVIEW — Claude Code] — Phase 8 deploy + recompute _(2026-03-30)_
+
+**Reviewed:** BUILD block above — `python deploy.py --step ssh-deploy` + 4× `php artisan payroll:recompute-am`
+
+**Verified:**
+- Production at `aa2c6ec` ✅ (fast-forward from `df26677`, confirmed via git pull)
+- All 4 artisan caches confirmed on deploy ✅ (config, route, view, template)
+- All 4 AMs recomputed ✅
+  - Harsono (3): 56 entries — large book, expected
+  - Dimarumba (4): 6 entries — small book, expected
+  - Prejido (5): 0 entries — no payroll data on file, correct
+  - Sibug (6): 94 entries — largest book, expected
+- Key-only SSH auth used, no password ✅
+- Phase 8 carry-forwards from prior REVIEW now fully resolved ✅
+
+**Phase 8 — CLOSED ✅**
+
+**Carry-forwards:**
+- None. Phase 8 fully complete.
+
+---
+
+<!-- ARCHIVE -->
+
 # DEVLOG — [Project Name]
 
 > Append-only audit trail. One file. Three blocks per phase.
@@ -2315,24 +2339,104 @@ Acceptance criteria in phase-8-plan.md. Run `php artisan test` at the end and co
 
 ---
 
-### ✅ [REVIEW — Claude Code] — Phase 8 deploy + recompute _(2026-03-30)_
+### 🏗️ [ARCHITECT — Claude Code] — Phase 9: P0 Auth + P1 Correctness Fixes _(2026-03-30)_
 
-**Reviewed:** BUILD block above — `python deploy.py --step ssh-deploy` + 4× `php artisan payroll:recompute-am`
+**Goal:** Fix three confirmed bugs from the Cursor codebase audit — one P0 data access gap
+and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
-**Verified:**
-- Production at `aa2c6ec` ✅ (fast-forward from `df26677`, confirmed via git pull)
-- All 4 artisan caches confirmed on deploy ✅ (config, route, view, template)
-- All 4 AMs recomputed ✅
-  - Harsono (3): 56 entries — large book, expected
-  - Dimarumba (4): 6 entries — small book, expected
-  - Prejido (5): 0 entries — no payroll data on file, correct
-  - Sibug (6): 94 entries — largest book, expected
-- Key-only SSH auth used, no password ✅
-- Phase 8 carry-forwards from prior REVIEW now fully resolved ✅
+**Mode:** SEQUENTIAL (4 files, no interdependencies, safe to build in one pass)
 
-**Phase 8 — CLOSED ✅**
+**Dependency diagram:**
+```
+[Phase 8] ✅ → [Phase 9] 🔨 (isolated bug fixes, no schema changes)
+```
 
-**Carry-forwards:**
-- None. Phase 8 fully complete.
+**Bugs being fixed:**
+
+**P0 — Placements authorization gap**
+- `PlacementController@index` (JSON path) returns all placements to any AM — no owner filter.
+- `PlacementPolicy::update()` + `view()` allow any AM to update/view any placement, regardless of who created it.
+- The Livewire UI scopes correctly, which hid this — but the raw HTTP routes are live and callable directly.
+- Fix: add `placed_by === user->id` ownership check to policy; add `where('placed_by', Auth::id())` to controller JSON query for non-admin roles.
+
+**P1a — ConsultantController SQL strictness**
+- `index()` uses `SELECT c.*` with `GROUP BY c.id` plus `cl.name` from a LEFT JOIN. `cl.name` is not functionally dependent on `c.id`, so this fails under MySQL `ONLY_FULL_GROUP_BY` (default mode).
+- Fix: `GROUP BY c.id, cl.id, cl.name`.
+- `endDateAlerts()` uses `DATE_ADD(CURDATE(), INTERVAL ? DAY)` — MySQL-only, breaks SQLite tests.
+- Fix: compute cutoff in PHP with `now()->addDays($days)->toDateString()` and use plain `<=`.
+
+**P1b — Server path info leak**
+- `w9Path()` and `contractPath()` return `storage_path(...)` absolute path in JSON responses.
+- Fix: return only `fileName`, drop the `path` key entirely.
+
+**Decisions made:**
+- GROUP BY fix uses `cl.id, cl.name` (not Eloquent rewrite) — minimal diff, same behavior, fixes strict mode.
+- endDateAlerts cutoff moves to PHP — driver-agnostic, no branching needed, cleaner than SQLite/MySQL conditional.
+- No schema changes, no migration needed.
+
+**Risks flagged:**
+- None. All changes are additive restrictions (fewer results, fewer fields). No new behavior introduced.
+- Placement scoping change will affect AM users who were previously able to see all placements — this is intentional and correct.
+
+**Files planned:**
+- `web/app/Policies/PlacementPolicy.php`
+- `web/app/Http/Controllers/PlacementController.php`
+- `web/app/Http/Controllers/ConsultantController.php`
+- `web/tests/Feature/PlacementPageTest.php`
 
 ---
+
+### 🔧 [BUILD — Cursor] — Phase 9: P0 Auth + P1 Correctness Fixes _(2026-03-30)_
+
+**Task 1 — Placement ownership enforcement**
+- Updated `web/app/Policies/PlacementPolicy.php`:
+  - `view()` now allows only `admin` or owner (`placed_by === user->id`).
+  - `update()` now allows only `admin` or owner (`placed_by === user->id`).
+- Updated `web/app/Http/Controllers/PlacementController.php` `index()` JSON path:
+  - Added non-admin query scope: `where('placed_by', $user->id)` before returning JSON.
+
+**Task 2 — Consultant SQL correctness**
+- Updated `web/app/Http/Controllers/ConsultantController.php` `index()`:
+  - `GROUP BY c.id` → `GROUP BY c.id, cl.id, cl.name` for `ONLY_FULL_GROUP_BY` compatibility.
+- Updated `endDateAlerts()`:
+  - Added `$cutoff = now()->addDays($days)->toDateString();`
+  - Replaced MySQL-specific `DATE_ADD(CURDATE(), INTERVAL ? DAY)` with driver-agnostic `c.project_end_date <= ?` and bind `[$cutoff]`.
+
+**Task 3 — Path-leak removal**
+- Updated `ConsultantController::w9Path()` JSON response:
+  - Removed absolute `path`; now returns only `['fileName' => $consultant->w9_file_path]`.
+- Updated `ConsultantController::contractPath()` JSON response:
+  - Removed absolute `path`; now returns only `['fileName' => $consultant->contract_file_path]`.
+
+**Task 4 — Placement ownership tests**
+- Added to `web/tests/Feature/PlacementPageTest.php`:
+  - `test_am_json_index_returns_only_own_placements()`
+  - `test_am_cannot_update_another_ams_placement()`
+- Added minimal factories required by these tests:
+  - `web/database/factories/ClientFactory.php`
+  - `web/database/factories/ConsultantFactory.php`
+  - `web/database/factories/PlacementFactory.php`
+- Enabled model factories for these models:
+  - `web/app/Models/Client.php` (`HasFactory`)
+  - `web/app/Models/Consultant.php` (`HasFactory`)
+  - `web/app/Models/Placement.php` (`HasFactory`)
+
+**Testing**
+- `php artisan test`: **160 passed** (424 assertions), **0 failures**.
+
+**Files touched**
+- `web/app/Policies/PlacementPolicy.php`
+- `web/app/Http/Controllers/PlacementController.php`
+- `web/app/Http/Controllers/ConsultantController.php`
+- `web/tests/Feature/PlacementPageTest.php`
+- `web/database/factories/ClientFactory.php` (new)
+- `web/database/factories/ConsultantFactory.php` (new)
+- `web/database/factories/PlacementFactory.php` (new)
+- `web/app/Models/Client.php`
+- `web/app/Models/Consultant.php`
+- `web/app/Models/Placement.php`
+- `DEVLOG.md` (this block)
+
+**Carry-forwards**
+- None.
+

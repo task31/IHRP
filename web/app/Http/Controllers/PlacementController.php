@@ -38,6 +38,9 @@ class PlacementController extends Controller
                 ->orderByDesc('start_date')
                 ->orderByDesc('id');
 
+            if ($user->role !== 'admin') {
+                $query->where('placed_by', $user->id);
+            }
 
             return response()->json($query->get());
         }
