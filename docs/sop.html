@@ -157,12 +157,19 @@
       border-radius:999px;
     }
     .chev{
-      margin-top:2px;
-      color:var(--muted);
-      font-size:12px;
-      font-family:var(--mono);
+      width:14px;
+      height:14px;
+      flex-shrink:0;
+      margin-top:3px;
+      border-right:2px solid var(--muted);
+      border-bottom:2px solid var(--muted);
+      transform:rotate(45deg);
+      transition:transform .2s ease, border-color .2s ease;
     }
-    details[open] .chev{color:rgba(230,237,247,.78)}
+    details[open] .chev{
+      transform:rotate(-135deg);
+      border-color:rgba(230,237,247,.78);
+    }
     .content{padding:0 14px 14px}
     .kvs{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;margin:10px 0 12px}
     .kvs .k{color:var(--muted);font-size:12px}
@@ -281,7 +288,7 @@
                   <span class="tag">Admin only</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -347,7 +354,7 @@
                   <span class="tag">Admin only</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -396,7 +403,7 @@
                   <span class="tag">Admin only</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -457,7 +464,7 @@
                   <span class="tag">PUT /payroll/api/mappings</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -506,7 +513,7 @@
                   <span class="tag">Admin only</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -565,7 +572,7 @@
                   <span class="tag">Bill rate required</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -597,7 +604,7 @@
                   <span class="tag">.xlsx</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -630,7 +637,7 @@
                   <span class="tag">Upload button (admin)</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -670,7 +677,7 @@
                   <span class="tag">KPIs + pay periods</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -712,7 +719,7 @@
                   <span class="tag">Meaning: bill_rate missing</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -746,7 +753,7 @@
                   <span class="tag">POST /payroll/recompute-margins</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
@@ -793,7 +800,7 @@
                   <span class="tag">/reports</span>
                 </div>
               </div>
-              <div class="chev">[open]</div>
+              <div class="chev"></div>
             </summary>
             <div class="content">
               <div class="kvs">
