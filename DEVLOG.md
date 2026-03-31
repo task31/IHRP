@@ -2640,3 +2640,20 @@ and two P1 correctness/SQL issues. No new features. Pure fix pass.
 
 **Carry-forwards:**
 - None. `improvements.md` Tracks 2 (controller-to-service refactor) and 3 (site speed) remain deferred.
+
+---
+
+### 🚦 [QA SIGN-OFF — Claude Code] — Deploy authorization _(2026-03-30)_
+
+**Deploying:** Phases 9, 10, 11 combined (commits b5dcd98 → 2a0a698)
+
+**QA gate waived — rationale:**
+- Zero migrations across all three phases
+- Zero new routes or auth surface
+- 162 tests, 434 assertions, 0 failures — includes targeted tests for every bug fixed
+- Changes are surgical: 2 auth fixes, 3 SQL portability fixes, 2 one-line semantics fixes
+- Existing production data unaffected (T029 already resolved bill_rate gaps)
+
+**Sign-off:** Raf Zobel — explicit confirmation received 2026-03-30
+
+**Authorized:** proceed with `python deploy.py --step ssh-deploy`
