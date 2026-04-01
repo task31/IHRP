@@ -3004,3 +3004,29 @@ The Soleno resume confirmed this: input is a clean formatted resume; output is p
 
 **Carry-forwards**
 - If unsupported PDFs are common in production, follow up on FPDI import failures for specific generators (see Phase 13 architect risks).
+
+---
+
+### ✅ [REVIEW — Claude Code] — Phase 13: Resume Redact Format Preservation Fix _(2026-04-01)_
+
+**Reviewed:** 3beab8e — fix(resume-redact): surface FPDI failure as user error instead of silent format destruction
+
+**Verified:**
+- `buildRedactedPdf` is a single-line call to `overlayWithFpdi` — no DomPDF fallback reachable ✅
+- FPDI block (new Fpdi through Output) wrapped in try-catch(\Throwable) → \RuntimeException ✅
+- Smalot coordinate detection per-page try-catch unchanged ✅
+- `buildPdf` method retained in service (not deleted) ✅
+- Controller: catch(\RuntimeException $e) between try and finally → back()->withErrors(['resume']) ✅
+- finally block unchanged — temp file cleanup always runs ✅
+- New test `test_process_shows_error_when_service_throws` — mocks buildRedactedPdf to throw, asserts sessionHasErrors(['resume']) ✅
+- `php artisan test --filter=ResumeRedaction` → 15 passed ✅
+- `php artisan test` → 177 passed, 476 assertions, 0 failures ✅
+
+**Deviations:** None.
+
+**Carry-forwards:**
+- [ ] Root cause of FPDI failure on Word-generated PDFs not yet diagnosed. If FPDI errors
+  are frequent in production, investigate PDF version/stream type. Possible fix: add
+  `setasign/fpdi-pdf-parser` or use `tcpdf` instead of the free FPDI parser.
+- [ ] Consider testing with the actual Jamieson Soleno PDF to confirm the error message
+  surfaces correctly in the browser UI before deploying.
