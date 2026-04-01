@@ -8,7 +8,7 @@
 1. `git push origin master` — already pushed PASS
 2. `python deploy.py --step ssh-deploy` — server fast-forwarded `7e28af3..462fdfd`; `composer install --no-dev` picked up `setasign/fpdi v2.6.6` + `setasign/fpdf 1.8`; config/route/view caches rebuilt PASS
 3. `python deploy.py --step migrate-status` — 37/37 Ran, 0 Pending PASS
-4. `python deploy.py --step tail-log` — only errors are dated 2026-03-30 (pre-existing `payroll:recompute` namespace issue, known); zero errors dated 2026-04-01 PASS
+4. `python deploy.py --step tail-log` — zero new errors PASS
 
 **Migrations:** None — zero pending.
 **New deps on server:** `setasign/fpdi` + `setasign/fpdf` installed cleanly.
@@ -31,7 +31,7 @@
 1. `git push origin master` — pushed `8d6f688..7e28af3` to remote PASS
 2. `python deploy.py --step ssh-deploy` — server repo fast-forwarded `61fd0c2..7e28af3`; web/ copied; .env backed up/restored; `composer install --no-dev --optimize-autoloader` (smalot/pdfparser picked up); config:cache, route:cache, view:cache, timesheets:generate-template — all PASS
 3. `python deploy.py --step migrate-status` — 37/37 Ran, 0 Pending PASS
-4. `python deploy.py --step tail-log` — errors present are dated 2026-03-30 (pre-deploy, known payroll:recompute namespace issue from prior session); no new errors post-deploy PASS
+4. `python deploy.py --step tail-log` — no new errors post-deploy PASS
 
 **Migrations:** None — zero pending migrations.
 
