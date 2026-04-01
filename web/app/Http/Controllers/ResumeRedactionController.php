@@ -45,6 +45,8 @@ class ResumeRedactionController extends Controller
             }
 
             $pdf = $service->buildRedactedPdf($tempPath, $headerMode, $logoBase64, $candidateName);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['resume' => $e->getMessage()])->withInput();
         } finally {
             if (is_file($tempPath)) {
                 @unlink($tempPath);

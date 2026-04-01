@@ -57,6 +57,24 @@ class ResumeRedactionControllerTest extends TestCase
             ->assertSessionHasErrors(['header_mode']);
     }
 
+    public function test_process_shows_error_when_service_throws(): void
+    {
+        $am = User::factory()->create(['role' => 'account_manager']);
+        $this->mock(ResumeRedactionService::class, function ($mock): void {
+            $mock->shouldReceive('extractLines')->once()->andReturn(['Jane Candidate']);
+            $mock->shouldReceive('buildRedactedPdf')->once()->andThrow(new \RuntimeException('unsupported'));
+        });
+
+        $this->actingAs($am)
+            ->from(route('resume.redact.index'))
+            ->post(route('resume.redact.process'), [
+                'resume' => UploadedFile::fake()->create('sample-resume.pdf', 50, 'application/pdf'),
+                'header_mode' => 'text',
+            ])
+            ->assertRedirect(route('resume.redact.index'))
+            ->assertSessionHasErrors(['resume']);
+    }
+
     public function test_process_text_header_returns_pdf_download(): void
     {
         $am = User::factory()->create(['role' => 'account_manager']);

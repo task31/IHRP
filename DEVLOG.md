@@ -2946,3 +2946,61 @@ conditional — no need for two separate templates.
 
 **Carry-forwards:**
 - [ ] None. Phase 12 complete and clean.
+
+---
+
+### 🏗️ [ARCHITECT — Claude Code] — Phase 13: Resume Redact Format Preservation Fix _(2026-04-01)_
+
+**Goal:** Remove the silent DomPDF fallback that destroys resume formatting when FPDI fails.
+Replace it with a user-facing error (option A, confirmed by Raf).
+
+**Mode:** SEQUENTIAL
+
+**Root Cause Diagnosed:**
+`buildRedactedPdf` wraps `overlayWithFpdi` in a try-catch that silently falls back to
+a DomPDF text-rebuild. When FPDI fails on real-world PDFs (e.g. Word-generated resumes),
+the output loses all formatting — fonts, columns, bullets, bold, color, layout all gone.
+The Soleno resume confirmed this: input is a clean formatted resume; output is plain flowing text.
+
+**Decisions made:**
+- Option A (confirmed by Raf): show user-facing error, do not output a file with contact info intact
+- DomPDF text-rebuild path removed entirely from `buildRedactedPdf`
+- FPDI operations wrapped in try-catch → re-throw as `\RuntimeException` with actionable message
+- Controller catches `\RuntimeException` and returns back()->withErrors on the `resume` field
+- `buildPdf` method stays in service (unit tests reference it) but is no longer called by main path
+
+**Risks flagged:**
+- If FPDI continues to fail for most real-world PDFs, the feature will always show an error.
+  Root cause of FPDI failure (PDF version/encryption/stream type) is not yet diagnosed.
+  This fix makes the failure visible rather than silently broken — next step would be to
+  investigate why FPDI can't import the specific PDF if errors are too frequent.
+
+**Files planned:**
+- `web/app/Services/ResumeRedactionService.php`
+- `web/app/Http/Controllers/ResumeRedactionController.php`
+- `web/tests/Feature/ResumeRedactionControllerTest.php`
+
+### 🔧 [BUILD — Cursor] — Phase 13: Resume Redact Format Preservation Fix _(2026-04-01)_
+
+**ResumeRedactionService**
+- `buildRedactedPdf` now delegates only to `overlayWithFpdi` (DomPDF fallback removed from this path).
+- `overlayWithFpdi`: smalot coordinate pass unchanged; FPDI work (`new Fpdi` through `Output('S')`) wrapped in `try` / `catch (\Throwable)` and re-thrown as `\RuntimeException` with the user-facing “re-save as standard PDF” message.
+- `buildPdf` retained for callers/tests that still use DomPDF directly.
+
+**ResumeRedactionController**
+- `process`: `catch (\RuntimeException $e)` returns `back()->withErrors(['resume' => $e->getMessage()])->withInput()`; existing `finally` temp-file cleanup unchanged.
+
+**ResumeRedactionControllerTest**
+- Added `test_process_shows_error_when_service_throws` (mocked service throws `RuntimeException`, assert redirect + session error on `resume`).
+
+**Testing**
+- `php artisan test`: **177 passed** (476 assertions), 0 failures. _(Phase 13 plan cited 176 total; current suite is 177 — 0 failures.)_
+
+**Files touched**
+- `web/app/Services/ResumeRedactionService.php`
+- `web/app/Http/Controllers/ResumeRedactionController.php`
+- `web/tests/Feature/ResumeRedactionControllerTest.php`
+- `DEVLOG.md` (this block)
+
+**Carry-forwards**
+- If unsupported PDFs are common in production, follow up on FPDI import failures for specific generators (see Phase 13 architect risks).

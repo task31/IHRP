@@ -87,7 +87,6 @@ class ResumeRedactionService
 
     /**
      * Build a redacted PDF preserving the original formatting using FPDI overlay.
-     * Falls back to a DomPDF text-rebuild if FPDI cannot process the source PDF.
      */
     public function buildRedactedPdf(
         string $pdfPath,
@@ -95,28 +94,7 @@ class ResumeRedactionService
         string $logoBase64,
         string $candidateName = ''
     ): string {
-        try {
-            return $this->overlayWithFpdi($pdfPath, $headerMode, $logoBase64, $candidateName);
-        } catch (\Throwable) {
-            // Fallback: rebuild from extracted text (loses original formatting)
-            $lines   = $this->extractLines($pdfPath);
-            $redacted = $this->redactContactInfo($lines);
-            $removed  = false;
-            $redacted = array_values(array_filter(
-                $redacted,
-                function (string $l) use ($candidateName, &$removed): bool {
-                    if (! $removed && trim($l) === $candidateName) {
-                        $removed = true;
-
-                        return false;
-                    }
-
-                    return true;
-                }
-            ));
-
-            return $this->buildPdf($redacted, $headerMode, $logoBase64, $candidateName);
-        }
+        return $this->overlayWithFpdi($pdfPath, $headerMode, $logoBase64, $candidateName);
     }
 
     /**
@@ -169,57 +147,64 @@ class ResumeRedactionService
         }
 
         // Step 2: Build modified PDF with FPDI (units = pts to match smalot coords)
-        $fpdi = new Fpdi('P', 'pt');
-        $fpdi->SetAutoPageBreak(false);
-        $pageCount = $fpdi->setSourceFile($pdfPath);
+        try {
+            $fpdi = new Fpdi('P', 'pt');
+            $fpdi->SetAutoPageBreak(false);
+            $pageCount = $fpdi->setSourceFile($pdfPath);
 
-        for ($i = 1; $i <= $pageCount; $i++) {
-            $tplId = $fpdi->importPage($i);
-            $size  = $fpdi->getTemplateSize($tplId);
-            $w     = (float) $size['width'];
-            $h     = (float) $size['height'];
+            for ($i = 1; $i <= $pageCount; $i++) {
+                $tplId = $fpdi->importPage($i);
+                $size  = $fpdi->getTemplateSize($tplId);
+                $w     = (float) $size['width'];
+                $h     = (float) $size['height'];
 
-            $fpdi->AddPage('P', [$w, $h]);
-            $fpdi->useTemplate($tplId, 0, 0, $w, $h);
+                $fpdi->AddPage('P', [$w, $h]);
+                $fpdi->useTemplate($tplId, 0, 0, $w, $h);
 
-            $pageIndex    = $i - 1; // smalot pages are 0-indexed
-            $pageContactYs = $contactYsByPage[$pageIndex] ?? [];
+                $pageIndex    = $i - 1; // smalot pages are 0-indexed
+                $pageContactYs = $contactYsByPage[$pageIndex] ?? [];
 
-            if ($pageContactYs === []) {
-                continue;
-            }
+                if ($pageContactYs === []) {
+                    continue;
+                }
 
-            // Deduplicate y-positions: group elements on the same physical line
-            $dedupedYs = $this->deduplicateYPositions($pageContactYs, 8.0);
+                // Deduplicate y-positions: group elements on the same physical line
+                $dedupedYs = $this->deduplicateYPositions($pageContactYs, 8.0);
 
-            // Draw a full-width white box over each contact line
-            $fpdi->SetFillColor(255, 255, 255);
-            foreach ($dedupedYs as $yPt) {
-                // smalot y = from page bottom; FPDI y = from page top
-                $yFpdi = $h - $yPt;
-                $boxY  = max(0.0, $yFpdi - 14); // 14 pt above baseline
-                $fpdi->Rect(0, $boxY, $w, 20.0, 'F');
-            }
+                // Draw a full-width white box over each contact line
+                $fpdi->SetFillColor(255, 255, 255);
+                foreach ($dedupedYs as $yPt) {
+                    // smalot y = from page bottom; FPDI y = from page top
+                    $yFpdi = $h - $yPt;
+                    $boxY  = max(0.0, $yFpdi - 14); // 14 pt above baseline
+                    $fpdi->Rect(0, $boxY, $w, 20.0, 'F');
+                }
 
-            // Step 3: Add MPG branding in the cleared contact area on page 1 only
-            if ($i === 1) {
-                // Topmost contact line = largest smalot-y = closest to top of page
-                $topContactY  = max($dedupedYs);
-                $brandingYFpdi = max(0.0, $h - $topContactY - 10);
+                // Step 3: Add MPG branding in the cleared contact area on page 1 only
+                if ($i === 1) {
+                    // Topmost contact line = largest smalot-y = closest to top of page
+                    $topContactY  = max($dedupedYs);
+                    $brandingYFpdi = max(0.0, $h - $topContactY - 10);
 
-                if ($headerMode === 'logo' && trim($logoBase64) !== '') {
-                    $this->placeLogoInPdf($fpdi, $logoBase64, 5.0, $brandingYFpdi, 80.0);
-                } else {
-                    $fpdi->SetFont('Helvetica', 'B', 9);
-                    $fpdi->SetTextColor(192, 57, 43);
-                    $fpdi->SetXY(5.0, $brandingYFpdi);
-                    $fpdi->Cell($w - 10.0, 12.0, 'MatchPointe Group', 0, 0, 'L');
-                    $fpdi->SetTextColor(0, 0, 0);
+                    if ($headerMode === 'logo' && trim($logoBase64) !== '') {
+                        $this->placeLogoInPdf($fpdi, $logoBase64, 5.0, $brandingYFpdi, 80.0);
+                    } else {
+                        $fpdi->SetFont('Helvetica', 'B', 9);
+                        $fpdi->SetTextColor(192, 57, 43);
+                        $fpdi->SetXY(5.0, $brandingYFpdi);
+                        $fpdi->Cell($w - 10.0, 12.0, 'MatchPointe Group', 0, 0, 'L');
+                        $fpdi->SetTextColor(0, 0, 0);
+                    }
                 }
             }
-        }
 
-        return $fpdi->Output('S');
+            return $fpdi->Output('S');
+        } catch (\Throwable) {
+            throw new \RuntimeException(
+                'This PDF format is not supported. Please re-save the file as a standard PDF '
+                . '(e.g. File → Save As PDF from Word or Google Docs) and try again.'
+            );
+        }
     }
 
     /**
