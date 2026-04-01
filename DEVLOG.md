@@ -1,3 +1,20 @@
+### 🚀 [DEPLOY] — Resume redact format-preserve overhaul _(2026-04-01)_
+
+**Commit deployed:** `462fdfd` (feat(resume-redact): preserve original format + silently remove contact info)
+**Since last deploy `7e28af3`:**
+- `462fdfd` feat(resume-redact): preserve original format + silently remove contact info
+
+**Steps run:**
+1. `git push origin master` — already pushed PASS
+2. `python deploy.py --step ssh-deploy` — server fast-forwarded `7e28af3..462fdfd`; `composer install --no-dev` picked up `setasign/fpdi v2.6.6` + `setasign/fpdf 1.8`; config/route/view caches rebuilt PASS
+3. `python deploy.py --step migrate-status` — 37/37 Ran, 0 Pending PASS
+4. `python deploy.py --step tail-log` — only errors are dated 2026-03-30 (pre-existing `payroll:recompute` namespace issue, known); zero errors dated 2026-04-01 PASS
+
+**Migrations:** None — zero pending.
+**New deps on server:** `setasign/fpdi` + `setasign/fpdf` installed cleanly.
+
+---
+
 ### 🚀 [DEPLOY] — Security fixes + Phase 12 (Resume Redaction) to production _(2026-04-01)_
 
 **Commit deployed:** `7e28af3` (docs(review): Phase 12 review — resume redaction complete, 175 tests pass)
