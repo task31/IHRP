@@ -3074,3 +3074,21 @@ of these natively.
 - web/scripts/redact_pdf.py
 - web/app/Services/ResumeRedactionService.php
 - web/composer.json + composer.lock
+
+---
+
+### ARCHITECT UPDATE -- Phase 14 decision: distinct proc_open vs Python-missing error paths _(2026-04-01)_
+
+Decision confirmed by Raf:
+- proc_open() === false -> RuntimeException('Server configuration does not allow PDF processing subprocesses.')
+- Python binary not found -> RuntimeException('Python is not available on this server.')
+These are operationally distinct failures and must not be collapsed into one branch.
+Makes production diagnosis straightforward.
+
+Also refined per Raf's plan review:
+- Error messages must NOT say "re-save as standard PDF" -- that advice is wrong for
+  encrypted files and other non-format failures.
+- Add 4 new unit tests covering: Python missing, proc_open false, non-zero exit,
+  output file missing.
+- Polyfill cleanup is conditional: remove only if nothing else needs it post-removal.
+- Keep buildPdf/extractLines/redactContactInfo intact in this phase.
