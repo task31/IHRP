@@ -1,3 +1,34 @@
+### 🚀 [DEPLOY] — Security fixes + Phase 12 (Resume Redaction) to production _(2026-04-01)_
+
+**Commit deployed:** `7e28af3` (docs(review): Phase 12 review — resume redaction complete, 175 tests pass)
+**Commits included (since last deploy `61fd0c2`):**
+- `81d8d21` docs: add project README
+- `a354ec5` docs: add admin + payroll run SOP (sop.html)
+- `e656516` fix(sop): replace [open] text chevrons with CSS rotating arrows
+- `8dc466a` fix(security): P0+P1 hardening — auth, settings allowlist, error leaks, password min
+- `8d6f688` fix(security): scope call reports to own records for account_manager role
+- `a86504c` feat(resume-redact): add two-mode resume redaction + MPG branding tool
+- `7e28af3` docs(review): Phase 12 review — resume redaction complete, 175 tests pass
+
+**Steps run:**
+1. `git push origin master` — pushed `8d6f688..7e28af3` to remote PASS
+2. `python deploy.py --step ssh-deploy` — server repo fast-forwarded `61fd0c2..7e28af3`; web/ copied; .env backed up/restored; `composer install --no-dev --optimize-autoloader` (smalot/pdfparser picked up); config:cache, route:cache, view:cache, timesheets:generate-template — all PASS
+3. `python deploy.py --step migrate-status` — 37/37 Ran, 0 Pending PASS
+4. `python deploy.py --step tail-log` — errors present are dated 2026-03-30 (pre-deploy, known payroll:recompute namespace issue from prior session); no new errors post-deploy PASS
+
+**Migrations:** None — zero pending migrations.
+
+**New Composer dependency:** `smalot/pdfparser` installed successfully by composer install on server.
+
+**Protected files:**
+- `.env` — backed up and restored by ssh-deploy PASS
+- `storage/app/uploads/` — not touched PASS
+- `public/storage` symlink — not modified PASS
+
+**Note:** Repo was temporarily set to private causing `git fetch` to fail with auth error. Made public again and deploy succeeded.
+
+---
+
 ### 🚀 [DEPLOY] — Phases 9, 10, 11 to production _(2026-03-30)_
 
 **Commit deployed:** `61fd0c2` (docs: QA sign-off — authorize deploy of Phases 9-11)

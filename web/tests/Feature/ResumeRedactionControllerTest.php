@@ -61,9 +61,8 @@ class ResumeRedactionControllerTest extends TestCase
     {
         $am = User::factory()->create(['role' => 'account_manager']);
         $this->mock(ResumeRedactionService::class, function ($mock): void {
-            $mock->shouldReceive('extractLines')->once()->andReturn(['Jane Candidate', 'Email jane@example.com']);
-            $mock->shouldReceive('redactContactInfo')->once()->andReturn(['Jane Candidate', 'Email [REDACTED]']);
-            $mock->shouldReceive('buildPdf')->once()->andReturn('%PDF-1.4 mocked');
+            $mock->shouldReceive('extractLines')->once()->andReturn(['Jane Candidate']);
+            $mock->shouldReceive('buildRedactedPdf')->once()->andReturn('%PDF-1.4 mocked');
         });
 
         $response = $this->actingAs($am)
@@ -82,9 +81,8 @@ class ResumeRedactionControllerTest extends TestCase
     {
         $am = User::factory()->create(['role' => 'account_manager']);
         $this->mock(ResumeRedactionService::class, function ($mock): void {
-            $mock->shouldReceive('extractLines')->once()->andReturn(['Jane Candidate', 'Phone 555-111-2222']);
-            $mock->shouldReceive('redactContactInfo')->once()->andReturn(['Jane Candidate', 'Phone [REDACTED]']);
-            $mock->shouldReceive('buildPdf')->once()->andReturn('%PDF-1.4 mocked');
+            $mock->shouldReceive('extractLines')->once()->andReturn(['Jane Candidate']);
+            $mock->shouldReceive('buildRedactedPdf')->once()->andReturn('%PDF-1.4 mocked');
         });
         DB::table('settings')->insert([
             'key' => 'agency_logo_base64',

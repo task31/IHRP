@@ -7,28 +7,36 @@ use PHPUnit\Framework\TestCase;
 
 class ResumeRedactionServiceTest extends TestCase
 {
-    public function test_email_is_redacted(): void
+    public function test_email_is_removed(): void
     {
         $service = new ResumeRedactionService;
-        $out = $service->redactContactInfo(['Email: person@example.com']);
+        $out = $service->redactContactInfo(['person@example.com']);
 
-        $this->assertSame(['Email: [REDACTED]'], $out);
+        $this->assertSame([], $out);
     }
 
-    public function test_phone_is_redacted(): void
+    public function test_phone_is_removed(): void
     {
         $service = new ResumeRedactionService;
-        $out = $service->redactContactInfo(['Phone: (555) 111-2222']);
+        $out = $service->redactContactInfo(['(555) 111-2222']);
 
-        $this->assertSame(['Phone: [REDACTED]'], $out);
+        $this->assertSame([], $out);
     }
 
-    public function test_linkedin_url_is_redacted(): void
+    public function test_linkedin_url_is_removed(): void
     {
         $service = new ResumeRedactionService;
         $out = $service->redactContactInfo(['linkedin.com/in/jane-doe']);
 
-        $this->assertSame(['[REDACTED]'], $out);
+        $this->assertSame([], $out);
+    }
+
+    public function test_pipe_separated_contact_line_is_removed(): void
+    {
+        $service = new ResumeRedactionService;
+        $out = $service->redactContactInfo(['jane@example.com | (555) 111-2222 | linkedin.com/in/jane']);
+
+        $this->assertSame([], $out);
     }
 
     public function test_street_address_line_is_dropped(): void

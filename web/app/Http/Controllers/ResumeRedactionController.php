@@ -36,32 +36,15 @@ class ResumeRedactionController extends Controller
         }
 
         $candidateName = 'candidate';
-        $redactedLines = [];
+        $pdf = '';
 
         try {
             $lines = $service->extractLines($tempPath);
-            if ($lines !== []) {
-                $candidateName = trim($lines[0]) !== '' ? trim($lines[0]) : $candidateName;
+            if ($lines !== [] && trim($lines[0]) !== '') {
+                $candidateName = trim($lines[0]);
             }
 
-            $redactedLines = $service->redactContactInfo($lines);
-
-            // Render the candidate name in the dedicated header block, not in body content.
-            $removed = false;
-            $redactedLines = array_values(array_filter(
-                $redactedLines,
-                function (string $line) use ($candidateName, &$removed): bool {
-                    if (! $removed && trim($line) === $candidateName) {
-                        $removed = true;
-
-                        return false;
-                    }
-
-                    return true;
-                }
-            ));
-
-            $pdf = $service->buildPdf($redactedLines, $headerMode, $logoBase64, $candidateName);
+            $pdf = $service->buildRedactedPdf($tempPath, $headerMode, $logoBase64, $candidateName);
         } finally {
             if (is_file($tempPath)) {
                 @unlink($tempPath);

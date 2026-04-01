@@ -13,6 +13,8 @@
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.2",
         "phpoffice/phpspreadsheet": "^5.5",
+        "setasign/fpdf": "1.8",
+        "setasign/fpdi": "2.6.6",
         "smalot/pdfparser": "^2.12"
     },
     "require-dev": {
