@@ -13,8 +13,6 @@
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.2",
         "phpoffice/phpspreadsheet": "^5.5",
-        "setasign/fpdf": "1.8",
-        "setasign/fpdi": "2.6.6",
         "smalot/pdfparser": "^2.12"
     },
     "require-dev": {
@@ -27,9 +25,6 @@
         "phpunit/phpunit": "^12.5.12"
     },
     "autoload": {
-        "files": [
-            "bootstrap/php8_polyfills.php"
-        ],
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",

@@ -3092,3 +3092,37 @@ Also refined per Raf's plan review:
   output file missing.
 - Polyfill cleanup is conditional: remove only if nothing else needs it post-removal.
 - Keep buildPdf/extractLines/redactContactInfo intact in this phase.
+
+### 🔧 [BUILD — Cursor] — Phase 14: Resume redact PyMuPDF worker _(2026-04-01)_
+
+**`web/scripts/redact_pdf.py`**
+- JSON config via `argv[1]`: `input_path`, `output_path`, `header_mode`, `logo_b64`.
+- `CONTACT_PATTERNS`: email, phone, LinkedIn URL, generic `https?://` URL, street-address line, city/state/ZIP line (aligned with PHP `redactContactInfo`).
+- Per page: `get_text('rawdict')` → full-width white `add_redact_annot` per matched line → `apply_redactions()`.
+- Page 0 only: after redactions, MPG branding at topmost cleared line — `header_mode=text` → `insert_text` “MatchPointe Group” (helv, 9pt, `#c0392b`); `header_mode=logo` → decode `logo_b64` (data URI or raw base64) to temp file → `insert_image`, fallback to text on failure.
+- Save: `garbage=4`, `deflate=True`. Exit 0/1; errors to stderr.
+
+**`ResumeRedactionService`**
+- `buildRedactedPdf()` → single-line `overlayWithPython()`; removed `overlayWithFpdi()`, `placeLogoInPdf()`, `deduplicateYPositions()`, `use setasign\Fpdi\Fpdi`.
+- `overlayWithPython()`: (1) `function_exists('proc_open')` → distinct server-config exception; (2) detect `python3` then `python` via `proc_open` array form + `--version`; (3) JSON config `tempnam` + output path `tempnam` base + `.pdf`; (4) `proc_open([$python, base_path('scripts/redact_pdf.py'), $configPath], ...)`; (5) close stdin, drain stdout/stderr, `proc_close`; non-zero / missing / empty output → `PDF processing failed...` (no “re-save as PDF” wording); (6) `file_get_contents` + `finally` unlinks config and output temps.
+- Optional constructor callables (`$functionExistsFn`, `$procOpenFn`) for unit tests only; default resolves to global `function_exists` / `proc_open`.
+- Unchanged: `extractLines()`, `redactContactInfo()`, `buildPdf()`.
+
+**Composer / polyfills**
+- `composer remove setasign/fpdf setasign/fpdi`; kept `smalot/pdfparser`.
+- Confirmed no remaining need for `get_magic_quotes_runtime` polyfill (HTMLPurifier uses `get_magic_quotes_gpc` guard only); removed `bootstrap/php8_polyfills.php` and `autoload.files` entry; `composer dump-autoload`.
+
+**Testing**
+- `ResumeRedactionServicePythonTest`: proc_open “disabled” (injected `functionExistsFn`), Python missing (version checks exit 1), `proc_open` false for worker, worker exit non-zero, worker exit 0 with missing output — assertions include distinct server-config / Python / processing-failed messaging.
+- `php artisan test`: **182 passed** (489 assertions), 0 failures. _(177 baseline + 5 new tests.)_
+
+**Files touched**
+- `web/scripts/redact_pdf.py` (refined draft)
+- `web/app/Services/ResumeRedactionService.php`
+- `web/tests/Unit/ResumeRedactionServicePythonTest.php` (new)
+- `web/composer.json`, `web/composer.lock`
+- `web/bootstrap/php8_polyfills.php` (removed)
+- `DEVLOG.md` (this block)
+
+**Carry-forwards**
+- Production needs Python 3 + PyMuPDF (`pip install pymupdf`) and `proc_open` enabled; verify on Bluehost before relying on live redaction.
