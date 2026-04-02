@@ -178,10 +178,14 @@ class ResumeRedactionService
 
             fclose($pipes[0]);
             stream_get_contents($pipes[1]);
-            stream_get_contents($pipes[2]);
+            $stderr = stream_get_contents($pipes[2]);
             fclose($pipes[1]);
             fclose($pipes[2]);
             $exitCode = proc_close($process);
+
+            if ($stderr !== '' && $stderr !== false) {
+                \Illuminate\Support\Facades\Log::warning('redact_pdf.py stderr', ['output' => $stderr]);
+            }
 
             if ($exitCode !== 0 || ! is_file($outputPath) || filesize($outputPath) === 0) {
                 throw new \RuntimeException(

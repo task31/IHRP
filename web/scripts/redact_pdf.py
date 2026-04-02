@@ -86,7 +86,7 @@ def process(config: dict) -> None:
         doc.close()
 
 
-def _insert_logo(page, logo_b64: str, y: float, max_w: float = 150) -> None:
+def _insert_logo(page, logo_b64: str, y: float, max_w: float = 50) -> None:
     """Decode logo_b64 (data URI or raw base64), temp file, insert_image; on failure stamp text."""
     img_bytes = None
     ext = "png"
@@ -130,7 +130,7 @@ def _insert_logo(page, logo_b64: str, y: float, max_w: float = 150) -> None:
             f.write(img_bytes)
             tmp = f.name
         try:
-            page.insert_image(fitz.Rect(5, y, 5 + max_w, y + 40), filename=tmp)
+            page.insert_image(fitz.Rect(5, y, 5 + max_w, y + max_w), filename=tmp)
         finally:
             os.unlink(tmp)
     except Exception as e:
