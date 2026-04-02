@@ -228,3 +228,29 @@
 **Outcome:** Success
 
 **Files changed:** `references/deploy-learning-log.md`, `DEVLOG.md`
+
+---
+
+## 2026-04-02 — Resume redact fix deployed (50a0f59)
+
+**Trigger:** Deploy commit `50a0f59` from worktree branch `claude/dreamy-greider` — fix `web/scripts/redact_pdf.py`: swap `get_text("rawdict")` for `get_text("dict")` (rawdict stores text in span["chars"] not span["text"], so no contact patterns ever matched), and pin MPG branding to fixed top-left instead of relative to first contact rect. No migrations, no composer changes, no env keys.
+
+**Diagnosis:** Worktree branch not yet on `origin/master`. Required merge to master before deploy could proceed. Also: `.deploy.env` had stale SSH key path (`C:/Users/zobel/Downloads/id_rsa`) — key moved to `C:/Users/zobel/Claude-Workspace/projects/IHRP/Keys/id_rsa`. Updated `.deploy.env` before running any deploy steps.
+
+**Fix:**
+1. `git merge claude/dreamy-greider` on master — fast-forward, clean.
+2. `git push origin master` — pushed `e4bb719..50a0f59`.
+3. Updated `BLUEHOST_SSH_KEY` in `.deploy.env` to `C:/Users/zobel/Claude-Workspace/projects/IHRP/Keys/id_rsa`.
+4. `--step migrate-status` — 37 Ran, 0 Pending. Migration gate clear.
+5. `--step ssh-deploy` — server repo updated `e4bb719..50a0f59`; `web/` copied; `.env` backed up/restored; composer install; artisan caches OK.
+6. `--step verify-env` — APP_ENV=production, APP_DEBUG=false confirmed.
+7. `--step smoke` — /login 200 OK; /dashboard FAIL (known false negative).
+8. `--step tail-log` — most recent log entries dated 2026-03-30 20:52:xx (pre-deploy historical errors). No new errors introduced.
+
+**Prevention:**
+- When deploying from a worktree branch, always merge to master and push before running deploy steps — server deploys from `origin/master`.
+- Keep `.deploy.env` `BLUEHOST_SSH_KEY` path updated if key location changes. Check it whenever SSH auth fails with "SSH key not found".
+
+**Outcome:** Success
+
+**Files changed:** `references/deploy-learning-log.md`, `.deploy.env`
