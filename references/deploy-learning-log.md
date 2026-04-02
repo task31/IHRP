@@ -254,3 +254,28 @@
 **Outcome:** Success
 
 **Files changed:** `references/deploy-learning-log.md`, `.deploy.env`
+
+---
+
+## 2026-04-02 — Logo stamp 50x50 + Python stderr logging deployed (e5f9e2f)
+
+**Trigger:** Deploy commit `e5f9e2f` from worktree branch `claude/dreamy-greider` — fix `web/scripts/redact_pdf.py`: square logo stamp at 50x50 pts + log Python stderr for easier debugging. Also updated `web/app/Services/ResumeRedactionService.php`. Single-commit change, no migrations, no composer changes, no env keys.
+
+**Diagnosis:** Worktree branch was one commit ahead of `origin/master` (`4830c80`) with a clean fast-forward path. No rebase required. `.deploy.env` SSH key path already correct.
+
+**Fix:**
+1. Preflight: `contractUpload()` declared exactly once in ConsultantController — pass.
+2. `git checkout master && git merge claude/dreamy-greider --ff-only` — fast-forward to `e5f9e2f`.
+3. `git push origin master` — pushed `4830c80..e5f9e2f`.
+4. `--step migrate-status` — 37 Ran, 0 Pending. Migration gate clear.
+5. `--step ssh-deploy` — server repo updated `4830c80..e5f9e2f`; `web/` copied; `.env` backed up/restored; composer install; artisan caches OK.
+6. `--step verify-env` — APP_ENV=production, APP_DEBUG=false confirmed.
+7. `--step tail-log` — all errors dated 2026-03-30 20:52:xx (pre-existing historical errors). No new errors introduced.
+8. `--step smoke` — /login 200 OK; /dashboard FAIL (known false negative).
+
+**Prevention:**
+- Fast-forward merge is safe when `git log origin/master..branch` shows no divergence. Check before every worktree deploy.
+
+**Outcome:** Success
+
+**Files changed:** `references/deploy-learning-log.md`
