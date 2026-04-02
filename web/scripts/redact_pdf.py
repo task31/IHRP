@@ -50,7 +50,7 @@ def process(config: dict) -> None:
             page_w = page.rect.width
             contact_rects: list = []
 
-            blocks = page.get_text("rawdict", flags=fitz.TEXT_PRESERVE_WHITESPACE).get(
+            blocks = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE).get(
                 "blocks", []
             )
             for block in blocks:
@@ -69,13 +69,11 @@ def process(config: dict) -> None:
             page.apply_redactions()
 
             if page_idx == 0 and contact_rects and not branding_done:
-                top_rect = min(contact_rects, key=lambda r: r.y0)
-                brand_y = top_rect.y0 + 2
                 if header_mode == "logo" and logo_b64.strip():
-                    _insert_logo(page, logo_b64, brand_y)
+                    _insert_logo(page, logo_b64, 5)
                 else:
                     page.insert_text(
-                        (5, brand_y + 9),
+                        (5, 15),
                         "MatchPointe Group",
                         fontname="helv",
                         fontsize=9,
