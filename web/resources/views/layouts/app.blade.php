@@ -60,17 +60,6 @@
 
             {{-- ===== SIDEBAR ===== --}}
             <aside class="sidebar">
-                <div class="brand">
-                    <div class="mark">
-                        {{-- Lucide zap --}}
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-                    </div>
-                    <div>
-                        <div class="name">HR Command</div>
-                        <div style="font-size:10px;color:var(--fg-3);letter-spacing:0.14em;text-transform:uppercase;margin-top:2px;">Matchpointe</div>
-                    </div>
-                </div>
-
                 <nav class="nav">
                     @unless($user?->role === 'account_manager')
                     <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -175,10 +164,6 @@
                     <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.01em;">{{ $pageTitle }}</h1>
                     @endisset
                     <div class="spacer"></div>
-                    <div class="search">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--fg-3)"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input placeholder="Search consultants, clients, invoices…">
-                    </div>
                     <div class="user-chip">
                         <div class="avatar" style="width:28px;height:28px;background:linear-gradient(135deg,{{ $avatarC1 }},{{ $avatarC2 }});font-size:11px;">{{ $initials }}</div>
                         <div>

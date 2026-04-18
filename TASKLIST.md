@@ -30,6 +30,7 @@ _Completed tasks → `references/tasklist-archive.md`_
 
 - [x] **T028** — Commission tier + placement role overhaul. Done 2026-03-30.
 - [x] **T029** — Rate resolution script: cross-workbook pay/bill lookup. Done 2026-03-30.
+- [ ] **T030** — Reintroduce topbar global search + notifications only when backed by real behavior. Removed dead UI controls on 2026-04-18; define scope, routes/data model, and smoke coverage before restoring.
 
 ---
 
