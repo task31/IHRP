@@ -14,7 +14,6 @@
         <div class="flex flex-wrap items-center gap-3">
             <button
                 type="button"
-                class="rounded px-3 py-1.5 text-sm font-medium"
                 :class="activeView === 'detail' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'"
                 @click="activeView = 'detail'"
             >
@@ -22,7 +21,6 @@
             </button>
             <button
                 type="button"
-                class="rounded px-3 py-1.5 text-sm font-medium"
                 :class="activeView === 'summary' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm'"
                 @click="activeView = 'summary'"
             >
@@ -31,41 +29,45 @@
         </div>
 
         <form method="GET" action="{{ route('ledger.index') }}" class="card-base">
-            <div>
-                <label class="eyebrow">From</label>
-                <input type="date" name="startDate" value="{{ $f['startDate'] ?? '' }}" class="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm" />
+            <div class="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+            <div class="field">
+                <label>From</label>
+                <input type="date" name="startDate" value="{{ $f['startDate'] ?? '' }}" class="field-control" />
             </div>
-            <div>
-                <label class="eyebrow">To</label>
-                <input type="date" name="endDate" value="{{ $f['endDate'] ?? '' }}" class="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm" />
+            <div class="field">
+                <label>To</label>
+                <input type="date" name="endDate" value="{{ $f['endDate'] ?? '' }}" class="field-control" />
             </div>
-            <div>
-                <label class="eyebrow">Consultant</label>
-                <select name="consultantId" class="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm">
+            <div class="field">
+                <label>Consultant</label>
+                <select name="consultantId" class="field-control">
                     <option value="">All</option>
                     @foreach ($consultantsInLedger as $co)
                         <option value="{{ $co->id }}" @selected((string) ($f['consultantId'] ?? '') === (string) $co->id)>{{ $co->full_name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="eyebrow">Client</label>
-                <select name="clientId" class="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm">
+            <div class="field">
+                <label>Client</label>
+                <select name="clientId" class="field-control">
                     <option value="">All</option>
                     @foreach ($clientsInLedger as $cl)
                         <option value="{{ $cl->id }}" @selected((string) ($f['clientId'] ?? '') === (string) $cl->id)>{{ $cl->name }}</option>
                     @endforeach
                 </select>
             </div>
-            <div>
-                <label class="eyebrow">Invoice status</label>
-                <select name="invoiceStatus" class="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm">
+            <div class="field">
+                <label>Invoice status</label>
+                <select name="invoiceStatus" class="field-control">
                     <option value="">All</option>
                     <option value="pending" @selected(($f['invoiceStatus'] ?? '') === 'pending')>Pending</option>
                 </select>
             </div>
+            <div class="flex items-end gap-2">
             <button type="submit" class="btn btn-primary btn-sm">Apply</button>
             <a href="{{ route('ledger.index') }}" class="btn btn-secondary btn-sm">Clear</a>
+            </div>
+            </div>
         </form>
 
         {{-- Detail --}}
@@ -93,11 +95,11 @@
                             $marginClass = $pct < 20 ? 'text-red-600' : ($pct < 30 ? 'text-yellow-600' : 'text-green-600');
                         @endphp
                         <tr>
-                            <td class="px-3 py-2 whitespace-nowrap text-gray-800">
+                            <td class="px-3 py-2 whitespace-nowrap" style="color:var(--fg-1)">
                                 {{ Carbon::parse($t->pay_period_start)->format('m/d/Y') }} – {{ Carbon::parse($t->pay_period_end)->format('m/d/Y') }}
                             </td>
-                            <td class="px-3 py-2 text-gray-800">{{ $t->consultant_name }}</td>
-                            <td class="px-3 py-2 text-gray-600">{{ $t->client_name }}</td>
+                            <td class="px-3 py-2" style="color:var(--fg-1)">{{ $t->consultant_name }}</td>
+                            <td class="px-3 py-2">{{ $t->client_name }}</td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ number_format((float) $t->total_regular_hours, 2) }}</td>
                             <td class="px-3 py-2 text-right tabular-nums">{{ number_format((float) $t->total_ot_hours, 2) }}</td>
                             <td class="px-3 py-2 text-right tabular-nums">${{ number_format((float) $t->total_consultant_cost, 2) }}</td>
@@ -105,7 +107,7 @@
                             <td class="px-3 py-2 text-right tabular-nums">${{ number_format((float) $t->gross_margin_dollars, 2) }}</td>
                             <td class="px-3 py-2 text-right font-medium tabular-nums {{ $marginClass }}">{{ number_format($pct, 1) }}%</td>
                             <td class="px-3 py-2">
-                                <span class="badge neutral">{{ $t->invoice_status ?? '—' }}</span>
+                                <span class="badge {{ ($t->invoice_status ?? '') === 'pending' ? 'warn' : ((($t->invoice_status ?? '') === 'paid' || ($t->invoice_status ?? '') === 'sent') ? 'ok' : 'neutral') }}">{{ $t->invoice_status ?? '—' }}</span>
                             </td>
                             <td class="px-3 py-2 text-right">
                                 @can('admin')
@@ -118,14 +120,14 @@
                                             Create invoice
                                         </button>
                                     @else
-                                        <span class="text-xs text-gray-400">Invoiced</span>
+                                        <span class="mono-dim">Invoiced</span>
                                     @endif
                                 @endcan
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="px-3 py-8 text-center text-gray-500">No timesheets in ledger.</td>
+                            <td colspan="11" class="px-3 py-8 text-center" style="color:var(--fg-3)">No timesheets in ledger.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -153,17 +155,17 @@
         {{-- Summary --}}
         <div x-show="activeView === 'summary'" x-cloak class="stack">
             <div class="card-base">
-                <h3 class="mb-3 font-semibold text-gray-900">By pay period</h3>
+                <h3 class="mb-3 font-semibold" style="color:var(--fg-1)">By pay period</h3>
                 <div style="overflow-x:auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="border-b text-left text-xs uppercase text-gray-500">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <th class="py-2 pr-4">Period</th>
-                                <th class="py-2 pr-4">#</th>
-                                <th class="py-2 pr-4 text-right">Cost</th>
-                                <th class="py-2 pr-4 text-right">Billable</th>
-                                <th class="py-2 pr-4 text-right">Margin $</th>
-                                <th class="py-2 text-right">Margin %</th>
+                                <th>Period</th>
+                                <th>#</th>
+                                <th class="text-right">Cost</th>
+                                <th class="text-right">Billable</th>
+                                <th class="text-right">Margin $</th>
+                                <th class="text-right">Margin %</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -172,15 +174,15 @@
                                     $bp = (float) ($row->blended_margin_percent ?? 0);
                                     $bc = $bp < 20 ? 'text-red-600' : ($bp < 30 ? 'text-yellow-600' : 'text-green-600');
                                 @endphp
-                                <tr class="border-t border-gray-100">
-                                    <td class="py-2 pr-4 whitespace-nowrap">
+                                <tr>
+                                    <td class="whitespace-nowrap">
                                         {{ Carbon::parse($row->pay_period_start)->format('m/d/Y') }} – {{ Carbon::parse($row->pay_period_end)->format('m/d/Y') }}
                                     </td>
-                                    <td class="py-2 pr-4">{{ (int) ($row->row_count ?? 0) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
-                                    <td class="py-2 text-right font-medium {{ $bc }}">{{ number_format($bp, 1) }}%</td>
+                                    <td class="mono-num">{{ (int) ($row->row_count ?? 0) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
+                                    <td class="text-right font-medium mono-num {{ $bc }}">{{ number_format($bp, 1) }}%</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -189,17 +191,17 @@
             </div>
 
             <div class="card-base">
-                <h3 class="mb-3 font-semibold text-gray-900">By consultant</h3>
+                <h3 class="mb-3 font-semibold" style="color:var(--fg-1)">By consultant</h3>
                 <div style="overflow-x:auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="border-b text-left text-xs uppercase text-gray-500">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <th class="py-2 pr-4">Consultant</th>
-                                <th class="py-2 pr-4">#</th>
-                                <th class="py-2 pr-4 text-right">Cost</th>
-                                <th class="py-2 pr-4 text-right">Billable</th>
-                                <th class="py-2 pr-4 text-right">Margin $</th>
-                                <th class="py-2 text-right">Margin %</th>
+                                <th>Consultant</th>
+                                <th>#</th>
+                                <th class="text-right">Cost</th>
+                                <th class="text-right">Billable</th>
+                                <th class="text-right">Margin $</th>
+                                <th class="text-right">Margin %</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -208,13 +210,13 @@
                                     $bp = (float) ($row->blended_margin_percent ?? 0);
                                     $bc = $bp < 20 ? 'text-red-600' : ($bp < 30 ? 'text-yellow-600' : 'text-green-600');
                                 @endphp
-                                <tr class="border-t border-gray-100">
-                                    <td class="py-2 pr-4">{{ $row->consultant_name }}</td>
-                                    <td class="py-2 pr-4">{{ (int) ($row->row_count ?? 0) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
-                                    <td class="py-2 text-right font-medium {{ $bc }}">{{ number_format($bp, 1) }}%</td>
+                                <tr>
+                                    <td style="color:var(--fg-1)">{{ $row->consultant_name }}</td>
+                                    <td class="mono-num">{{ (int) ($row->row_count ?? 0) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
+                                    <td class="text-right font-medium mono-num {{ $bc }}">{{ number_format($bp, 1) }}%</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -223,17 +225,17 @@
             </div>
 
             <div class="card-base">
-                <h3 class="mb-3 font-semibold text-gray-900">By client</h3>
+                <h3 class="mb-3 font-semibold" style="color:var(--fg-1)">By client</h3>
                 <div style="overflow-x:auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="border-b text-left text-xs uppercase text-gray-500">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <th class="py-2 pr-4">Client</th>
-                                <th class="py-2 pr-4">#</th>
-                                <th class="py-2 pr-4 text-right">Cost</th>
-                                <th class="py-2 pr-4 text-right">Billable</th>
-                                <th class="py-2 pr-4 text-right">Margin $</th>
-                                <th class="py-2 text-right">Margin %</th>
+                                <th>Client</th>
+                                <th>#</th>
+                                <th class="text-right">Cost</th>
+                                <th class="text-right">Billable</th>
+                                <th class="text-right">Margin $</th>
+                                <th class="text-right">Margin %</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -242,13 +244,13 @@
                                     $bp = (float) ($row->blended_margin_percent ?? 0);
                                     $bc = $bp < 20 ? 'text-red-600' : ($bp < 30 ? 'text-yellow-600' : 'text-green-600');
                                 @endphp
-                                <tr class="border-t border-gray-100">
-                                    <td class="py-2 pr-4">{{ $row->client_name }}</td>
-                                    <td class="py-2 pr-4">{{ (int) ($row->row_count ?? 0) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
-                                    <td class="py-2 pr-4 text-right">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
-                                    <td class="py-2 text-right font-medium {{ $bc }}">{{ number_format($bp, 1) }}%</td>
+                                <tr>
+                                    <td style="color:var(--fg-1)">{{ $row->client_name }}</td>
+                                    <td class="mono-num">{{ (int) ($row->row_count ?? 0) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_consultant_cost ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->total_client_billable ?? 0), 2) }}</td>
+                                    <td class="text-right mono-num">${{ number_format((float) ($row->gross_margin_dollars ?? 0), 2) }}</td>
+                                    <td class="text-right font-medium mono-num {{ $bc }}">{{ number_format($bp, 1) }}%</td>
                                 </tr>
                             @endforeach
                         </tbody>

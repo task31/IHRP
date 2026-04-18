@@ -164,11 +164,13 @@
                     <h1 style="font-size:20px;font-weight:700;letter-spacing:-0.01em;">{{ $pageTitle }}</h1>
                     @endisset
                     <div class="spacer"></div>
-                    <div class="user-chip">
-                        <div class="avatar" style="width:28px;height:28px;background:linear-gradient(135deg,{{ $avatarC1 }},{{ $avatarC2 }});font-size:11px;">{{ $initials }}</div>
-                        <div>
-                            <div class="name">{{ $userName }}</div>
-                            <div class="email">{{ $userEmail }}</div>
+                    <div class="topbar-actions">
+                        <div class="user-chip">
+                            <div class="avatar" style="width:28px;height:28px;background:linear-gradient(135deg,{{ $avatarC1 }},{{ $avatarC2 }});font-size:11px;">{{ $initials }}</div>
+                            <div>
+                                <div class="name">{{ $userName }}</div>
+                                <div class="email">{{ $userEmail }}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -177,10 +179,10 @@
                 @if(session('success') || session('error'))
                 <div style="padding:12px 32px 0;">
                     @if(session('success'))
-                    <div style="background:var(--success-bg);border:1px solid rgba(52,211,153,0.25);border-radius:var(--radius-md);padding:10px 16px;font-size:13px;color:var(--success-400);margin-bottom:8px;">{{ session('success') }}</div>
+                    <div class="flash-banner flash-success" style="margin-bottom:8px;">{{ session('success') }}</div>
                     @endif
                     @if(session('error'))
-                    <div style="background:var(--danger-bg);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-md);padding:10px 16px;font-size:13px;color:var(--danger-400);margin-bottom:8px;">{{ session('error') }}</div>
+                    <div class="flash-banner flash-error" style="margin-bottom:8px;">{{ session('error') }}</div>
                     @endif
                 </div>
                 @endif

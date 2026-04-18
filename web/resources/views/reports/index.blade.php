@@ -5,54 +5,54 @@
 
     <div x-data="reportsPage()" x-init="loadBudget()" class="stack">
         <div class="flex flex-wrap items-center gap-3">
-            <label class="text-sm font-semibold text-gray-700">Fiscal year</label>
-            <select x-model.number="year" @change="loadBudget()" class="rounded border border-gray-300 px-2 py-1.5 text-sm">
+            <label class="field" style="min-width:140px;">
+                <span class="eyebrow">Fiscal Year</span>
+                <select x-model.number="year" @change="loadBudget()">
                 @for ($y = (int) date('Y') - 2; $y <= (int) date('Y') + 1; $y++)
                     <option value="{{ $y }}">{{ $y }}</option>
                 @endfor
-            </select>
+                </select>
+            </label>
         </div>
 
         <div class="card-base">
-            <h3 class="font-semibold text-red-700">Year-end summary</h3>
-            <p class="mt-1 text-sm text-gray-500">PDF with revenue by client / consultant for the selected year.</p>
+            <h3 style="color:var(--brand-300);">Year-end summary</h3>
+            <p style="margin-top:6px;font-size:13px;color:var(--fg-3);">PDF with revenue by client and consultant for the selected year.</p>
             <button type="button" @click="generateYearEnd()" :disabled="loadingYearEnd"
-                class="mt-3 rounded bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                class="btn btn-danger" style="margin-top:12px;">
                 <span x-show="!loadingYearEnd">Generate <span x-text="year"></span> PDF</span>
                 <span x-show="loadingYearEnd">Generating…</span>
             </button>
         </div>
 
         <div class="card-base">
-            <h3 class="font-semibold text-green-700">QuickBooks CSV export</h3>
-            <p class="mt-2 rounded bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
+            <h3 style="color:var(--success-400);">QuickBooks CSV export</h3>
+            <p class="flash-banner flash-warn" style="margin-top:10px;">
                 Account names in the CSV must match your QuickBooks chart of accounts.
             </p>
             <button type="button" @click="exportQuickbooks()" :disabled="loadingQB"
-                class="mt-3 rounded bg-green-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+                class="btn btn-primary" style="margin-top:12px;">
                 <span x-show="!loadingQB">Export <span x-text="year"></span> QuickBooks CSV</span>
                 <span x-show="loadingQB">Exporting…</span>
             </button>
         </div>
 
         <div class="card-base">
-            <h3 class="font-semibold text-blue-700">Monthly report</h3>
+            <h3 style="color:var(--accent-300);">Monthly report</h3>
             <div class="mt-2 flex flex-wrap items-center gap-3">
-                <select x-model.number="month" class="rounded border border-gray-300 px-2 py-1.5 text-sm">
+                <select x-model.number="month">
                     @foreach (['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as $i => $m)
                         <option value="{{ $i + 1 }}">{{ $m }}</option>
                     @endforeach
                 </select>
-                <button type="button" @click="previewMonthly()"
-                    class="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white">Preview PDF</button>
-                <button type="button" @click="downloadMonthlyCsv()"
-                    class="rounded bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-800">Download CSV</button>
+                <button type="button" @click="previewMonthly()" class="btn btn-primary btn-sm">Preview PDF</button>
+                <button type="button" @click="downloadMonthlyCsv()" class="btn btn-secondary btn-sm">Download CSV</button>
             </div>
         </div>
 
         <div class="card-base">
-            <h3 class="font-semibold text-gray-800">FY budgets</h3>
-            <p class="mt-1 text-sm text-gray-500">BridgeBio vs other spend for the fiscal year selected above.</p>
+            <h3>FY budgets</h3>
+            <p style="margin-top:6px;font-size:13px;color:var(--fg-3);">BridgeBio vs other spend for the fiscal year selected above.</p>
             <div class="mt-4 space-y-4">
                 <template x-if="budgetLoading">
                     <p class="text-sm text-gray-500">Loading…</p>
@@ -115,8 +115,8 @@
                 <div class="flex items-center justify-between border-b p-3">
                     <h3 class="font-semibold">PDF preview</h3>
                     <div class="flex gap-2">
-                        <a :href="pdfUrl" download class="rounded bg-blue-600 px-3 py-1 text-sm text-white">Download</a>
-                        <button type="button" @click="closePdf()" class="text-gray-500 hover:text-gray-800">✕</button>
+                        <a :href="pdfUrl" download class="btn btn-primary btn-sm">Download</a>
+                        <button type="button" @click="closePdf()" class="btn btn-ghost btn-sm">✕</button>
                     </div>
                 </div>
                 <iframe :src="pdfUrl" class="w-full flex-1 border-0" title="PDF preview"></iframe>

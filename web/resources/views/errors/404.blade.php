@@ -4,22 +4,26 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>404 — IHRP</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/hr-command.css">
 </head>
-<body class="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-    <div class="w-full max-w-md text-center">
-        <p class="text-8xl font-bold text-gray-200">404</p>
-        <h1 class="mt-4 text-2xl font-semibold text-gray-800">Page Not Found</h1>
-        <p class="mt-2 text-sm text-gray-500">
+<body>
+    <div class="auth-shell">
+        <div class="auth-wrap">
+            <div class="auth-card" style="text-align:center;">
+                <div class="eyebrow">IHRP Error</div>
+                <p style="font-size:72px;font-weight:700;letter-spacing:-0.03em;color:var(--fg-4);margin-top:10px;">404</p>
+                <h1 class="auth-title" style="margin-top:8px;">Page Not Found</h1>
+                <p class="auth-subtitle" style="margin-top:8px;">
             @if(!empty($exception->getMessage()))
                 {{ $exception->getMessage() }}
             @else
                 The page you're looking for doesn't exist or has been moved.
             @endif
-        </p>
-        <a href="/login" class="mt-6 inline-block rounded-md bg-gray-900 px-5 py-2 text-sm font-medium text-white hover:bg-gray-700">
-            ← Back to login
-        </a>
+                </p>
+                <a href="/login" class="btn btn-primary" style="margin-top:20px;">Back to login</a>
+            </div>
+        </div>
     </div>
 </body>
 </html>

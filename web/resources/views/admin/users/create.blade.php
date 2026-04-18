@@ -31,7 +31,7 @@
 
                     <div>
                         <x-input-label for="role" value="Role" />
-                        <select id="role" name="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        <select id="role" name="role" class="mt-1 block w-full" required>
                             <option value="">Select role</option>
                             @foreach (['admin', 'account_manager'] as $role)
                                 <option value="{{ $role }}" @selected(old('role') === $role)>{{ str_replace('_', ' ', $role) }}</option>
@@ -42,7 +42,7 @@
 
                     <div>
                         <x-input-label for="consultant_id" value="Consultant Link (Optional)" />
-                        <select id="consultant_id" name="consultant_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select id="consultant_id" name="consultant_id" class="mt-1 block w-full">
                             <option value="">No linked consultant</option>
                             @foreach ($consultants as $consultant)
                                 <option value="{{ $consultant->id }}" @selected((string) old('consultant_id') === (string) $consultant->id)>
@@ -54,9 +54,9 @@
                         <p style="margin-top:4px;font-size:11px;color:var(--fg-3)">For <strong>account managers</strong> only. Ignored if role is admin.</p>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <input id="active" name="active" type="checkbox" value="1" checked class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" />
-                        <label for="active" class="text-sm text-gray-700">Active account</label>
+                    <div class="checkbox-row">
+                        <input id="active" name="active" type="checkbox" value="1" checked />
+                        <label for="active">Active account</label>
                     </div>
 
                     <div class="flex items-center justify-end gap-2">

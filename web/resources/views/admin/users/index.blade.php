@@ -17,44 +17,44 @@
 
                 <div style="overflow-x:auto">
                     <table class="table">
-                        <thead >
+                        <thead>
                             <tr>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Email</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Role</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Linked consultant</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
-                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Actions</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Linked consultant</th>
+                                <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody >
+                        <tbody>
                             @forelse ($users as $user)
                                 <tr>
-                                    <td class="px-3 py-2">{{ $user->name }}</td>
-                                    <td class="px-3 py-2">{{ $user->email }}</td>
-                                    <td class="px-3 py-2">
+                                    <td style="color:var(--fg-1);font-weight:500;">{{ $user->name }}</td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>
                                         <span class="badge neutral">
                                             {{ str_replace('_', ' ', $user->role) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2 text-gray-600">
+                                    <td>
                                         @if ($user->consultant)
                                             {{ $user->consultant->full_name }}
                                             @if (! $user->consultant->active)
-                                                <span class="text-xs text-amber-700">(inactive)</span>
+                                                <span style="font-size:11px;color:var(--warn-400);">(inactive)</span>
                                             @endif
                                         @else
                                             <span style="color:var(--fg-4)">—</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td>
                                         @if ($user->active)
                                             <span class="badge ok">Active</span>
                                         @else
                                             <span class="badge bad">Inactive</span>
                                         @endif
                                     </td>
-                                    <td class="px-3 py-2">
+                                    <td>
                                         <div class="flex items-center gap-2">
                                             <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-ghost btn-sm">Edit</a>
                                             @if ($user->active)
@@ -69,7 +69,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-3 py-4 text-center text-gray-500">No users found.</td>
+                                    <td colspan="6" style="padding:24px;text-align:center;color:var(--fg-3);">No users found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

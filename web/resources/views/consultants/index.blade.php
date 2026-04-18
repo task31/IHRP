@@ -67,7 +67,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-dim cursor-pointer'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'mono-dim cursor-pointer'"
+                                        style="font-size:12px;"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -96,7 +97,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer' style='color:var(--accent-400);font-size:12px;' : 'badge neutral cursor-pointer'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'badge neutral cursor-pointer'"
+                                        style="font-size:12px;"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -125,7 +127,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-num cursor-pointer'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'mono-num cursor-pointer'"
+                                        style="font-size:12px;"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -151,7 +154,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-num cursor-pointer'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'mono-num cursor-pointer'"
+                                        style="font-size:12px;"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -183,7 +187,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'cursor-pointer hover:text-indigo-500'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'cursor-pointer'"
+                                        style="font-size:12px;color:var(--fg-2);"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -203,12 +208,20 @@
                             </td>
                             {{-- End Date --}}
                             @php
-                                $endClass = 'text-gray-400';
+                                $endStyle = 'font-size:12px;color:var(--fg-4);';
                                 if ($c->project_end_date) {
                                     $end = Carbon::parse((string) $c->project_end_date)->startOfDay();
                                     $today = Carbon::now()->startOfDay();
                                     $daysLeft = (int) floor(($end->timestamp - $today->timestamp) / 86400);
-                                    $endClass = $daysLeft < 0 ? 'text-gray-400' : ($daysLeft <= 7 ? 'text-red-600 font-semibold' : ($daysLeft <= 14 ? 'text-orange-500 font-semibold' : ($daysLeft <= 30 ? 'text-yellow-600' : 'text-gray-700')));
+                                    $endStyle = $daysLeft < 0
+                                        ? 'font-size:12px;color:var(--fg-4);'
+                                        : ($daysLeft <= 7
+                                            ? 'font-size:12px;color:var(--danger-400);font-weight:600;'
+                                            : ($daysLeft <= 14
+                                                ? 'font-size:12px;color:var(--warn-400);font-weight:600;'
+                                                : ($daysLeft <= 30
+                                                    ? 'font-size:12px;color:var(--warn-400);'
+                                                    : 'font-size:12px;color:var(--fg-2);')));
                                 }
                             @endphp
                             <td
@@ -217,7 +230,8 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'cursor-pointer hover:text-indigo-500 {{ $endClass }}'"
+                                        :class="isMissing() ? 'link-accent cursor-pointer' : 'cursor-pointer'"
+                                        style="{{ $endStyle }}"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -254,8 +268,7 @@
                                     </div>
                                     <div style="height:4px;width:100%;border-radius:999px;background:var(--bg-5);margin-top:4px;">
                                         <div
-                                            style="height:4px;border-radius:999px;background:{{ $rowComplete ? 'var(--success-500)' : 'var(--accent-400)' }}"
-                                            style="width: {{ $rowPct }}%"
+                                            style="height:4px;width:{{ $rowPct }}%;border-radius:999px;background:{{ $rowComplete ? 'var(--success-500)' : 'var(--accent-400)' }};"
                                         ></div>
                                     </div>
                                 </button>

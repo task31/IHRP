@@ -11,7 +11,7 @@
             <div>
                 <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Daily Call Reports</h2>
                 <p style="margin-top:4px;font-size:13px;color:var(--fg-3)">
-                    Today: <span class="font-medium text-gray-700">{{ \Illuminate\Support\Carbon::parse($todayDate)->format('l, F j, Y') }}</span>
+                    Today: <span style="font-weight:600;color:var(--fg-2)">{{ \Illuminate\Support\Carbon::parse($todayDate)->format('l, F j, Y') }}</span>
                 </p>
             </div>
             @can('admin')
@@ -54,9 +54,9 @@
                 ['label' => 'Submittals — ' . $statMonth, 'value' => $monthlyStats?->submittals ?? 0],
                 ['label' => 'Interviews — ' . $statMonth, 'value' => $monthlyStats?->interviews_scheduled ?? 0],
             ] as $stat)
-                <div class="card-base">
-                    <p class="eyebrow">{{ $stat['label'] }}</p>
-                    <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $stat['value'] }}</p>
+                <div class="kpi-card">
+                    <p class="kpi-label">{{ $stat['label'] }}</p>
+                    <p class="kpi-value mono-num" style="margin-top:12px;color:var(--fg-1)">{{ $stat['value'] }}</p>
                 </div>
             @endforeach
         </div>
@@ -66,8 +66,8 @@
             <form method="POST" action="{{ route('calls.store') }}" class="stack">
                 @csrf
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                        <label for="report_date" class="eyebrow">Date</label>
+                    <div class="field">
+                        <label for="report_date">Date</label>
                         <input
                             type="date"
                             name="report_date"
@@ -76,14 +76,14 @@
                             @change="syncFromDate()"
                             max="{{ $todayDate }}"
                             required
-                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                            class="field-control"
                         />
                         @error('report_date')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label for="calls_made" class="eyebrow">Calls made</label>
+                    <div class="field">
+                        <label for="calls_made">Calls made</label>
                         <input
                             type="number"
                             name="calls_made"
@@ -91,14 +91,14 @@
                             x-model.number="callsMade"
                             min="0"
                             required
-                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                            class="field-control"
                         />
                         @error('calls_made')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label for="contacts_reached" class="eyebrow">Contacts reached</label>
+                    <div class="field">
+                        <label for="contacts_reached">Contacts reached</label>
                         <input
                             type="number"
                             name="contacts_reached"
@@ -106,14 +106,14 @@
                             x-model.number="contactsReached"
                             min="0"
                             required
-                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                            class="field-control"
                         />
                         @error('contacts_reached')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label for="submittals" class="eyebrow">Submittals</label>
+                    <div class="field">
+                        <label for="submittals">Submittals</label>
                         <input
                             type="number"
                             name="submittals"
@@ -121,14 +121,14 @@
                             x-model.number="submittals"
                             min="0"
                             required
-                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                            class="field-control"
                         />
                         @error('submittals')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label for="interviews_scheduled" class="eyebrow">Interviews scheduled</label>
+                    <div class="field">
+                        <label for="interviews_scheduled">Interviews scheduled</label>
                         <input
                             type="number"
                             name="interviews_scheduled"
@@ -136,24 +136,24 @@
                             x-model.number="interviewsScheduled"
                             min="0"
                             required
-                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                            class="field-control"
                         />
                         @error('interviews_scheduled')
-                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
-                <div>
-                    <label for="notes" class="eyebrow">Notes</label>
+                <div class="field">
+                    <label for="notes">Notes</label>
                     <textarea
                         name="notes"
                         id="notes"
                         rows="3"
                         x-model="notes"
-                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
+                        class="field-control"
                     ></textarea>
                     @error('notes')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
                 <div>
@@ -192,7 +192,7 @@
                     @endforeach
                 </div>
             </div>
-            <div class="card-base" style="padding:0;overflow-x:auto">
+            <div class="card-base table-wrap" style="padding:0;">
                 <table class="table">
                     <thead >
                         <tr>
@@ -210,19 +210,19 @@
                     <tbody >
                         @forelse ($reports as $report)
                             <tr>
-                                <td class="whitespace-nowrap px-4 py-3 text-gray-900">
+                                <td class="whitespace-nowrap px-4 py-3" style="color:var(--fg-1)">
                                     {{ $report->report_date->format('M j, Y') }}
                                 </td>
                                 @if ($showEmployeeColumn)
-                                    <td class="px-4 py-3 text-gray-700">
+                                    <td class="px-4 py-3">
                                         {{ $report->user->name ?? '—' }}
                                     </td>
                                 @endif
-                                <td class="px-4 py-3 text-gray-700">{{ $report->calls_made }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $report->contacts_reached }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $report->submittals }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $report->interviews_scheduled }}</td>
-                                <td class="max-w-xs px-4 py-3 text-gray-600">
+                                <td class="px-4 py-3 mono-num">{{ $report->calls_made }}</td>
+                                <td class="px-4 py-3 mono-num">{{ $report->contacts_reached }}</td>
+                                <td class="px-4 py-3 mono-num">{{ $report->submittals }}</td>
+                                <td class="px-4 py-3 mono-num">{{ $report->interviews_scheduled }}</td>
+                                <td class="max-w-xs px-4 py-3">
                                     @if ($report->notes)
                                         <span class="line-clamp-2" title="{{ $report->notes }}">{{ $report->notes }}</span>
                                     @else
@@ -232,7 +232,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $showEmployeeColumn ? 7 : 6 }}" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="{{ $showEmployeeColumn ? 7 : 6 }}" class="px-4 py-8 text-center" style="color:var(--fg-3)">
                                     @if ($historyPeriod === 'all')
                                         No call reports yet.
                                     @else

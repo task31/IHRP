@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">Payroll</h2>
+        <h2 class="text-xl font-semibold leading-tight" style="color:var(--fg-1)">Payroll</h2>
     </x-slot>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -12,18 +12,18 @@
         x-init="init()"
     >
         <div class="flex flex-wrap items-end gap-4">
-            <div>
-                <label class="eyebrow">Year</label>
-                <select x-model.number="year" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
+            <div class="field">
+                <label>Year</label>
+                <select x-model.number="year" class="field-control" style="min-width:140px;">
                     <template x-for="y in yearsList" :key="y">
                         <option :value="y" x-text="y"></option>
                     </template>
                 </select>
             </div>
             <template x-if="IS_ADMIN">
-                <div>
-                    <label class="eyebrow">Account manager</label>
-                    <select x-model.number="amId" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
+                <div class="field">
+                    <label>Account manager</label>
+                    <select x-model.number="amId" class="field-control" style="min-width:220px;">
                         @foreach ($accountManagers as $am)
                             <option value="{{ $am->id }}">{{ $am->name }}</option>
                         @endforeach
@@ -33,64 +33,64 @@
             <template x-if="IS_ADMIN">
                 <button
                     type="button"
-                    class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                    class="btn btn-primary"
                     @click="uploadOpen = true"
                 >Upload payroll file</button>
             </template>
         </div>
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="card-base">
-                <p class="text-xs text-gray-500">YTD net</p>
-                <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.ytd_net)"></p>
+            <div class="kpi-card good">
+                <p class="kpi-label">YTD net</p>
+                <p class="kpi-value mono-num" style="color:var(--fg-1)" x-text="fmtMoney(summary?.totals?.ytd_net)"></p>
             </div>
-            <div class="card-base">
-                <p class="text-xs text-gray-500">YTD gross</p>
-                <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.ytd_gross)"></p>
+            <div class="kpi-card">
+                <p class="kpi-label">YTD gross</p>
+                <p class="kpi-value mono-num" style="color:var(--fg-1)" x-text="fmtMoney(summary?.totals?.ytd_gross)"></p>
             </div>
-            <div class="card-base">
-                <p class="text-xs text-gray-500">Taxes paid</p>
-                <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.taxes_paid)"></p>
+            <div class="kpi-card warn">
+                <p class="kpi-label">Taxes paid</p>
+                <p class="kpi-value mono-num" style="color:var(--fg-1)" x-text="fmtMoney(summary?.totals?.taxes_paid)"></p>
             </div>
-            <div class="card-base">
-                <p class="text-xs text-gray-500">Projected annual net</p>
-                <p class="mt-1 text-lg font-bold text-gray-900" x-show="!projection?.projectionSuppressed" x-text="fmtMoney(projection?.projectedAnnual)"></p>
-                <p class="mt-1 text-sm text-amber-700" x-show="projection?.projectionSuppressed" x-text="projection?.message || '—'"></p>
+            <div class="kpi-card brand">
+                <p class="kpi-label">Projected annual net</p>
+                <p class="kpi-value mono-num" style="font-size:28px;color:var(--fg-1)" x-show="!projection?.projectionSuppressed" x-text="fmtMoney(projection?.projectedAnnual)"></p>
+                <p class="kpi-sub" x-show="projection?.projectionSuppressed" style="color:var(--warn-400)" x-text="projection?.message || '—'"></p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div class="card-base lg:col-span-2">
                 <div class="mb-2 flex items-center justify-between">
-                    <h3 class="text-sm font-semibold text-gray-800">Gross vs net</h3>
+                    <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">Gross vs net</h3>
                     <div class="flex gap-2 text-xs">
-                        <button type="button" :class="barMode==='biweekly' ? 'font-semibold text-gray-900' : 'text-gray-500'" @click="setBarMode('biweekly')">Bi-weekly</button>
-                        <button type="button" :class="barMode==='monthly' ? 'font-semibold text-gray-900' : 'text-gray-500'" @click="setBarMode('monthly')">Monthly</button>
+                        <button type="button" :class="barMode==='biweekly' ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm'" @click="setBarMode('biweekly')">Bi-weekly</button>
+                        <button type="button" :class="barMode==='monthly' ? 'btn btn-secondary btn-sm' : 'btn btn-ghost btn-sm'" @click="setBarMode('monthly')">Monthly</button>
                     </div>
                 </div>
                 <div class="h-64"><canvas id="payrollBarChart"></canvas></div>
             </div>
             <div class="card-base">
-                <h3 class="mb-2 text-sm font-semibold text-gray-800">Tax mix</h3>
+                <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">Tax mix</h3>
                 <div class="h-52"><canvas id="payrollDonutChart"></canvas></div>
-                <div id="payrollDonutLegend" class="mt-2 space-y-1 text-xs text-gray-600"></div>
+                <div id="payrollDonutLegend" class="mt-2 space-y-1" style="font-size:12px;color:var(--fg-2)"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div class="card-base">
-                <h3 class="mb-2 text-sm font-semibold text-gray-800">Cumulative net (YoY)</h3>
+                <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">Cumulative net (YoY)</h3>
                 <div class="h-56"><canvas id="payrollYoyChart"></canvas></div>
             </div>
             <div class="card-base">
-                <h3 class="mb-2 text-sm font-semibold text-gray-800">Goal tracker</h3>
-                <p class="text-sm text-gray-600" x-show="!goalAmount || Number(goalAmount)<=0">No goal set</p>
+                <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">Goal tracker</h3>
+                <p class="field-help" x-show="!goalAmount || Number(goalAmount)<=0">No goal set</p>
                 <template x-if="goalAmount && Number(goalAmount)>0">
                     <div>
-                        <div class="h-3 w-full overflow-hidden rounded-full bg-gray-200">
-                            <div class="h-3 rounded-full bg-emerald-500 transition-all" :style="`width:${goalPct}%`"></div>
+                        <div class="progress-track" style="margin-top:10px;">
+                            <div class="progress-fill" style="background:var(--success-500)" :style="`width:${goalPct}%`"></div>
                         </div>
-                        <p class="mt-2 text-sm text-gray-700">
+                        <p style="margin-top:10px;font-size:13px;color:var(--fg-2)">
                             <span x-text="goalPct.toFixed(1)"></span>% of goal
                             (<span x-text="fmtMoney(summary?.totals?.ytd_net)"></span> / <span x-text="fmtMoney(goalAmount)"></span>)
                         </p>
@@ -98,9 +98,9 @@
                 </template>
                 <template x-if="IS_ADMIN">
                     <form class="mt-3 flex items-center gap-2" @submit.prevent="saveGoal">
-                        <span class="text-xs text-gray-500">Set goal:</span>
-                        <input type="number" min="0" step="0.01" x-model="goalInput" placeholder="e.g. 80000" class="w-32 rounded-md border-gray-300 text-sm shadow-sm" />
-                        <button type="submit" class="rounded-md bg-gray-900 px-3 py-1 text-xs font-medium text-white hover:bg-gray-800">Save</button>
+                        <span class="eyebrow">Set goal:</span>
+                        <input type="number" min="0" step="0.01" x-model="goalInput" placeholder="e.g. 80000" class="field-control" style="width:140px;" />
+                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
                     </form>
                 </template>
             </div>
@@ -110,7 +110,7 @@
         <div id="bracketCardWrap"></div>
 
         <div class="card-base">
-            <h3 class="mb-2 text-sm font-semibold text-gray-800">Multi-year trend</h3>
+            <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">Multi-year trend</h3>
             <div class="h-56"><canvas id="payrollTrendChart"></canvas></div>
         </div>
 
@@ -127,19 +127,19 @@
 
         <template x-if="IS_ADMIN">
             <div class="card-base">
-                <h3 class="mb-3 text-sm font-semibold text-gray-800">AM comparison (<span x-text="year"></span>)</h3>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-left text-sm">
+                <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">AM comparison (<span x-text="year"></span>)</h3>
+                <div class="table-wrap">
+                    <table class="table">
                         <thead>
-                            <tr class="border-b text-xs uppercase text-gray-500">
-                                <th class="py-2 pr-4">AM</th>
-                                <th class="py-2 pr-4">YTD net</th>
-                                <th class="py-2 pr-4">YTD gross</th>
-                                <th class="py-2">Share of net</th>
+                            <tr>
+                                <th>AM</th>
+                                <th>YTD net</th>
+                                <th>YTD gross</th>
+                                <th>Share of net</th>
                             </tr>
                         </thead>
                         <tbody id="payrollAmCompareBody">
-                            <tr><td colspan="4" class="py-3 text-gray-500">Loading…</td></tr>
+                            <tr><td colspan="4" style="color:var(--fg-3)">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -155,62 +155,62 @@
             x-show="drawerOpen"
             x-cloak
             class="fixed inset-0 z-40 flex justify-end"
-            style="background:rgba(0,0,0,0.55)"
+            style="background:rgba(5,7,13,0.76)"
             @keydown.escape.window="drawerOpen = false"
         >
             <div
                 class="relative h-full w-full overflow-y-auto p-6 shadow-xl"
-                style="max-width:600px;background:#0f172a;color:#f8fafc"
+                style="max-width:600px;background:var(--bg-2);color:var(--fg-1);border-left:1px solid var(--border-2)"
                 @click.outside="drawerOpen = false"
             >
                 <div class="mb-5 flex items-center justify-between">
-                    <h3 class="text-lg font-semibold" style="color:#f8fafc">
+                    <h3 class="text-lg font-semibold" style="color:var(--fg-1)">
                         Consultant Breakdown — <span x-text="year"></span>
                     </h3>
                     <button
                         type="button"
-                        style="color:#94a3b8;background:none;border:none;cursor:pointer;font-size:18px;line-height:1"
-                        class="hover:opacity-70"
+                        class="icon-btn hover:opacity-70"
+                        style="width:32px;height:32px;font-size:18px;line-height:1"
                         @click="drawerOpen = false"
                     >✕</button>
                 </div>
 
                 <div class="mb-5 grid grid-cols-3 gap-3">
-                    <div class="rounded-lg p-3" style="background:#1e293b">
-                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Active Consultants</p>
-                        <p class="text-2xl font-bold" style="color:#f8fafc;margin:0" x-text="consultants.length"></p>
+                    <div class="card-soft">
+                        <p class="eyebrow" style="margin-bottom:4px;">Active Consultants</p>
+                        <p class="mono-num" style="font-size:28px;font-weight:700;color:var(--fg-1);margin:0" x-text="consultants.length"></p>
                     </div>
-                    <div class="rounded-lg p-3" style="background:#1e293b">
-                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Total Commissions</p>
-                        <p class="text-xl font-bold" style="color:#22c55e;margin:0" x-text="fmtMoney(consultantMeta?.total_am_earnings)"></p>
+                    <div class="card-soft">
+                        <p class="eyebrow" style="margin-bottom:4px;">Total Commissions</p>
+                        <p class="mono-num" style="font-size:22px;font-weight:700;color:var(--success-400);margin:0" x-text="fmtMoney(consultantMeta?.total_am_earnings)"></p>
                     </div>
-                    <div class="rounded-lg p-3" style="background:#1e293b">
-                        <p style="font-size:11px;color:#94a3b8;margin:0 0 4px 0">Top Earner</p>
-                        <p class="text-lg font-bold truncate" style="color:#f8fafc;margin:0" x-text="(consultantMeta?.top_earner || '—').split(' ')[0]"></p>
+                    <div class="card-soft">
+                        <p class="eyebrow" style="margin-bottom:4px;">Top Earner</p>
+                        <p class="text-lg font-bold truncate" style="color:var(--fg-1);margin:0" x-text="(consultantMeta?.top_earner || '—').split(' ')[0]"></p>
                     </div>
                 </div>
 
                 <template x-if="consultants.length > 0">
-                    <table style="width:100%;border-collapse:collapse">
+                    <table class="table">
                         <thead>
-                            <tr style="border-bottom:1px solid #334155">
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:left">Consultant</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:left">Commission</th>
-                                <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#64748b;font-weight:500;text-align:right">Earned for You</th>
+                            <tr>
+                                <th>Consultant</th>
+                                <th>Commission</th>
+                                <th class="text-right">Earned for You</th>
                             </tr>
                         </thead>
                         <tbody>
                             <template x-for="c in consultants" :key="c.name">
-                                <tr style="border-bottom:1px solid #1e293b">
-                                    <td style="padding:10px 12px 10px 0;font-size:13px;color:#e2e8f0;font-weight:500" x-text="c.name"></td>
-                                    <td style="padding:10px 12px 10px 0">
+                                <tr>
+                                    <td style="color:var(--fg-1);font-weight:500" x-text="c.name"></td>
+                                    <td>
                                         <span
                                             style="border-radius:9999px;padding:2px 8px;font-size:11px;font-weight:600;display:inline-block"
                                             :style="'background:' + tierColor(c.tier) + '22;color:' + tierColor(c.tier)"
                                             x-text="c.tier || '—'"
                                         ></span>
                                     </td>
-                                    <td style="padding:10px 12px 10px 0;font-size:13px;font-weight:600;text-align:right;color:#22c55e"
+                                    <td class="mono-num" style="text-align:right;color:var(--success-400);font-weight:600"
                                         x-text="c.am_earnings !== null ? fmtMoney(c.am_earnings) : '—'">
                                     </td>
                                 </tr>
@@ -219,44 +219,44 @@
                     </table>
                 </template>
 
-                <div x-show="!consultants.length && drawerOpen" class="py-12 text-center" style="color:#475569">
+                <div x-show="!consultants.length && drawerOpen" class="py-12 text-center" style="color:var(--fg-3)">
                     <p>No consultant data for this period.</p>
                 </div>
             </div>
         </div>
 
         {{-- Upload modal --}}
-        <div x-show="uploadOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div x-show="uploadOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(5,7,13,0.76)">
             <div class="card-base" style="width:100%;max-width:520px" @click.outside="uploadOpen = false">
-                <h3 class="text-lg font-semibold">Upload payroll (.xlsx)</h3>
+                <h3 style="font-size:18px;font-weight:700;color:var(--fg-1)">Upload payroll (.xlsx)</h3>
                 <form class="mt-4 space-y-4" @submit.prevent="submitUpload">
-                    <div>
-                        <label class="eyebrow">File</label>
-                        <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" x-ref="payrollFile" class="mt-1 block w-full text-sm" required />
+                    <div class="field">
+                        <label>File</label>
+                        <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" x-ref="payrollFile" class="field-control" required />
                     </div>
-                    <div>
-                        <label class="eyebrow">Account manager</label>
-                        <select x-model.number="uploadAmId" class="mt-1 w-full rounded-md border-gray-300 text-sm" required>
+                    <div class="field">
+                        <label>Account manager</label>
+                        <select x-model.number="uploadAmId" class="field-control" required>
                             @foreach ($accountManagers as $am)
                                 <option value="{{ $am->id }}">{{ $am->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div>
-                        <label class="eyebrow">Stop reading at row starting with…</label>
-                        <input type="text" x-model="uploadStopName" class="mt-1 w-full rounded-md border-gray-300 text-sm" placeholder="AM's full name" required />
-                        <p class="mt-1 text-xs text-gray-500">Auto-filled from the selected AM — override only if the name differs in the file.</p>
+                    <div class="field">
+                        <label>Stop reading at row starting with…</label>
+                        <input type="text" x-model="uploadStopName" class="field-control" placeholder="AM's full name" required />
+                        <p class="field-help">Auto-filled from the selected AM — override only if the name differs in the file.</p>
                     </div>
-                    <div x-show="uploadMessage" class="rounded-md bg-amber-50 p-3 text-sm text-amber-900" x-text="uploadMessage"></div>
+                    <div x-show="uploadMessage" class="surface-warn" style="padding:12px 14px;font-size:13px;" x-text="uploadMessage"></div>
                     <div class="flex justify-end gap-2">
-                        <button type="button" class="rounded-md border border-gray-300 px-4 py-2 text-sm" @click="uploadOpen = false">Cancel</button>
+                        <button type="button" class="btn btn-secondary btn-sm" @click="uploadOpen = false">Cancel</button>
                         <button type="button"
-                            class="rounded-md border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                            class="btn btn-secondary btn-sm"
                             @click="recomputeMargins()"
                             :disabled="recomputeLoading"
                             x-text="recomputeLoading ? 'Recomputing…' : 'Recompute Margins'">
                         </button>
-                        <button type="submit" class="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white">Upload</button>
+                        <button type="submit" class="btn btn-primary btn-sm">Upload</button>
                     </div>
                 </form>
             </div>
@@ -405,7 +405,7 @@
                         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' },
                     });
                     if (leg) {
-                        leg.innerHTML = labels.map((l, i) => `<div class="flex justify-between gap-2"><span>${l}</span><span>${this.fmtMoney(values[i])}</span></div>`).join('');
+                        leg.innerHTML = labels.map((l, i) => `<div class="flex justify-between gap-2"><span style="color:var(--fg-2)">${l}</span><span class="mono-num" style="color:var(--fg-1)">${this.fmtMoney(values[i])}</span></div>`).join('');
                     }
                 },
                 renderYoy() {
@@ -509,32 +509,33 @@
                         ? "You're in the " + marginal.rate + "% bracket, but only pay " + effectiveRate + "% on your total income \u2014 because lower brackets are taxed at their lower rates first."
                         : 'Enter payroll data to see your federal tax bracket position.';
 
-                    wrap.innerHTML = '<div class="card-base">'
-                        + '<div class="mb-3 flex items-center justify-between">'
-                        + '<h3 class="text-sm font-semibold text-gray-800">&#9658; Federal Tax Bracket</h3>'
-                        + '<span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">2026 Single Filer</span>'
-                        + '</div>'
-                        + '<div style="position:relative;margin-bottom:42px;margin-top:6px">'
-                        + '<div style="display:flex;height:26px;border-radius:6px;overflow:hidden;width:100%">' + segments + '</div>'
-                        + '<div style="position:absolute;top:0;left:' + markerPct.toFixed(2) + '%;transform:translateX(-50%);z-index:1;pointer-events:none">'
-                        + '<div style="width:2px;height:26px;background:#1e293b;margin:0 auto"></div>'
-                        + '<div style="background:#1e293b;color:white;font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;margin-top:3px;text-align:center">' + this.fmtMoney(ytdGross) + '</div>'
-                        + '</div>'
-                        + '</div>'
-                        + '<div class="flex gap-3">'
-                        + '<div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px">'
-                        + '<p style="font-size:11px;color:#64748b;margin:0 0 4px 0">Marginal Rate</p>'
-                        + '<p style="font-size:24px;font-weight:700;color:' + marginal.color + ';margin:0 0 2px 0">' + marginal.rate + '%</p>'
-                        + '<p style="font-size:11px;color:#94a3b8;margin:0">on income over ' + this.fmtMoney(marginal.min) + '</p>'
-                        + '</div>'
-                        + '<div style="flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px">'
-                        + '<p style="font-size:11px;color:#64748b;margin:0 0 4px 0">Effective Federal Rate</p>'
-                        + '<p style="font-size:24px;font-weight:700;color:#3b82f6;margin:0 0 2px 0">' + (effectiveRate !== null ? effectiveRate + '%' : '—') + '</p>'
-                        + '<p style="font-size:11px;color:#94a3b8;margin:0">of YTD income</p>'
-                        + '</div>'
-                        + '</div>'
-                        + '<p style="margin-top:12px;background:#eff6ff;border-radius:6px;padding:8px 12px;font-size:12px;color:#1e40af">' + insight + '</p>'
-                        + '</div>';
+                    wrap.innerHTML = `
+                        <div class="card-base">
+                            <div class="mb-3 flex items-center justify-between">
+                                <h3 style="font-size:15px;font-weight:700;color:var(--fg-1)">&#9658; Federal Tax Bracket</h3>
+                                <span class="badge info">2026 Single Filer</span>
+                            </div>
+                            <div style="position:relative;margin-bottom:42px;margin-top:6px">
+                                <div style="display:flex;height:26px;border-radius:6px;overflow:hidden;width:100%">${segments}</div>
+                                <div style="position:absolute;top:0;left:${markerPct.toFixed(2)}%;transform:translateX(-50%);z-index:1;pointer-events:none">
+                                    <div style="width:2px;height:26px;background:var(--bg-1);margin:0 auto"></div>
+                                    <div style="background:var(--bg-1);color:var(--fg-1);font-size:10px;padding:2px 7px;border-radius:4px;white-space:nowrap;margin-top:3px;text-align:center">${this.fmtMoney(ytdGross)}</div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                <div class="card-soft">
+                                    <p class="eyebrow" style="margin-bottom:4px;">Marginal Rate</p>
+                                    <p class="mono-num" style="font-size:24px;font-weight:700;color:${marginal.color};margin:0 0 2px 0">${marginal.rate}%</p>
+                                    <p class="field-help" style="margin:0">on income over ${this.fmtMoney(marginal.min)}</p>
+                                </div>
+                                <div class="card-soft">
+                                    <p class="eyebrow" style="margin-bottom:4px;">Effective Federal Rate</p>
+                                    <p class="mono-num" style="font-size:24px;font-weight:700;color:var(--info-400);margin:0 0 2px 0">${effectiveRate !== null ? effectiveRate + '%' : '—'}</p>
+                                    <p class="field-help" style="margin:0">of YTD income</p>
+                                </div>
+                            </div>
+                            <p class="surface-info" style="margin-top:12px;padding:8px 12px;font-size:12px;color:var(--info-400)">${insight}</p>
+                        </div>`;
                 },
                 renderPeriodTable() {
                     const wrap = document.getElementById('periodTableWrap');
@@ -549,16 +550,16 @@
                     const cell = (v, green) => {
                         const n = Number(v);
                         const fmt = this.fmtMoney(v);
-                        if (green && n > 0) return '<span style="color:#10b981;font-weight:600">' + fmt + '</span>';
-                        if (!n || Number.isNaN(n)) return '<span style="color:#cbd5e1">' + fmt + '</span>';
-                        return fmt;
+                        if (green && n > 0) return `<span class="mono-num" style="color:var(--success-400);font-weight:600">${fmt}</span>`;
+                        if (!n || Number.isNaN(n)) return `<span class="mono-num" style="color:var(--fg-4)">${fmt}</span>`;
+                        return `<span class="mono-num">${fmt}</span>`;
                     };
 
                     const rowsHtml = displayed.map(p => {
                         const isExp = this.expandedPeriod === p.date;
                         const gross = Number(p.gross) || 0;
                         const pctOf = v => gross > 0
-                            ? ' <span style="color:#94a3b8;font-size:11px">(' + (Number(v) / gross * 100).toFixed(1) + '%)</span>'
+                            ? ` <span class="mono-dim">(${(Number(v) / gross * 100).toFixed(1)}%)</span>`
                             : '';
                         const totalDed = ['federal','ss','medicare','state','disability','retirement']
                             .reduce((s, k) => s + (Number(p[k]) || 0), 0);
@@ -570,86 +571,86 @@
                             ['State', p.state],
                             ['Disability', p.disability],
                             ['401k', p.retirement],
-                        ].map(([lbl, val]) =>
-                            '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid #f1f5f9">'
-                            + '<span style="color:#64748b;min-width:80px">' + lbl + '</span>'
-                            + '<span style="color:#374151;min-width:80px;text-align:right">' + this.fmtMoney(val) + '</span>'
-                            + pctOf(val)
-                            + '</div>'
+                        ].map(([lbl, val]) => `
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--border-1)">
+                                <span style="color:var(--fg-3);min-width:80px">${lbl}</span>
+                                <span class="mono-num" style="min-width:80px;text-align:right">${this.fmtMoney(val)}</span>
+                                ${pctOf(val)}
+                            </div>`
                         ).join('');
 
                         const expandRow = isExp
-                            ? '<tr><td colspan="9" style="padding:0 12px 10px 28px;background:#f8fafc">'
-                                + '<div style="padding:6px 0;font-size:12px">'
-                                + dedRows
-                                + '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;font-weight:700;border-top:2px solid #e2e8f0;margin-top:2px">'
-                                + '<span style="color:#374151;min-width:80px">Total Ded.</span>'
-                                + '<span style="color:#374151;min-width:80px;text-align:right">' + this.fmtMoney(totalDed) + '</span>'
-                                + pctOf(totalDed)
-                                + '</div>'
-                                + '</div>'
-                                + '</td></tr>'
+                            ? `<tr><td colspan="9" style="padding:0 12px 10px 28px;background:rgba(255,255,255,0.02)">
+                                <div style="padding:6px 0;font-size:12px">
+                                    ${dedRows}
+                                    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;font-weight:700;border-top:2px solid var(--border-2);margin-top:2px">
+                                        <span style="color:var(--fg-2);min-width:80px">Total Ded.</span>
+                                        <span class="mono-num" style="min-width:80px;text-align:right">${this.fmtMoney(totalDed)}</span>
+                                        ${pctOf(totalDed)}
+                                    </div>
+                                </div>
+                            </td></tr>`
                             : '';
 
-                        return '<tr class="period-row" data-date="' + escapeHtml(p.date) + '" style="border-bottom:1px solid #f3f4f6;cursor:pointer" onmouseenter="this.style.background=\'#f9fafb\'" onmouseleave="this.style.background=\'\'">'
-                            + '<td style="padding:9px 12px 9px 8px;font-size:13px">' + escapeHtml(p.date) + ' <span style="font-size:10px;color:#94a3b8">' + (isExp ? '&#9650;' : '&#9660;') + '</span></td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + this.fmtMoney(p.gross) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.federal) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.ss) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.medicare) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.state) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.disability) + '</td>'
-                            + '<td style="padding:9px 12px 9px 0;font-size:13px">' + cell(p.retirement, true) + '</td>'
-                            + '<td style="padding:9px 0 9px 0;font-size:13px;font-weight:600">' + this.fmtMoney(p.net) + '</td>'
-                            + '</tr>'
-                            + expandRow;
+                        return `<tr class="period-row" data-date="${escapeHtml(p.date)}" style="border-bottom:1px solid var(--border-1);cursor:pointer">
+                            <td style="padding:9px 12px 9px 8px;font-size:13px;color:var(--fg-1)">${escapeHtml(p.date)} <span class="mono-dim">${isExp ? '&#9650;' : '&#9660;'}</span></td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.gross)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.federal)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.ss)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.medicare)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.state)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.disability)}</td>
+                            <td style="padding:9px 12px 9px 0">${cell(p.retirement, true)}</td>
+                            <td class="mono-num" style="padding:9px 0 9px 0;font-weight:600;color:var(--fg-1)">${this.fmtMoney(p.net)}</td>
+                        </tr>${expandRow}`;
                     }).join('');
 
-                    const footerHtml = '<tr style="border-top:2px solid #d1d5db;background:#f9fafb;font-weight:600">'
-                        + '<td style="padding:8px 12px 8px 8px;font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:0.04em">YTD Total</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.ytd_gross) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.federal) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.ss) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.medicare) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.state) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.disability) + '</td>'
-                        + '<td style="padding:8px 12px 8px 0;font-size:13px">' + this.fmtMoney(t.retirement_total) + '</td>'
-                        + '<td style="padding:8px 0 8px 0;font-size:13px">' + this.fmtMoney(t.ytd_net) + '</td>'
-                        + '</tr>';
+                    const footerHtml = `<tr style="border-top:2px solid var(--border-2);background:rgba(255,255,255,0.03);font-weight:600">
+                        <td style="padding:8px 12px 8px 8px;font-size:11px;text-transform:uppercase;color:var(--fg-3);letter-spacing:0.04em">YTD Total</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.ytd_gross)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.federal)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.ss)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.medicare)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.state)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.disability)}</td>
+                        <td style="padding:8px 12px 8px 0">${cell(t.retirement_total, true)}</td>
+                        <td class="mono-num" style="padding:8px 0 8px 0;color:var(--fg-1)">${this.fmtMoney(t.ytd_net)}</td>
+                    </tr>`;
 
                     const toggleLabel = this.showAllPeriods ? '5 periods' : ('All (' + totalCount + ')');
                     const toggleBtn = totalCount > 5
-                        ? '<button id="periodToggleBtn" type="button" style="border:1px solid #d1d5db;border-radius:6px;padding:2px 10px;font-size:12px;color:#374151;background:white;cursor:pointer">' + toggleLabel + '</button>'
+                        ? `<button id="periodToggleBtn" type="button" class="btn btn-secondary btn-sm">${toggleLabel}</button>`
                         : '';
 
-                    wrap.innerHTML = '<div class="card-base">'
-                        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-                        + '<div style="display:flex;align-items:center;gap:8px">'
-                        + '<h3 style="font-size:14px;font-weight:600;color:#1f2937;margin:0">&#9658; Pay Period Detail</h3>'
-                        + '<span style="background:#f3f4f6;border-radius:9999px;padding:1px 8px;font-size:11px;color:#6b7280">' + totalCount + ' period' + (totalCount !== 1 ? 's' : '') + '</span>'
-                        + '</div>'
-                        + toggleBtn
-                        + '</div>'
-                        + '<div style="overflow-x:auto">'
-                        + '<table style="width:100%;border-collapse:collapse;min-width:720px">'
-                        + '<thead><tr style="border-bottom:1px solid #e5e7eb;background:#f9fafb">'
-                        + '<th style="padding:8px 12px 8px 8px;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Check Date</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Gross</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Federal</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Soc Sec</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Medicare</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">State</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Disability</th>'
-                        + '<th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">401k</th>'
-                        + '<th style="padding:8px 0 8px 0;font-size:11px;text-transform:uppercase;color:#9ca3af;font-weight:500;text-align:left">Net</th>'
-                        + '</tr></thead>'
-                        + '<tbody>'
-                        + (rowsHtml || '<tr><td colspan="9" style="padding:16px 8px;color:#9ca3af">No payroll data available yet</td></tr>')
-                        + footerHtml
-                        + '</tbody>'
-                        + '</table>'
-                        + '</div>'
-                        + '</div>';
+                    wrap.innerHTML = `
+                        <div class="card-base">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                    <h3 style="font-size:14px;font-weight:600;color:var(--fg-1);margin:0">&#9658; Pay Period Detail</h3>
+                                    <span class="badge neutral">${totalCount} period${totalCount !== 1 ? 's' : ''}</span>
+                                </div>
+                                ${toggleBtn}
+                            </div>
+                            <div class="table-wrap">
+                                <table style="width:100%;border-collapse:collapse;min-width:720px">
+                                    <thead><tr style="border-bottom:1px solid var(--border-1);background:rgba(255,255,255,0.03)">
+                                        <th style="padding:8px 12px 8px 8px;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Check Date</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Gross</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Federal</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Soc Sec</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Medicare</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">State</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Disability</th>
+                                        <th style="padding:8px 12px 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">401k</th>
+                                        <th style="padding:8px 0 8px 0;font-size:11px;text-transform:uppercase;color:var(--fg-3);font-weight:500;text-align:left">Net</th>
+                                    </tr></thead>
+                                    <tbody>
+                                        ${rowsHtml || '<tr><td colspan="9" style="padding:16px 8px;color:var(--fg-3)">No payroll data available yet</td></tr>'}
+                                        ${footerHtml}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
 
                     wrap.querySelectorAll('.period-row').forEach(tr => {
                         tr.addEventListener('click', () => {
@@ -681,12 +682,12 @@
                     const body = document.getElementById('payrollAmCompareBody');
                     if (!res.ok || !body) return;
                     const data = await res.json();
-                    body.innerHTML = (data.perAm || []).map(r => `<tr class="border-b border-gray-100">
-                        <td class="py-2 pr-4">${escapeHtml(r.name)}</td>
-                        <td class="py-2 pr-4">${fmtNum(r.ytd_net)}</td>
-                        <td class="py-2 pr-4">${fmtNum(r.ytd_gross)}</td>
-                        <td class="py-2">${Number(r.pct_of_total_net).toFixed(1)}%</td>
-                    </tr>`).join('') || '<tr><td colspan="4" class="py-3 text-gray-500">No data</td></tr>';
+                    body.innerHTML = (data.perAm || []).map(r => `<tr>
+                        <td style="color:var(--fg-1)">${escapeHtml(r.name)}</td>
+                        <td class="mono-num">${fmtNum(r.ytd_net)}</td>
+                        <td class="mono-num">${fmtNum(r.ytd_gross)}</td>
+                        <td class="mono-num">${Number(r.pct_of_total_net).toFixed(1)}%</td>
+                    </tr>`).join('') || '<tr><td colspan="4" style="color:var(--fg-3)">No data</td></tr>';
                 },
                 async loadMappingsTable() {
                     const res = await fetch('/payroll/api/mappings', { headers: { Accept: 'application/json' } });
@@ -694,19 +695,19 @@
                     if (!res.ok || !body) return;
                     const data = await res.json();
                     const rows = data.mappings || [];
-                    if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="py-3 text-gray-500">No unresolved names</td></tr>'; return; }
+                    if (!rows.length) { body.innerHTML = '<tr><td colspan="4" style="color:var(--fg-3)">No unresolved names</td></tr>'; return; }
                     const consultants = @json($consultants->map(fn ($c) => ['id' => $c->id, 'name' => $c->full_name])->values());
-                    body.innerHTML = rows.map(m => `<tr class="border-b border-gray-100">
-                        <td class="py-2 pr-4">${escapeHtml(m.raw_name)}</td>
-                        <td class="py-2 pr-4">${escapeHtml(m.user_name || '')}</td>
-                        <td class="py-2 pr-4">
-                            <select class="rounded border-gray-300 text-xs payroll-map-select" data-raw="${escapeHtml(m.raw_name)}" data-uid="${m.user_id}">
+                    body.innerHTML = rows.map(m => `<tr>
+                        <td class="mono-num">${escapeHtml(m.raw_name)}</td>
+                        <td>${escapeHtml(m.user_name || '')}</td>
+                        <td>
+                            <select class="field-control payroll-map-select" style="font-size:12px;padding:8px 10px;" data-raw="${escapeHtml(m.raw_name)}" data-uid="${m.user_id}">
                                 <option value="">—</option>
                                 ${consultants.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('')}
                             </select>
                         </td>
-                        <td class="py-2">
-                            <button type="button" class="rounded bg-gray-900 px-2 py-1 text-xs text-white payroll-map-save">Save</button>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm payroll-map-save">Save</button>
                         </td>
                     </tr>`).join('');
                     const rootEl = document.getElementById('payroll-root');

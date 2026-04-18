@@ -1,5 +1,14 @@
 @php
     use Illuminate\Support\Carbon;
+
+    $invoiceCount = $invoices->count();
+    $sentCount = $invoices->where('status', 'sent')->count();
+    $outstandingTotal = $invoices
+        ->filter(fn ($invoice) => in_array($invoice->status, ['pending', 'sent'], true))
+        ->sum(fn ($invoice) => (float) $invoice->total_amount_due);
+    $paidTotal = $invoices
+        ->where('status', 'paid')
+        ->sum(fn ($invoice) => (float) $invoice->total_amount_due);
 @endphp
 
 <x-app-layout>
@@ -58,6 +67,57 @@
             <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Clear</a>
         </form>
 
+        <div class="grid-4">
+            <div class="kpi-card">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Displayed</div>
+                        <div class="kpi-value">{{ number_format($invoiceCount) }}</div>
+                        <div class="kpi-sub">Invoices in current filter</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card warn">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Outstanding</div>
+                        <div class="kpi-value">${{ number_format($outstandingTotal, 2) }}</div>
+                        <div class="kpi-sub">Pending and sent invoices</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card good">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Paid</div>
+                        <div class="kpi-value">${{ number_format($paidTotal, 2) }}</div>
+                        <div class="kpi-sub">Cleared invoice total</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card brand">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Sent</div>
+                        <div class="kpi-value">{{ number_format($sentCount) }}</div>
+                        <div class="kpi-sub">Awaiting final payment</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card-base" style="padding:0;overflow-x:auto;">
             <table class="table">
                 <thead >
@@ -82,7 +142,7 @@
                             <td style="color:var(--fg-1);font-weight:500;">{{ $inv->consultant?->full_name ?? '—' }}</td>
                             <td style="color:var(--fg-1);font-weight:500;">{{ $inv->client?->name ?? '—' }}</td>
                             <td class="mono-num" style="color:var(--fg-1);font-weight:600;">${{ number_format((float) $inv->total_amount_due, 2) }}</td>
-                            <td class="px-3 py-2">
+                            <td>
                                 @can('admin')
                                     <span x-show="editingPo !== {{ $inv->id }}" class="inline-flex items-center gap-1">
                                         <span style="color:var(--fg-2);">{{ $inv->po_number ?? '—' }}</span>
@@ -97,7 +157,7 @@
                                     <span style="color:var(--fg-2);">{{ $inv->po_number ?? '—' }}</span>
                                 @endcan
                             </td>
-                            <td class="px-3 py-2">
+                            <td>
                                 @php
                                     $st = $inv->status;
                                     $badge =
@@ -107,7 +167,7 @@
                                                 ? 'teal'
                                                 : 'neutral');
                                 @endphp
-                                <span class="badge {{ $badge }}">{{ $st }}</span>
+                                <span class="badge {{ $badge }}" style="text-transform:uppercase;">{{ $st }}</span>
                             </td>
                             <td style="text-align:right;white-space:nowrap;">
                                 <button type="button" class="btn btn-ghost btn-sm" @click="openPreview({{ $inv->id }})">Preview</button>

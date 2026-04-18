@@ -1,19 +1,19 @@
 {{-- Unresolved consultant name mappings (admin); included from payroll index --}}
-<div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-    <h3 class="text-sm font-semibold text-amber-900">Unresolved consultant mappings</h3>
-    <p class="mt-1 text-xs text-amber-800">Map raw XLSX names to consultants. Future uploads resolve automatically.</p>
-    <div class="mt-3 overflow-x-auto">
-        <table class="min-w-full text-left text-sm">
+<div class="surface-warn" style="padding:16px;">
+    <h3 style="font-size:15px;font-weight:700;color:var(--warn-400);margin-bottom:6px;">Unresolved consultant mappings</h3>
+    <p style="font-size:12px;color:var(--fg-2);">Map raw XLSX names to consultants. Future uploads resolve automatically.</p>
+    <div class="table-wrap" style="margin-top:12px;">
+        <table class="table" style="font-size:13px;">
             <thead>
-                <tr class="border-b border-amber-200 text-xs uppercase text-amber-900">
-                    <th class="py-2 pr-4">Raw name</th>
-                    <th class="py-2 pr-4">AM</th>
-                    <th class="py-2 pr-4">Consultant</th>
-                    <th class="py-2">Action</th>
+                <tr>
+                    <th>Raw name</th>
+                    <th>AM</th>
+                    <th>Consultant</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="payrollMappingsBody">
-                <tr><td colspan="4" class="py-3 text-gray-500">Loading…</td></tr>
+                <tr><td colspan="4" style="padding:16px;color:var(--fg-3);">Loading…</td></tr>
             </tbody>
         </table>
     </div>
