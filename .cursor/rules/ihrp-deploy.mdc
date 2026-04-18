@@ -62,7 +62,7 @@ When Raf asks to **deploy**, **ship to prod**, **run deploy**, **push to product
 
 1. **Never overwrite protected files** — `.env`, `storage/app/uploads/`, `storage/app/templates/timesheet_template.xlsx`, `public/storage` symlink.
 2. **Migrations are manual, deliberate** — Always run `migrate:status` first, show Raf the pending list, wait for explicit "yes" before running `migrate --force`.
-3. **Test gate** — 107 tests, 259 assertions, 0 failures. Any regression = rollback immediately.
+3. **Test gate** — Use current repo baseline from latest passing runs and verify against latest executed test output. Any regression = rollback immediately.
 
 ---
 

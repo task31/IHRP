@@ -5,22 +5,22 @@
 @endphp
 
 <x-app-layout>
-    <div class="space-y-4" x-data="clientsPage()">
+    <div class="stack" x-data="clientsPage()">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-xl font-semibold text-gray-800">Clients</h2>
+            <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Clients</h2>
             @can('admin')
                 <button
                     type="button"
-                    class="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                    class="btn btn-primary btn-sm"
                     x-on:click="openCreate()"
                 >
                     Add Client
                 </button>
             @endcan
         </div>
-        <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+        <div class="card-base" style="padding:0;overflow-x:auto">
+            <table class="table">
+                <thead >
                     <tr>
                         <th class="px-4 py-3">Name</th>
                         <th class="px-4 py-3">Account manager</th>
@@ -31,48 +31,45 @@
                         <th class="px-4 py-3 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody >
                     @foreach ($clients as $client)
                         @php
                             $spent = (float) ($spentByClient[$client->id] ?? 0);
                             $budget = (float) $client->total_budget;
                             $pct = $budget > 0 ? min(100, ($spent / $budget) * 100) : 0;
                         @endphp
-                        <tr class="{{ $client->active ? '' : 'bg-gray-50 opacity-75' }}">
-                            <td class="px-4 py-3 font-medium text-gray-900">
+                        <tr style="{{ $client->active ? '' : 'opacity:0.55' }}">
+                            <td style="font-weight:500">
                                 {{ $client->name }}
                                 @if (! $client->active)
-                                    <span class="ml-2 rounded bg-gray-200 px-1.5 py-0.5 text-xs text-gray-600">Inactive</span>
+                                    <span class="badge neutral" style="margin-left:6px">Inactive</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-gray-700">
-                                {{ $client->accountManager->name ?? '—' }}
-                            </td>
-                            <td class="px-4 py-3 text-gray-700">{{ $client->billing_contact_name ?? '—' }}</td>
-                            <td class="px-4 py-3">
+                            <td>{{ $client->accountManager->name ?? '—' }}</td>
+                            <td>{{ $client->billing_contact_name ?? '—' }}</td>
+                            <td>
                                 @if ($client->email)
-                                    <a href="mailto:{{ $client->email }}" class="text-indigo-600 hover:underline">{{ $client->email }}</a>
+                                    <a href="mailto:{{ $client->email }}" style="color:var(--accent-400);text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ $client->email }}</a>
                                 @else
-                                    <span class="text-gray-400">—</span>
+                                    <span style="color:var(--fg-4)">—</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-gray-600">{{ $client->payment_terms ?? 'Net 30' }}</td>
-                            <td class="px-4 py-3">
+                            <td style="color:var(--fg-3)">{{ $client->payment_terms ?? 'Net 30' }}</td>
+                            <td>
                                 @if ($budget > 0)
-                                    <div class="max-w-[140px]">
-                                        <div class="mb-0.5 flex justify-between text-xs text-gray-500">
+                                    <div style="max-width:140px">
+                                        <div style="margin-bottom:3px;display:flex;justify-content:space-between;font-size:11px;color:var(--fg-3)">
                                             <span>${{ number_format($spent, 0) }}</span>
                                             <span>${{ number_format($budget, 0) }}</span>
                                         </div>
-                                        <div class="h-1.5 w-full rounded-full bg-gray-100">
+                                        <div style="height:4px;width:100%;border-radius:2px;background:var(--bg-5)">
                                             <div
-                                                class="h-1.5 rounded-full {{ $pct >= 100 ? 'bg-red-500' : ($pct >= 80 ? 'bg-orange-400' : 'bg-green-500') }}"
-                                                style="width: {{ $pct }}%"
+                                                style="height:4px;border-radius:2px;width:{{ $pct }}%;background:{{ $pct >= 100 ? 'var(--danger-400)' : ($pct >= 80 ? 'var(--warn-400)' : 'var(--ok-400)') }}"
                                             ></div>
                                         </div>
                                     </div>
                                 @else
-                                    <span class="text-xs text-gray-400">Not set</span>
+                                    <span style="font-size:11px;color:var(--fg-4)">Not set</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-right">
@@ -80,7 +77,7 @@
                                     @if ($client->active)
                                         <button
                                             type="button"
-                                            class="text-xs text-indigo-600 hover:underline"
+                                            class="btn btn-ghost btn-sm"
                                             @click="openEdit({{ $client->id }})"
                                         >
                                             Edit
@@ -108,13 +105,13 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="showModal = false"
         >
-            <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl" @click.outside="showModal = false">
+            <div class="card-base" style="max-height:90vh;width:100%;max-width:520px;overflow-y:auto" @click.outside="showModal = false">
                 <h3 class="text-lg font-semibold text-gray-900" x-text="isEdit ? 'Edit Client' : 'Add Client'"></h3>
                 <div class="mt-4 space-y-3">
                     @can('admin')
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Account manager</label>
-                            <select x-model="form.account_manager_id" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                            <label class="eyebrow">Account manager</label>
+                            <select x-model="form.account_manager_id" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;">
                                 <option value="">— Unassigned —</option>
                                 @foreach ($accountManagers as $am)
                                     <option value="{{ $am->id }}">{{ $am->name }}</option>
@@ -123,28 +120,28 @@
                         </div>
                     @endcan
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Client Name *</label>
-                        <input type="text" x-model="form.name" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">Client Name *</label>
+                        <input type="text" x-model="form.name" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Billing Contact</label>
-                        <input type="text" x-model="form.billing_contact_name" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">Billing Contact</label>
+                        <input type="text" x-model="form.billing_contact_name" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Billing Address</label>
-                        <textarea x-model="form.billing_address" rows="3" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"></textarea>
+                        <label class="eyebrow">Billing Address</label>
+                        <textarea x-model="form.billing_address" rows="3" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Billing Email *</label>
-                        <input type="email" x-model="form.email" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">Billing Email *</label>
+                        <input type="email" x-model="form.email" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">SMTP Email *</label>
-                        <input type="email" x-model="form.smtp_email" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">SMTP Email *</label>
+                        <input type="email" x-model="form.smtp_email" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Payment Terms</label>
-                        <select x-model="form.payment_terms" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                        <label class="eyebrow">Payment Terms</label>
+                        <select x-model="form.payment_terms" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;">
                             <option value="Net 15">Net 15</option>
                             <option value="Net 30">Net 30</option>
                             <option value="Net 45">Net 45</option>
@@ -153,15 +150,15 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Total Budget</label>
-                        <input type="number" step="0.01" x-model="form.total_budget" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">Total Budget</label>
+                        <input type="number" step="0.01" x-model="form.total_budget" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;" />
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end gap-2">
-                    <button type="button" class="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100" @click="showModal = false">Cancel</button>
+                    <button type="button" class="btn btn-ghost btn-sm" @click="showModal = false">Cancel</button>
                     <button
                         type="button"
-                        class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        class="btn btn-primary btn-sm"
                         :disabled="saving"
                         @click="save()"
                         x-text="saving ? 'Saving…' : 'Save'"
@@ -177,11 +174,11 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="confirmId = null"
         >
-            <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <div class="card-base" style="width:100%;max-width:400px">
                 <p class="text-sm text-gray-700">Deactivate this client? They will be hidden from active lists.</p>
                 <div class="mt-4 flex justify-end gap-2">
-                    <button type="button" class="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100" @click="confirmId = null">Cancel</button>
-                    <button type="button" class="rounded bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700" @click="deactivate()">Deactivate</button>
+                    <button type="button" class="btn btn-ghost btn-sm" @click="confirmId = null">Cancel</button>
+                    <button type="button" class="btn btn-danger btn-sm" @click="deactivate()">Deactivate</button>
                 </div>
             </div>
         </div>

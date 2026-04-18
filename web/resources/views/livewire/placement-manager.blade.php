@@ -5,14 +5,14 @@
             <button
                 type="button"
                 wire:click="openCreate"
-                class="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                class="btn btn-primary btn-sm"
             >
                 Add Placement
             </button>
         @endcan
     </div>
 
-    <div class="flex flex-wrap items-end gap-3 rounded-lg bg-white p-4 shadow-sm">
+    <div class="card-base">
         <label class="block min-w-[160px] text-xs font-medium text-gray-500">
             Consultant
             <input
@@ -48,9 +48,9 @@
         </label>
     </div>
 
-    <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
-        <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+    <div class="card-base" style="padding:0;overflow-x:auto">
+        <table class="table">
+            <thead >
                 <tr>
                     <th class="px-4 py-3">Consultant</th>
                     <th class="px-4 py-3">Client</th>
@@ -67,7 +67,7 @@
                     @endcan
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody >
                 @forelse ($placements ?? [] as $p)
                     <tr wire:key="placement-row-{{ $p->id }}" class="text-gray-700">
                         <td class="px-4 py-3 font-medium text-gray-900">
@@ -96,7 +96,7 @@
                                     <button
                                         type="button"
                                         wire:click="openEdit({{ $p->id }})"
-                                        class="rounded border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                                        class="btn btn-secondary btn-sm"
                                     >
                                         Edit
                                     </button>
@@ -128,20 +128,20 @@
         </table>
         {{-- Pagination --}}
         @if($totalPlacements > $perPage)
-        <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border-1)">
             <div class="text-sm text-gray-600">
                 Showing {{ (($page - 1) * $perPage) + 1 }}–{{ min($page * $perPage, $totalPlacements) }} of {{ $totalPlacements }}
             </div>
             <div class="flex gap-2">
                 @if($page > 1)
                     <button wire:click="prevPage"
-                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                        class="btn btn-secondary btn-sm">
                         ← Prev
                     </button>
                 @endif
                 @if(($page * $perPage) < $totalPlacements)
                     <button wire:click="nextPage"
-                        class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50">
+                        class="btn btn-secondary btn-sm">
                         Next →
                     </button>
                 @endif
@@ -153,7 +153,7 @@
     @if ($showForm)
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" wire:click.self="cancelForm">
             <div
-                class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl"
+                class="card-base" style="max-height:90vh;width:100%;max-width:520px;overflow-y:auto"
                 @click.stop
                 wire:click.stop
             >
@@ -255,7 +255,7 @@
                             <input
                                 type="text"
                                 wire:model="po_number"
-                                class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                                style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                             />
                         @else
                             <p class="mt-1 text-sm text-gray-600">{{ $po_number ?: '—' }}</p>
@@ -291,14 +291,14 @@
                     <button
                         type="button"
                         wire:click="cancelForm"
-                        class="rounded border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        class="btn btn-secondary"
                     >
                         Cancel
                     </button>
                     <button
                         type="button"
                         wire:click="save"
-                        class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                        class="btn btn-primary"
                     >
                         Save
                     </button>

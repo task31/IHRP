@@ -1,3 +1,45 @@
+<!-- DEVTEAM_TEMPLATE: DEVLOG v4 -->
+# DevTeam Workflow -- DEVLOG
+# DEVLOG -- [Project Name]
+
+> Claude Code updates the CURRENT STATE block at phase close by default.
+> Update this file mid-phase only when a durable project fact must change before phase close.
+> Cursor never writes this file.
+> Never delete entries. Archive older CURRENT STATE blocks below the divider.
+
+---
+
+<!-- CURRENT STATE — agents read only this block -->
+## Current State
+
+**Phase:** Phase 14 — Resume Redact Format Fix via PyMuPDF
+**Status:** In Progress
+**Last updated:** 2026-04-01
+
+### What is verified working
+- Production app is live at `hr.matchpointegroup.com`
+- Resume redaction PyMuPDF worker is implemented locally with distinct subprocess / Python error handling
+- Latest recorded full-suite result in DEVLOG: `182` tests, `489` assertions, `0` failures
+
+### Carry-forwards (active)
+- Verify Bluehost production supports Python 3, PyMuPDF, and `proc_open` before deploying Phase 14
+- Review and close Phase 14, then update project summary docs so they match the latest build state
+
+### Non-negotiables confirmed this phase
+- Resume redaction failures surface as explicit user-facing errors instead of silent format loss
+- `BUSINESS_MODEL.md` remains the SSOT for payroll and margin semantics; `am_earnings` stays immutable
+
+### Planning signals for the next cycle
+- [Decision, dependency, or reality Claude.ai should keep in view]
+- [Another planning-relevant note]
+
+<!-- END CURRENT STATE -->
+
+---
+<!-- ARCHIVE -- do not read below this line for the live state -->
+
+## Archive
+
 ### 🚀 [DEPLOY] — Resume redact format-preserve overhaul _(2026-04-01)_
 
 **Commit deployed:** `462fdfd` (feat(resume-redact): preserve original format + silently remove contact info)
@@ -3126,3 +3168,58 @@ Also refined per Raf's plan review:
 
 **Carry-forwards**
 - Production needs Python 3 + PyMuPDF (`pip install pymupdf`) and `proc_open` enabled; verify on Bluehost before relying on live redaction.
+
+
+
+---
+
+## BUILD — HR Command Dark Theme Retheme (2026-04-18)
+
+**Goal**
+Apply the "Matchpointe HR Command" dark design system (exported from Claude Design) pixel-for-pixel to the IHRP Laravel/Blade/Alpine app.
+
+**Assets installed**
+- `web/public/fonts/HelveticaNeue/` — 16 OTF font files (UltraLight→Black, roman+italic) from design bundle
+- `web/public/css/tokens.css` — CSS custom properties: `--bg-*`, `--fg-*`, `--accent-*`, `--brand-*`, semantic colors, gradients, radii, motion; `@font-face` for Helvetica Neue
+- `web/public/css/hr-command.css` — component CSS: `.sidebar`, `.topbar`, `.main`, `.kpi-card` (with `::before` masked gradient-edge), `.table`, `.badge`, `.btn`, `.card-base`, `.eyebrow`, `.mono-num`, `.stack`, `.grid-4`, `.grid-2`, etc.
+- `web/public/images/matchpointe-logo.png` — transparent-BG logo
+- Tailwind CDN preflight disabled (`tailwind.config = { corePlugins: { preflight: false } }`) to avoid conflicts
+
+**Layouts rewritten**
+- `layouts/app.blade.php` — dark shell: 240px navy sidebar + 64px sticky topbar + `#05070D` bg. Sidebar nav wired with `routeIs()` active detection, `.dot` indicator, teal active gradient. Topbar has search + user-chip with initials avatar (hash-based gradient).
+- `layouts/guest.blade.php` — dark centered login card with teal zap mark, CSS-var tokens throughout.
+
+**Views fully rethemed**
+- `dashboard.blade.php` — 4-up `.kpi-card` grid (gradient-edge effect preserved), dark Chart.js options, `.table` for alerts, dark budget progress bars
+- `consultants/index.blade.php` — `.table`, dark modals, `.badge ok/warn/neutral`, initials avatar cells
+- `invoices/index.blade.php` — `.kpi-card` grid at top, `.table`, semantic `.badge` pills, dark send-email modal
+- `timesheets/index.blade.php` — `.card-base` manual entry with dark selects/inputs, OT preview teal box, `.table`, dark view modal with hours table and margin summary mini-cards, edit-hours section with amber-tinted warning box
+
+**Shell-only pass** (new dark shell, card/table/badge/button class swaps)
+- `clients/`, `calls/`, `ledger/`, `placements/`, `settings/`, `admin/users/`, `admin/partials/email-inbox`, `resume-redact/`, `livewire/placement-manager`, `livewire/timesheet-wizard`, `profile/` (edit + 3 partials), `auth/login`
+
+**Blade components updated**
+- `primary-button` → `btn btn-primary`
+- `secondary-button` → `btn btn-secondary`
+- `danger-button` → `btn btn-danger`
+- `text-input` → dark CSS-var inline style
+- `input-label` → `eyebrow` class
+- `modal` → `card-base` + dark overlay backdrop
+
+**Testing**
+- `php artisan test`: **173 passed** (462 assertions), 0 failures. Theme changes are CSS/view-only; no PHP logic touched.
+
+**Files touched**
+- `web/public/css/tokens.css` (new)
+- `web/public/css/hr-command.css` (new)
+- `web/public/fonts/HelveticaNeue/*.otf` (16 new)
+- `web/public/images/matchpointe-logo.png` (new)
+- `web/resources/views/layouts/app.blade.php`
+- `web/resources/views/layouts/guest.blade.php`
+- `web/resources/views/dashboard.blade.php`
+- `web/resources/views/consultants/index.blade.php`
+- `web/resources/views/invoices/index.blade.php`
+- `web/resources/views/timesheets/index.blade.php`
+- `web/resources/views/components/{primary,secondary,danger}-button.blade.php`
+- `web/resources/views/components/{text-input,input-label,modal}.blade.php`
+- 19 additional views (shell-only pass)

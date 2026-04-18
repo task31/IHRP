@@ -1,103 +1,143 @@
 <x-app-layout>
-    <div x-data="dashboardPage()" x-init="init()" class="space-y-6">
+    <div x-data="dashboardPage()" x-init="init()" class="stack">
 
-        {{-- ── Page heading ─────────────────────────────────────────── --}}
-        <h2 class="text-xl font-semibold text-gray-800">Dashboard</h2>
+        {{-- ── Page heading ──────────────────────────────────────────── --}}
+        <div class="row-between">
+            <div>
+                <div class="eyebrow">Overview &middot; {{ now()->format('F Y') }}</div>
+                <div style="font-size:22px;font-weight:700;letter-spacing:-0.01em;margin-top:4px;">Dashboard</div>
+            </div>
+        </div>
 
         {{-- ── KPI stat cards ──────────────────────────────────────── --}}
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-lg bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Active Consultants</p>
-                <p class="mt-1 text-3xl font-bold" x-text="stats.activeConsultants ?? '—'"></p>
+        <div class="grid-4">
+            <div class="kpi-card">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Active Consultants</div>
+                        <div class="kpi-value" x-text="stats.activeConsultants ?? '—'"></div>
+                        <div class="kpi-sub">Placed &amp; active</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                </div>
             </div>
-            <div class="rounded-lg bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Active Clients</p>
-                <p class="mt-1 text-3xl font-bold" x-text="stats.activeClients ?? '—'"></p>
+            <div class="kpi-card">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Active Clients</div>
+                        <div class="kpi-value" x-text="stats.activeClients ?? '—'"></div>
+                        <div class="kpi-sub">Billed this month</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    </div>
+                </div>
             </div>
-            <div class="rounded-lg bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Pending Invoices</p>
-                <p class="mt-1 text-3xl font-bold" x-text="stats.pendingInvoicesCount ?? '—'"></p>
-                <p
-                    class="text-xs text-gray-400"
-                    x-show="stats.pendingInvoicesAmount > 0"
-                    x-text="'$' + Number(stats.pendingInvoicesAmount).toFixed(2) + ' due'"
-                ></p>
+            <div class="kpi-card warn">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">Pending Invoices</div>
+                        <div class="kpi-value" x-text="stats.pendingInvoicesCount ?? '—'"></div>
+                        <div class="kpi-sub" x-show="stats.pendingInvoicesAmount > 0" x-text="'$' + Number(stats.pendingInvoicesAmount).toFixed(2) + ' due'"></div>
+                        <div class="kpi-sub" x-show="!stats.pendingInvoicesAmount || stats.pendingInvoicesAmount <= 0">Awaiting payment</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                </div>
             </div>
-            <div class="rounded-lg bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">MTD Revenue</p>
-                <p
-                    class="mt-1 text-3xl font-bold"
-                    x-text="stats.mtdRevenue != null ? '$' + Number(stats.mtdRevenue).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—'"
-                ></p>
+            <div class="kpi-card good">
+                <div class="kpi-head">
+                    <div>
+                        <div class="kpi-label">MTD Revenue</div>
+                        <div class="kpi-value" x-text="stats.mtdRevenue != null ? '$' + Number(stats.mtdRevenue).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—'"></div>
+                        <div class="kpi-sub">Month to date</div>
+                    </div>
+                    <div class="kpi-chip">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                </div>
             </div>
         </div>
 
         {{-- ── End-Date Alerts ─────────────────────────────────────── --}}
-        <div class="rounded-lg bg-white p-5 shadow-sm" x-show="alerts.length > 0" x-cloak>
-            <h3 class="mb-3 font-semibold">End-Date Alerts (<span x-text="alerts.length"></span>)</h3>
-            <div class="mb-3 flex gap-4 text-xs">
-                <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> Critical (≤7d)</span>
-                <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-orange-400"></span> Warning (≤14d)</span>
-                <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-yellow-400"></span> Notice (≤30d)</span>
+        <div class="card-base" x-show="alerts.length > 0" x-cloak>
+            <div class="row-between" style="margin-bottom:16px;">
+                <div>
+                    <h3 style="font-size:15px;font-weight:700;letter-spacing:-0.005em;">End-Date Alerts <span style="color:var(--fg-3);font-weight:400;" x-text="'(' + alerts.length + ')'"></span></h3>
+                    <div style="font-size:12px;color:var(--fg-3);margin-top:3px;">Consultants with projects ending in the next 30 days</div>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="badge bad"><span class="dot" style="background:var(--danger-500)"></span>Critical ≤7d</span>
+                    <span class="badge warn"><span class="dot" style="background:var(--warn-500)"></span>Warning ≤14d</span>
+                    <span class="badge info"><span class="dot" style="background:var(--info-500)"></span>Notice ≤30d</span>
+                </div>
             </div>
-            <table class="w-full text-sm">
-                <template x-for="a in alerts" :key="a.id">
-                    <tr class="border-t border-gray-100">
-                        <td class="flex flex-wrap items-center gap-2 py-2">
-                            <span :class="tierColor(a.daysLeft)" class="inline-block h-2 w-2 shrink-0 rounded-full"></span>
-                            <span x-text="a.full_name"></span>
-                            <span
-                                class="rounded px-1 text-xs"
-                                :class="a.daysLeft <= 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'"
-                                x-text="a.daysLeft <= 0 ? Math.abs(a.daysLeft) + 'd overdue' : a.daysLeft + 'd left'"
-                            ></span>
-                        </td>
-                        <td class="text-gray-500" x-text="a.client_name ?? 'Unassigned'"></td>
-                        <td class="text-gray-500" x-text="a.project_end_date"></td>
-                        <td class="text-right">
-                            <div x-data="{ extending: false, newDate: '' }">
-                                <button
-                                    type="button"
-                                    x-show="!extending"
-                                    class="text-xs text-blue-600 hover:underline"
-                                    x-on:click="extending = true; newDate = a.project_end_date"
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Consultant</th>
+                        <th>Client</th>
+                        <th>End Date</th>
+                        <th>Status</th>
+                        <th style="text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="a in alerts" :key="a.id">
+                        <tr>
+                            <td style="color:var(--fg-1);font-weight:500;" x-text="a.full_name"></td>
+                            <td x-text="a.client_name ?? 'Unassigned'"></td>
+                            <td class="mono-dim" x-text="a.project_end_date"></td>
+                            <td>
+                                <span
+                                    class="badge"
+                                    :class="a.daysLeft <= 7 ? 'bad' : a.daysLeft <= 14 ? 'warn' : 'info'"
                                 >
-                                    Extend
-                                </button>
-                                <span x-show="extending" class="inline-flex items-center gap-1">
-                                    <input type="date" x-model="newDate" class="rounded border px-1 py-0.5 text-xs" />
+                                    <span class="dot" :style="a.daysLeft <= 7 ? 'background:var(--danger-500)' : a.daysLeft <= 14 ? 'background:var(--warn-500)' : 'background:var(--info-500)'"></span>
+                                    <span x-text="a.daysLeft <= 0 ? Math.abs(a.daysLeft) + 'd overdue' : a.daysLeft + 'd left'"></span>
+                                </span>
+                            </td>
+                            <td style="text-align:right;">
+                                <div x-data="{ extending: false, newDate: '' }">
                                     <button
                                         type="button"
-                                        class="text-xs text-green-600"
-                                        x-on:click="extendDate(a.id, newDate); extending = false"
-                                    >Save</button>
-                                    <button type="button" class="text-xs text-gray-400" x-on:click="extending = false">Cancel</button>
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
+                                        x-show="!extending"
+                                        class="btn btn-ghost btn-sm"
+                                        x-on:click="extending = true; newDate = a.project_end_date"
+                                    >Extend →</button>
+                                    <span x-show="extending" style="display:inline-flex;align-items:center;gap:6px;">
+                                        <input type="date" x-model="newDate" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--fg-1);outline:none;" />
+                                        <button type="button" class="btn btn-primary btn-sm" x-on:click="extendDate(a.id, newDate); extending = false">Save</button>
+                                        <button type="button" class="btn btn-ghost btn-sm" x-on:click="extending = false">Cancel</button>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
             </table>
         </div>
 
         {{-- ── Budget Utilization (admin only) ─────────────────────── --}}
         @if(auth()->user()->role === 'admin')
-        <div class="rounded-lg bg-white p-5 shadow-sm" x-show="budgets.length > 0" x-cloak>
-            <h3 class="mb-3 font-semibold">Budget Utilization</h3>
+        <div class="card-base" x-show="budgets.length > 0" x-cloak>
+            <h3 style="font-size:15px;font-weight:700;letter-spacing:-0.005em;margin-bottom:16px;">Budget Utilization</h3>
             <template x-for="b in budgets" :key="b.client_id">
-                <div class="mb-4">
-                    <div class="mb-1 flex justify-between text-sm">
-                        <span class="font-medium" :class="budgetColor(b.pct)" x-text="b.client_name"></span>
-                        <span class="text-xs text-gray-500">
+                <div style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                        <span style="font-size:13px;font-weight:500;color:var(--fg-1);" x-text="b.client_name"></span>
+                        <span style="font-size:11px;font-family:var(--font-mono);color:var(--fg-3);">
                             $<span x-text="Number(b.spent).toLocaleString()"></span>
                             / $<span x-text="Number(b.budget).toLocaleString()"></span>
                         </span>
                     </div>
-                    <div class="h-2 w-full rounded-full bg-gray-100">
+                    <div style="height:6px;width:100%;border-radius:999px;background:var(--bg-5);">
                         <div
-                            class="h-2 rounded-full transition-all"
-                            :class="budgetColor(b.pct).replace('text-', 'bg-')"
-                            :style="'width:' + Math.min(b.pct, 100) + '%'"
+                            style="height:6px;border-radius:999px;transition:width 0.3s;"
+                            :style="'width:' + Math.min(b.pct, 100) + '%;background:' + (b.pct >= 100 ? 'var(--danger-500)' : b.pct >= 80 ? 'var(--warn-500)' : 'var(--success-500)')"
                         ></div>
                     </div>
                 </div>
@@ -107,16 +147,15 @@
 
         {{-- ── Call Activity (admin only) ───────────────────────────── --}}
         @if(auth()->user()->role === 'admin')
-        <div class="rounded-lg bg-white p-5 shadow-sm">
-            {{-- Header + period picker --}}
-            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <h3 class="font-semibold text-gray-800">Call Activity</h3>
-                <div class="flex rounded-md border border-gray-200 text-xs font-medium overflow-hidden">
+        <div class="card-base">
+            <div class="row-between" style="margin-bottom:16px;">
+                <h3 style="font-size:15px;font-weight:700;letter-spacing:-0.005em;">Call Activity</h3>
+                <div style="display:flex;border:1px solid var(--border-2);border-radius:var(--radius-md);overflow:hidden;">
                     <template x-for="p in [{v:'week',l:'This Week'},{v:'month',l:'This Month'},{v:'quarter',l:'This Quarter'},{v:'year',l:'This Year'}]" :key="p.v">
                         <button
                             type="button"
-                            class="px-3 py-1.5 transition-colors"
-                            :class="callsPeriod === p.v ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-50'"
+                            style="padding:6px 12px;font-size:12px;font-weight:600;font-family:var(--font-sans);transition:background 120ms,color 120ms;border:none;cursor:pointer;"
+                            :style="callsPeriod === p.v ? 'background:var(--accent-400);color:var(--fg-on-accent);' : 'background:transparent;color:var(--fg-3);'"
                             x-on:click="callsPeriod = p.v; loadCalls()"
                             x-text="p.l"
                         ></button>
@@ -124,71 +163,66 @@
                 </div>
             </div>
 
-            {{-- Empty state --}}
-            <div x-show="calls && calls.team.total_dials === 0" class="py-8 text-center text-sm text-gray-400">
+            <div x-show="calls && calls.team.total_dials === 0" style="padding:32px 0;text-align:center;font-size:13px;color:var(--fg-4);">
                 No call data for this period.
             </div>
 
             <div x-show="calls && calls.team.total_dials > 0" x-cloak>
-
-                {{-- Team summary cards --}}
-                <div class="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <div class="rounded-lg bg-indigo-50 p-3 text-center">
-                        <p class="text-xs text-indigo-600 font-medium">Total Dials</p>
-                        <p class="mt-0.5 text-2xl font-bold text-indigo-700" x-text="calls.team.total_dials"></p>
-                        <p class="text-xs text-indigo-400" x-text="calls.team.avg_dials_per_day + ' / day avg'"></p>
+                {{-- Team summary mini-cards --}}
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+                    <div style="background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.18);border-radius:var(--radius-md);padding:12px;text-align:center;">
+                        <div class="eyebrow" style="color:var(--accent-300);">Total Dials</div>
+                        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--fg-1);margin-top:4px;" x-text="calls.team.total_dials"></div>
+                        <div style="font-size:11px;color:var(--fg-3);font-family:var(--font-mono);margin-top:2px;" x-text="calls.team.avg_dials_per_day + ' / day avg'"></div>
                     </div>
-                    <div class="rounded-lg bg-emerald-50 p-3 text-center">
-                        <p class="text-xs text-emerald-600 font-medium">Total Connects</p>
-                        <p class="mt-0.5 text-2xl font-bold text-emerald-700" x-text="calls.team.total_connects"></p>
-                        <p class="text-xs text-emerald-400" x-text="calls.team.active_ams + ' AMs reporting'"></p>
+                    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);border-radius:var(--radius-md);padding:12px;text-align:center;">
+                        <div class="eyebrow" style="color:var(--success-400);">Total Connects</div>
+                        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--fg-1);margin-top:4px;" x-text="calls.team.total_connects"></div>
+                        <div style="font-size:11px;color:var(--fg-3);font-family:var(--font-mono);margin-top:2px;" x-text="calls.team.active_ams + ' AMs reporting'"></div>
                     </div>
-                    <div class="rounded-lg bg-violet-50 p-3 text-center">
-                        <p class="text-xs text-violet-600 font-medium">Connect Rate</p>
-                        <p class="mt-0.5 text-2xl font-bold text-violet-700" x-text="calls.team.connect_rate + '%'"></p>
-                        <p class="text-xs text-violet-400">live calls / dials</p>
+                    <div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.18);border-radius:var(--radius-md);padding:12px;text-align:center;">
+                        <div class="eyebrow" style="color:#C4B5FD;">Connect Rate</div>
+                        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--fg-1);margin-top:4px;" x-text="calls.team.connect_rate + '%'"></div>
+                        <div style="font-size:11px;color:var(--fg-3);margin-top:2px;">live calls / dials</div>
                     </div>
-                    <div class="rounded-lg bg-amber-50 p-3 text-center">
-                        <p class="text-xs text-amber-600 font-medium">Submittals</p>
-                        <p class="mt-0.5 text-2xl font-bold text-amber-700" x-text="calls.team.total_submittals"></p>
-                        <p class="text-xs text-amber-400" x-text="calls.team.total_interviews + ' interviews'"></p>
+                    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);border-radius:var(--radius-md);padding:12px;text-align:center;">
+                        <div class="eyebrow" style="color:var(--warn-400);">Submittals</div>
+                        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--fg-1);margin-top:4px;" x-text="calls.team.total_submittals"></div>
+                        <div style="font-size:11px;color:var(--fg-3);font-family:var(--font-mono);margin-top:2px;" x-text="calls.team.total_interviews + ' interviews'"></div>
                     </div>
                 </div>
 
                 {{-- Trend chart + Leaderboard --}}
-                <div class="mb-5 grid gap-4 lg:grid-cols-5">
-                    {{-- Trend chart --}}
-                    <div class="lg:col-span-3">
-                        <p class="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Dials & Connects Trend</p>
-                        <div class="relative h-48">
+                <div style="display:grid;grid-template-columns:3fr 2fr;gap:20px;margin-bottom:20px;">
+                    <div>
+                        <div class="eyebrow" style="margin-bottom:8px;">Dials &amp; Connects Trend</div>
+                        <div style="position:relative;height:180px;">
                             <canvas id="callsTrendChart"></canvas>
                         </div>
                     </div>
-
-                    {{-- Leaderboard --}}
-                    <div class="lg:col-span-2">
-                        <p class="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Top Performers</p>
-                        <div class="space-y-2">
+                    <div>
+                        <div class="eyebrow" style="margin-bottom:8px;">Top Performers</div>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
                             <template x-for="(am, idx) in calls.by_am.slice(0, 5)" :key="am.name">
-                                <div class="flex items-center gap-2">
+                                <div style="display:flex;align-items:center;gap:10px;">
                                     <span
-                                        class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                                        :class="idx === 0 ? 'bg-yellow-400 text-yellow-900' : idx === 1 ? 'bg-gray-300 text-gray-700' : idx === 2 ? 'bg-orange-300 text-orange-900' : 'bg-gray-100 text-gray-500'"
+                                        style="width:20px;height:20px;border-radius:999px;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none;"
+                                        :style="idx === 0 ? 'background:var(--warn-400);color:#1a0f00;' : idx === 1 ? 'background:var(--fg-3);color:var(--bg-0);' : idx === 2 ? 'background:var(--brand-300);color:var(--bg-0);' : 'background:var(--bg-5);color:var(--fg-3);'"
                                         x-text="idx + 1"
                                     ></span>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center justify-between">
-                                            <span class="truncate text-sm font-medium" x-text="am.name.split(' ')[0]"></span>
-                                            <span class="ml-2 shrink-0 text-xs font-semibold text-indigo-600" x-text="am.dials + ' dials'"></span>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                                            <span style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" x-text="am.name.split(' ')[0]"></span>
+                                            <span style="margin-left:8px;font-size:11px;font-weight:600;color:var(--accent-300);font-family:var(--font-mono);" x-text="am.dials + ' dials'"></span>
                                         </div>
-                                        <div class="mt-0.5 h-1.5 w-full rounded-full bg-gray-100">
+                                        <div style="margin-top:4px;height:4px;width:100%;border-radius:999px;background:var(--bg-5);">
                                             <div
-                                                class="h-1.5 rounded-full bg-indigo-400"
+                                                style="height:4px;border-radius:999px;background:var(--accent-400);"
                                                 :style="'width:' + (calls.by_am[0].dials > 0 ? (am.dials / calls.by_am[0].dials * 100) : 0) + '%'"
                                             ></div>
                                         </div>
                                     </div>
-                                    <span class="shrink-0 text-xs text-emerald-600 font-medium" x-text="am.connect_rate + '%'"></span>
+                                    <span style="font-size:11px;font-weight:600;color:var(--success-400);font-family:var(--font-mono);" x-text="am.connect_rate + '%'"></span>
                                 </div>
                             </template>
                         </div>
@@ -197,60 +231,57 @@
 
                 {{-- AM breakdown table --}}
                 <div>
-                    <p class="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">AM Breakdown</p>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+                    <div class="eyebrow" style="margin-bottom:8px;">AM Breakdown</div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Account Manager</th>
+                                <th style="text-align:right;">Dials</th>
+                                <th style="text-align:right;">Connects</th>
+                                <th style="text-align:right;">Connect %</th>
+                                <th style="text-align:right;">Submittals</th>
+                                <th style="text-align:right;">Interviews</th>
+                                <th style="text-align:right;">Avg/Day</th>
+                                <th style="text-align:right;">Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="am in calls.by_am" :key="am.name">
                                 <tr>
-                                    <th class="px-3 py-2">Account Manager</th>
-                                    <th class="px-3 py-2 text-right">Dials</th>
-                                    <th class="px-3 py-2 text-right">Connects</th>
-                                    <th class="px-3 py-2 text-right">Connect %</th>
-                                    <th class="px-3 py-2 text-right">Submittals</th>
-                                    <th class="px-3 py-2 text-right">Interviews</th>
-                                    <th class="px-3 py-2 text-right">Avg Dials/Day</th>
-                                    <th class="px-3 py-2 text-right">Days Reported</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                <template x-for="am in calls.by_am" :key="am.name">
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-3 py-2 font-medium text-gray-900" x-text="am.name"></td>
-                                        <td class="px-3 py-2 text-right font-semibold text-indigo-600" x-text="am.dials"></td>
-                                        <td class="px-3 py-2 text-right text-emerald-600" x-text="am.connects"></td>
-                                        <td class="px-3 py-2 text-right">
-                                            <span
-                                                class="rounded px-1.5 py-0.5 text-xs font-medium"
-                                                :class="am.connect_rate >= 30 ? 'bg-green-100 text-green-700' : am.connect_rate >= 15 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'"
-                                                x-text="am.connect_rate + '%'"
-                                            ></span>
-                                        </td>
-                                        <td class="px-3 py-2 text-right text-gray-700" x-text="am.submittals"></td>
-                                        <td class="px-3 py-2 text-right text-gray-700" x-text="am.interviews"></td>
-                                        <td class="px-3 py-2 text-right text-gray-500" x-text="am.avg_dials_per_day"></td>
-                                        <td class="px-3 py-2 text-right text-gray-500" x-text="am.days_reported"></td>
-                                    </tr>
-                                </template>
-                                {{-- Team total row --}}
-                                <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                                    <td class="px-3 py-2 text-gray-700">Team Total</td>
-                                    <td class="px-3 py-2 text-right text-indigo-700" x-text="calls.team.total_dials"></td>
-                                    <td class="px-3 py-2 text-right text-emerald-700" x-text="calls.team.total_connects"></td>
-                                    <td class="px-3 py-2 text-right">
+                                    <td style="color:var(--fg-1);font-weight:500;" x-text="am.name"></td>
+                                    <td class="mono-num" style="text-align:right;color:var(--accent-300);" x-text="am.dials"></td>
+                                    <td class="mono-num" style="text-align:right;color:var(--success-400);" x-text="am.connects"></td>
+                                    <td style="text-align:right;">
                                         <span
-                                            class="rounded px-1.5 py-0.5 text-xs font-medium"
-                                            :class="calls.team.connect_rate >= 30 ? 'bg-green-100 text-green-700' : calls.team.connect_rate >= 15 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'"
-                                            x-text="calls.team.connect_rate + '%'"
+                                            class="badge"
+                                            :class="am.connect_rate >= 30 ? 'ok' : am.connect_rate >= 15 ? 'warn' : 'bad'"
+                                            x-text="am.connect_rate + '%'"
                                         ></span>
                                     </td>
-                                    <td class="px-3 py-2 text-right text-gray-700" x-text="calls.team.total_submittals"></td>
-                                    <td class="px-3 py-2 text-right text-gray-700" x-text="calls.team.total_interviews"></td>
-                                    <td class="px-3 py-2 text-right text-gray-500" x-text="calls.team.avg_dials_per_day"></td>
-                                    <td class="px-3 py-2 text-right text-gray-500" x-text="calls.team.days_with_data"></td>
+                                    <td class="mono-dim" style="text-align:right;" x-text="am.submittals"></td>
+                                    <td class="mono-dim" style="text-align:right;" x-text="am.interviews"></td>
+                                    <td class="mono-dim" style="text-align:right;" x-text="am.avg_dials_per_day"></td>
+                                    <td class="mono-dim" style="text-align:right;" x-text="am.days_reported"></td>
                                 </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                            </template>
+                            <tr style="border-top:1px solid var(--border-3);background:var(--bg-4);">
+                                <td style="font-weight:600;color:var(--fg-1);">Team Total</td>
+                                <td class="mono-num" style="text-align:right;color:var(--accent-300);font-weight:700;" x-text="calls.team.total_dials"></td>
+                                <td class="mono-num" style="text-align:right;color:var(--success-400);font-weight:700;" x-text="calls.team.total_connects"></td>
+                                <td style="text-align:right;">
+                                    <span
+                                        class="badge"
+                                        :class="calls.team.connect_rate >= 30 ? 'ok' : calls.team.connect_rate >= 15 ? 'warn' : 'bad'"
+                                        x-text="calls.team.connect_rate + '%'"
+                                    ></span>
+                                </td>
+                                <td class="mono-dim" style="text-align:right;" x-text="calls.team.total_submittals"></td>
+                                <td class="mono-dim" style="text-align:right;" x-text="calls.team.total_interviews"></td>
+                                <td class="mono-dim" style="text-align:right;" x-text="calls.team.avg_dials_per_day"></td>
+                                <td class="mono-dim" style="text-align:right;" x-text="calls.team.days_with_data"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -316,8 +347,8 @@
                                 {
                                     label: 'Dials',
                                     data: this.calls.trend.map((t) => t.dials),
-                                    borderColor: '#6366f1',
-                                    backgroundColor: 'rgba(99,102,241,0.08)',
+                                    borderColor: '#22d3ee',
+                                    backgroundColor: 'rgba(34,211,238,0.08)',
                                     fill: true,
                                     tension: 0.35,
                                     pointRadius: 3,
@@ -336,10 +367,12 @@
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
-                            plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 } } } },
+                            plugins: {
+                                legend: { position: 'top', labels: { boxWidth: 10, font: { size: 11 }, color: '#8691aa' } },
+                            },
                             scales: {
-                                x: { ticks: { font: { size: 10 }, maxRotation: 45 } },
-                                y: { beginAtZero: true, ticks: { font: { size: 10 } } },
+                                x: { ticks: { font: { size: 10 }, maxRotation: 45, color: '#8691aa' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                                y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#8691aa' }, grid: { color: 'rgba(255,255,255,0.04)' } },
                             },
                         },
                     });

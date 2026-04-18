@@ -8,7 +8,7 @@
             @enderror
             <div wire:loading wire:target="file" class="mt-2 text-xs text-gray-500">Reading file…</div>
             <button type="button" wire:click="uploadFile" wire:loading.attr="disabled"
-                class="mt-3 rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                class="btn btn-primary" style="margin-top:12px">
                 Parse &amp; continue
             </button>
         </div>
@@ -16,7 +16,7 @@
 
     @if ($step === 2)
         @if ($parseFormat === 'flat-csv' && count($builtRows) === 0)
-            <div class="space-y-3">
+            <div style="display:flex;flex-direction:column;gap:12px">
                 <p class="font-medium text-gray-700">Map CSV columns</p>
                 <div class="grid gap-3 sm:grid-cols-2">
                     <label class="block text-xs text-gray-500">Consultant name
@@ -91,7 +91,7 @@
                     <button type="button" wire:click="$set('step', 1)"
                         class="rounded border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">Back</button>
                     <button type="button" wire:click="confirmImport" wire:loading.attr="disabled"
-                        class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                        class="btn btn-primary">
                         Import all
                     </button>
                 </div>
@@ -117,7 +117,7 @@
             @endif
         </div>
         <button type="button" wire:click="finishImport"
-            class="mt-3 rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+            class="btn btn-primary" style="margin-top:12px">
             Done
         </button>
     @endif

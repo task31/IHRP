@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">Placements</h2>
+        <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Placements</h2>
     </x-slot>
 
     <div class="py-4">

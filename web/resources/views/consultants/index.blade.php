@@ -22,42 +22,42 @@
 
 <x-app-layout>
     <div
-        class="space-y-4"
+        class="stack"
         x-data="consultantsPage(@js($clients), @js(auth()->user()->isAdmin()))"
     >
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-xl font-semibold text-gray-800">Consultants</h2>
+        <div class="row-between">
+            <h2 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;">Consultants</h2>
             @can('admin')
                 <button
                     type="button"
-                    class="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                    class="btn btn-primary"
                     x-on:click="openCreate()"
                 >
                     Add Consultant
                 </button>
             @endcan
         </div>
-        <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+        <div class="card-base" style="padding:0;overflow-x:auto;">
+            <table class="table">
+                <thead >
                     <tr>
-                        <th class="px-3 py-3">Name</th>
-                        <th class="px-3 py-3">Client</th>
-                        <th class="px-3 py-3">State</th>
-                        <th class="px-3 py-3">Pay Rate</th>
-                        <th class="px-3 py-3">Bill Rate</th>
-                        <th class="px-3 py-3">GMPH</th>
-                        <th class="px-3 py-3">Start</th>
-                        <th class="px-3 py-3">End</th>
-                        <th class="px-3 py-3">Checklist</th>
-                        <th class="px-3 py-3 text-right">Actions</th>
+                        <th >Name</th>
+                        <th >Client</th>
+                        <th >State</th>
+                        <th >Pay Rate</th>
+                        <th >Bill Rate</th>
+                        <th >GMPH</th>
+                        <th >Start</th>
+                        <th >End</th>
+                        <th >Checklist</th>
+                        <th style="text-align:right;">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody >
                     @foreach ($consultants as $c)
                         <tr>
-                            <td class="px-3 py-2">
-                                <span class="font-medium text-gray-900">{{ $c->full_name }}</span>
+                            <td >
+                                <span style="color:var(--fg-1);font-weight:500;">{{ $c->full_name }}</span>
                             </td>
                             {{-- Client --}}
                             <td
@@ -67,7 +67,7 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-600 cursor-pointer hover:text-indigo-500'"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-dim cursor-pointer'"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -77,14 +77,14 @@
                                             x-model="inputVal"
                                             @change="save()"
                                             @keydown.escape="cancel()"
-                                            class="rounded border border-indigo-400 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 max-w-[140px]"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);max-width:140px;outline:none;font-family:var(--font-sans);"
                                         >
                                             <option value="">— Select —</option>
                                             @foreach ($clients as $cl)
                                                 <option value="{{ $cl->id }}">{{ $cl->name }}</option>
                                             @endforeach
                                         </select>
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
@@ -96,7 +96,7 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'rounded bg-gray-100 px-2 py-0.5 text-xs font-medium cursor-pointer hover:bg-indigo-100'"
+                                        :class="isMissing() ? 'cursor-pointer' style='color:var(--accent-400);font-size:12px;' : 'badge neutral cursor-pointer'"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -106,14 +106,14 @@
                                             x-model="inputVal"
                                             @change="save()"
                                             @keydown.escape="cancel()"
-                                            class="rounded border border-indigo-400 px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400 w-16"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);width:64px;outline:none;font-family:var(--font-sans);"
                                         >
                                             <option value="">—</option>
                                             @foreach ($usStates as $st)
                                                 <option value="{{ $st }}">{{ $st }}</option>
                                             @endforeach
                                         </select>
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
@@ -125,7 +125,7 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-700 cursor-pointer hover:text-indigo-500'"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-num cursor-pointer'"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -137,9 +137,9 @@
                                             @blur="save()"
                                             @keydown.enter="save()"
                                             @keydown.escape="cancel()"
-                                            class="w-20 rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);width:80px;outline:none;font-family:var(--font-sans);"
                                         />
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
@@ -151,7 +151,7 @@
                                 <template x-if="!editing">
                                     <span
                                         @click="startEdit()"
-                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'text-gray-700 cursor-pointer hover:text-indigo-500'"
+                                        :class="isMissing() ? 'cursor-pointer text-indigo-500 hover:underline text-xs' : 'mono-num cursor-pointer'"
                                         x-text="displayVal()"
                                     ></span>
                                 </template>
@@ -163,22 +163,21 @@
                                             @blur="save()"
                                             @keydown.enter="save()"
                                             @keydown.escape="cancel()"
-                                            class="w-20 rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);width:80px;outline:none;font-family:var(--font-sans);"
                                         />
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
-                            <td class="px-3 py-2 text-sm text-gray-700">
+                            <td class="mono-num">
                                 @if($c->gross_margin_per_hour && $c->gross_margin_per_hour > 0)
                                     ${{ number_format((float) $c->gross_margin_per_hour, 2) }}/hr
                                 @else
-                                    <span class="text-gray-400">—</span>
+                                    <span style="color:var(--fg-4);">—</span>
                                 @endif
                             </td>
                             {{-- Start Date --}}
                             <td
-                                class="px-3 py-2 text-gray-600"
                                 x-data="inlineCell({{ (int) $c->id }}, 'project_start_date', {{ $c->project_start_date ? Js::from(substr((string) $c->project_start_date, 0, 10)) : 'null' }})"
                             >
                                 <template x-if="!editing">
@@ -196,9 +195,9 @@
                                             @blur="save()"
                                             @keydown.enter="save()"
                                             @keydown.escape="cancel()"
-                                            class="rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);outline:none;font-family:var(--font-sans);"
                                         />
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
@@ -213,7 +212,6 @@
                                 }
                             @endphp
                             <td
-                                class="px-3 py-2 font-medium"
                                 x-data="inlineCell({{ (int) $c->id }}, 'project_end_date', {{ $c->project_end_date ? Js::from(substr((string) $c->project_end_date, 0, 10)) : 'null' }})"
                             >
                                 <template x-if="!editing">
@@ -231,9 +229,9 @@
                                             @blur="save()"
                                             @keydown.enter="save()"
                                             @keydown.escape="cancel()"
-                                            class="rounded border border-indigo-400 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--fg-1);outline:none;font-family:var(--font-sans);"
                                         />
-                                        <button type="button" @click="cancel()" class="text-gray-400 hover:text-gray-600 text-xs">✕</button>
+                                        <button type="button" @click="cancel()" class="btn btn-ghost btn-sm">✕</button>
                                     </div>
                                 </template>
                             </td>
@@ -246,40 +244,40 @@
                                 @endphp
                                 <button
                                     type="button"
-                                    class="max-w-[148px] rounded-lg border px-2 py-1.5 text-left transition hover:border-indigo-300 hover:bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-indigo-400 {{ $rowComplete ? 'border-green-200 bg-green-50/90' : 'border-gray-200 bg-white' }}"
+                                    class="badge {{ $rowComplete ? 'ok' : 'neutral' }}" style="padding:6px 8px;max-width:148px;text-align:left;cursor:pointer;display:block;width:100%;"
                                     @click="openOnboarding({{ (int) $c->id }})"
                                     title="Open onboarding checklist"
                                 >
-                                    <div class="mb-1 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                                    <div class="eyebrow" style="margin-bottom:4px;display:flex;justify-content:space-between;">
                                         <span>Progress</span>
-                                        <span class="tabular-nums text-gray-700">{{ $done }}/{{ $tot }}</span>
+                                        <span class="mono-num">{{ $done }}/{{ $tot }}</span>
                                     </div>
-                                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                                    <div style="height:4px;width:100%;border-radius:999px;background:var(--bg-5);margin-top:4px;">
                                         <div
-                                            class="h-1.5 rounded-full {{ $rowComplete ? 'bg-green-500' : 'bg-indigo-600' }}"
+                                            style="height:4px;border-radius:999px;background:{{ $rowComplete ? 'var(--success-500)' : 'var(--accent-400)' }}"
                                             style="width: {{ $rowPct }}%"
                                         ></div>
                                     </div>
                                 </button>
                             </td>
-                            <td class="px-3 py-2 text-right whitespace-nowrap">
+                            <td style="text-align:right;white-space:nowrap;">
                                 @can('admin')
-                                    <button type="button" class="text-xs text-indigo-600 hover:underline" @click="openEdit({{ (int) $c->id }})">Edit</button>
+                                    <button type="button" class="btn btn-ghost btn-sm" @click="openEdit({{ (int) $c->id }})">Edit</button>
                                     <button
                                         type="button"
-                                        class="ml-1 text-xs text-slate-600 hover:underline"
+                                        class="btn btn-ghost btn-sm"
                                         @click="openContract({{ (int) $c->id }}, {{ ($c->contract_on_file ?? false) ? 'true' : 'false' }})"
                                     >
                                         Contract
                                     </button>
                                     <button
                                         type="button"
-                                        class="ml-1 text-xs text-gray-600 hover:underline"
+                                        class="btn btn-ghost btn-sm"
                                         @click="openW9({{ (int) $c->id }}, {{ $c->w9_on_file ? 'true' : 'false' }})"
                                     >
                                         W-9
                                     </button>
-                                    <button type="button" class="ml-1 text-xs text-red-600 hover:underline" @click="confirmDeactivate({{ (int) $c->id }})">Deactivate</button>
+                                    <button type="button" class="btn btn-ghost btn-sm" style="color:var(--danger-400);" @click="confirmDeactivate({{ (int) $c->id }})">Deactivate</button>
                                 @endcan
                             </td>
                         </tr>
@@ -295,70 +293,70 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="showFormModal = false"
         >
-            <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-xl" @click.outside="showFormModal = false">
-                <h3 class="text-lg font-semibold" x-text="isEdit ? 'Edit Consultant' : 'Add Consultant'"></h3>
-                <div class="mt-4 space-y-3">
+            <div class="card-base" style="max-height:90vh;width:100%;max-width:520px;overflow-y:auto;" @click.outside="showFormModal = false">
+                <h3 style="font-size:16px;font-weight:700;margin-bottom:16px;" x-text="isEdit ? 'Edit Consultant' : 'Add Consultant'"></h3>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Full Name *</label>
-                        <input type="text" x-model="form.full_name" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                        <label class="eyebrow">Full Name *</label>
+                        <input type="text" x-model="form.full_name" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;" />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">State *</label>
-                        <select x-model="form.state" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                        <label class="eyebrow">State *</label>
+                        <select x-model="form.state" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;">
                             @foreach ($usStates as $st)
                                 <option value="{{ $st }}">{{ $st }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Industry Type</label>
-                        <select x-model="form.industry_type" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                        <label class="eyebrow">Industry Type</label>
+                        <select x-model="form.industry_type" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;">
                             <option value="other">Other</option>
                             <option value="manufacturing">Manufacturing</option>
                             <option value="factory">Factory</option>
                             <option value="mill">Mill</option>
                         </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Pay Rate *</label>
-                            <input type="number" step="0.01" x-model="form.pay_rate" @input="autoBillRate()" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                            <label class="eyebrow">Pay Rate *</label>
+                            <input type="number" step="0.01" x-model="form.pay_rate" @input="autoBillRate()" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;" />
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Bill Rate *</label>
-                            <input type="number" step="0.01" x-model="form.bill_rate" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                            <label class="eyebrow">Bill Rate *</label>
+                            <input type="number" step="0.01" x-model="form.bill_rate" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;" />
                         </div>
                     </div>
-                    <div x-show="form.gross_margin_per_hour !== null && form.gross_margin_per_hour !== ''" class="rounded bg-blue-50 px-3 py-2 text-xs text-blue-700">
+                    <div x-show="form.gross_margin_per_hour !== null && form.gross_margin_per_hour !== ''" style="background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.20);border-radius:var(--radius-md);padding:8px 12px;font-size:12px;color:var(--accent-300);">
                         Gross margin/hr from payroll: <span class="font-mono font-semibold" x-text="'$' + parseFloat(form.gross_margin_per_hour || 0).toFixed(2)"></span>
                         — bill rate auto-updates when you change pay rate.
                     </div>
-                    <p class="text-sm text-gray-600">Margin: <span class="font-mono font-medium text-gray-900" x-text="marginPct()"></span></p>
+                    <p style="font-size:13px;color:var(--fg-2);">Margin: <span class="mono-num" x-text="marginPct()"></span></p>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Client *</label>
-                        <select x-model="form.client_id" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                        <label class="eyebrow">Client *</label>
+                        <select x-model="form.client_id" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;">
                             <option value="">— Select —</option>
                             <template x-for="cl in clientList" :key="cl.id">
                                 <option :value="String(cl.id)" x-text="cl.name"></option>
                             </template>
                         </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Project Start</label>
-                            <input type="date" x-model="form.project_start_date" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                            <label class="eyebrow">Project Start</label>
+                            <input type="date" x-model="form.project_start_date" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;" />
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-600">Project End</label>
-                            <input type="date" x-model="form.project_end_date" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                            <label class="eyebrow">Project End</label>
+                            <input type="date" x-model="form.project_end_date" style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:9px 12px;font-size:13px;color:var(--fg-1);width:100%;outline:none;font-family:var(--font-sans);margin-top:4px;" />
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 flex justify-end gap-2">
-                    <button type="button" class="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100" @click="showFormModal = false">Cancel</button>
+                <div style="margin-top:20px;display:flex;justify-content:flex-end;gap:8px;">
+                    <button type="button" class="btn btn-ghost" @click="showFormModal = false">Cancel</button>
                     <button
                         type="button"
-                        class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        class="btn btn-primary"
                         :disabled="saving"
                         @click="saveConsultant()"
                         x-text="saving ? 'Saving…' : 'Save'"
@@ -374,15 +372,15 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="showOnboardingModal = false"
         >
-            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 class="text-lg font-semibold">Onboarding checklist</h3>
-                <p class="mt-1 text-xs text-gray-500" x-show="!canEditOnboarding">View only — contact an admin to update checklist items or upload the W-9 / contract.</p>
-                <div class="mt-3 h-2 w-full rounded-full bg-gray-100">
-                    <div class="h-2 rounded-full bg-indigo-600 transition-all" :style="'width:' + onboardingProgress() + '%'"></div>
+            <div class="card-base" style="width:100%;max-width:440px;">
+                <h3 style="font-size:16px;font-weight:700;">Onboarding checklist</h3>
+                <p style="font-size:12px;color:var(--fg-3);margin-bottom:8px;" x-show="!canEditOnboarding">View only — contact an admin to update checklist items or upload the W-9 / contract.</p>
+                <div style="height:6px;width:100%;border-radius:999px;background:var(--bg-5);margin:8px 0;">
+                    <div style="height:6px;border-radius:999px;background:var(--accent-400);transition:width 0.3s;" :style="'width:' + onboardingProgress() + '%'"></div>
                 </div>
-                <ul class="mt-4 space-y-2 text-sm">
+                <ul style="margin-top:8px;">
                     <template x-for="row in onboardingItems" :key="row.id ?? row.item_key">
-                        <li class="flex items-center justify-between gap-2 border-b border-gray-50 py-2">
+                        <li style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--border-1);">
                             <span x-text="onboardingLabel(row.item_key)"></span>
                             <template x-if="canEditOnboarding">
                                 <button
@@ -404,7 +402,7 @@
                     </template>
                 </ul>
                 @can('admin')
-                    <p class="mt-3 text-xs text-gray-500">W-9 and client–agency contract (MSA): use <strong>Contract</strong> or <strong>W-9</strong> in the row Actions menu (checklist updates when uploaded).</p>
+                    <p style="font-size:12px;color:var(--fg-3);margin-top:8px;">W-9 and client–agency contract (MSA): use <strong>Contract</strong> or <strong>W-9</strong> in the row Actions menu (checklist updates when uploaded).</p>
                 @endcan
                 <button type="button" class="mt-4 text-sm text-gray-600 hover:underline" @click="showOnboardingModal = false">Close</button>
             </div>
@@ -417,23 +415,23 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="showContractModal = false"
         >
-            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 class="text-lg font-semibold">Contract (MSA)</h3>
-                <p class="mt-1 text-xs text-gray-500">Client–agency master service agreement for this consultant. PDF only, max 10MB.</p>
+            <div class="card-base" style="width:100%;max-width:440px;">
+                <h3 style="font-size:16px;font-weight:700;">Contract (MSA)</h3>
+                <p style="font-size:12px;color:var(--fg-3);">Client–agency master service agreement for this consultant. PDF only, max 10MB.</p>
                 <a
                     :href="contractConsultantId ? `/consultants/${contractConsultantId}/contract` : '#'"
                     target="_blank"
                     rel="noopener"
-                    class="mt-3 inline-block text-sm text-indigo-600 hover:underline"
+                    style="display:inline-block;margin-top:8px;font-size:13px;color:var(--accent-300);"
                     x-show="contractConsultantId && contractHasFile"
                 >View current contract</a>
-                <div class="mt-4 space-y-3">
-                    <input type="file" x-ref="contractInput" accept=".pdf,application/pdf" class="block w-full text-sm" />
-                    <div class="flex justify-end gap-2">
-                        <button type="button" class="text-sm text-gray-600" @click="showContractModal = false">Cancel</button>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+                    <input type="file" x-ref="contractInput" accept=".pdf,application/pdf" style="font-size:13px;color:var(--fg-2);font-family:var(--font-sans);" />
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                        <button type="button" class="btn btn-ghost" @click="showContractModal = false">Cancel</button>
                         <button
                             type="button"
-                            class="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                            class="btn btn-primary"
                             :disabled="contractUploading"
                             @click="uploadContract()"
                             x-text="contractUploading ? 'Uploading…' : 'Upload'"
@@ -450,23 +448,23 @@
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="showW9Modal = false"
         >
-            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-                <h3 class="text-lg font-semibold">W-9</h3>
-                <p class="mt-1 text-xs text-gray-500">PDF only, max 10MB.</p>
+            <div class="card-base" style="width:100%;max-width:440px;">
+                <h3 style="font-size:16px;font-weight:700;">W-9</h3>
+                <p style="font-size:12px;color:var(--fg-3);">PDF only, max 10MB.</p>
                 <a
                     :href="w9ConsultantId ? `/consultants/${w9ConsultantId}/w9` : '#'"
                     target="_blank"
                     rel="noopener"
-                    class="mt-3 inline-block text-sm text-indigo-600 hover:underline"
+                    style="display:inline-block;margin-top:8px;font-size:13px;color:var(--accent-300);"
                     x-show="w9ConsultantId && w9HasFile"
                 >View current W-9</a>
-                <div class="mt-4 space-y-3">
-                    <input type="file" x-ref="w9Input" accept=".pdf,application/pdf" class="block w-full text-sm" />
-                    <div class="flex justify-end gap-2">
-                        <button type="button" class="text-sm text-gray-600" @click="showW9Modal = false">Cancel</button>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:16px;">
+                    <input type="file" x-ref="w9Input" accept=".pdf,application/pdf" style="font-size:13px;color:var(--fg-2);font-family:var(--font-sans);" />
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;">
+                        <button type="button" class="btn btn-ghost" @click="showW9Modal = false">Cancel</button>
                         <button
                             type="button"
-                            class="rounded bg-indigo-600 px-3 py-1.5 text-sm text-white hover:bg-indigo-700 disabled:opacity-50"
+                            class="btn btn-primary"
                             :disabled="w9Uploading"
                             @click="uploadW9()"
                             x-text="w9Uploading ? 'Uploading…' : 'Upload'"
@@ -482,11 +480,11 @@
             x-cloak
             class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
         >
-            <div class="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-                <p class="text-sm text-gray-700">Deactivate this consultant?</p>
-                <div class="mt-4 flex justify-end gap-2">
-                    <button type="button" class="rounded px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100" @click="deactivateId = null">Cancel</button>
-                    <button type="button" class="rounded bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700" @click="doDeactivate()">Deactivate</button>
+            <div class="card-base" style="width:100%;max-width:380px;">
+                <p style="font-size:14px;color:var(--fg-2);">Deactivate this consultant?</p>
+                <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;">
+                    <button type="button" class="btn btn-ghost" @click="deactivateId = null">Cancel</button>
+                    <button type="button" class="btn btn-danger" @click="doDeactivate()">Deactivate</button>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 ---
 name: ihrp-deploy-expert
-description: Use this agent for anything related to deployment. Trigger on phrases like "deploy app", "deploy application", "deploy this", "ship to production", "push to prod", "run deploy", "run deploy.py", "check pending migrations", "verify production", "production issue", "deploy failed", "rollback", "Bluehost deploy", "cPanel deploy", "SSH deploy", or any request involving deploy troubleshooting. If a user asks anything in regards to deployment, default to this agent. This agent also performs post-deploy learning so future deployments can resolve repeated issues faster. Examples:
+description: Use this agent for deployment and release execution. Trigger on phrases like "deploy app", "deploy application", "deploy this", "ship to production", "push to prod", "run deploy", "run deploy.py", "check pending migrations", "verify production", "production issue", "deploy failed", "rollback", "Bluehost deploy", "cPanel deploy", "SSH deploy", or any request involving deploy troubleshooting. Do not use this agent for feature implementation in controllers/services/models unless the task is strictly deploy-related remediation. If a user asks anything in regards to deployment, default to this agent. This agent also performs post-deploy learning so future deployments can resolve repeated issues faster. Examples:
 
 <example>
 Context: User has merged code and wants to release to production.
@@ -126,7 +126,7 @@ Convert each deployment outcome into reusable operational knowledge.
 1. Never overwrite protected files: `.env`, `storage/app/uploads/`, `storage/app/templates/timesheet_template.xlsx`, `public/storage` symlink.
 2. Always run migration status first and present the pending list before any migration execution.
 3. Never run `migrate --force` without explicit in-session user confirmation.
-4. Apply the test gate: 107 tests, 259 assertions. Regression = recommend rollback immediately.
+4. Apply the test gate using the current repo baseline and latest run output (do not rely on hardcoded counts). Any regression = recommend rollback immediately.
 5. Use `deploy.py` as the orchestrator; do not replace it with ad hoc deploy logic unless user explicitly asks.
 6. Always use `key_filename` for SSH — never `password`. Bluehost blocks password SSH.
 7. Always use `_cpanel_request()` for cPanel API calls — never raw `requests.get(auth=...)`.

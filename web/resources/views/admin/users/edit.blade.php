@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="text-lg font-semibold" style="color:var(--fg-1)">
             Edit User
         </h2>
     </x-slot>
 
-    <div class="py-8">
+    <div >
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('admin.users.update', $user) }}" class="space-y-4">
+            <div class="card-base">
+                <form method="POST" action="{{ route('admin.users.update', $user) }}" class="stack">
                     @csrf
                     @method('PUT')
 
@@ -51,7 +51,7 @@
                             @endforeach
                         </select>
                         <x-input-error :messages="$errors->get('consultant_id')" class="mt-2" />
-                        <p class="mt-1 text-xs text-gray-500">For <strong>account managers</strong> only. Admins cannot keep a consultant link.</p>
+                        <p style="margin-top:4px;font-size:11px;color:var(--fg-3)">For <strong>account managers</strong> only. Admins cannot keep a consultant link.</p>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -67,7 +67,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-2">
-                        <a href="{{ route('admin.users.index') }}" class="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-secondary btn-sm">Cancel</a>
                         <x-primary-button>Save Changes</x-primary-button>
                     </div>
                 </form>

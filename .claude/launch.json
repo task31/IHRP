@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "invoice-preview",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "7777", "--directory", "scripts"],
+      "port": 7777
+    },
+    {
       "name": "Laravel Dev Server",
       "runtimeExecutable": "C:\\Users\\zobel\\AppData\\Local\\Microsoft\\WinGet\\Packages\\PHP.PHP.8.3_Microsoft.Winget.Source_8wekyb3d8bbwe\\php.exe",
       "runtimeArgs": ["artisan", "serve", "--port=8000"],

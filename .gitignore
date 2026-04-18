@@ -21,3 +21,6 @@ __pycache__/
 # Screenshot / smoke test artifacts
 login_*.png
 smoke_screenshots/
+
+# SSH keys — never commit
+Keys/

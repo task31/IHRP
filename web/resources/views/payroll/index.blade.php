@@ -7,13 +7,13 @@
 
     <div
         id="payroll-root"
-        class="space-y-6"
+        class="stack"
         x-data="payrollDashboard()"
         x-init="init()"
     >
         <div class="flex flex-wrap items-end gap-4">
             <div>
-                <label class="block text-xs font-medium text-gray-600">Year</label>
+                <label class="eyebrow">Year</label>
                 <select x-model.number="year" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
                     <template x-for="y in yearsList" :key="y">
                         <option :value="y" x-text="y"></option>
@@ -22,7 +22,7 @@
             </div>
             <template x-if="IS_ADMIN">
                 <div>
-                    <label class="block text-xs font-medium text-gray-600">Account manager</label>
+                    <label class="eyebrow">Account manager</label>
                     <select x-model.number="amId" class="mt-1 rounded-md border-gray-300 text-sm shadow-sm">
                         @foreach ($accountManagers as $am)
                             <option value="{{ $am->id }}">{{ $am->name }}</option>
@@ -40,19 +40,19 @@
         </div>
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <p class="text-xs text-gray-500">YTD net</p>
                 <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.ytd_net)"></p>
             </div>
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <p class="text-xs text-gray-500">YTD gross</p>
                 <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.ytd_gross)"></p>
             </div>
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <p class="text-xs text-gray-500">Taxes paid</p>
                 <p class="mt-1 text-2xl font-bold text-gray-900" x-text="fmtMoney(summary?.totals?.taxes_paid)"></p>
             </div>
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <p class="text-xs text-gray-500">Projected annual net</p>
                 <p class="mt-1 text-lg font-bold text-gray-900" x-show="!projection?.projectionSuppressed" x-text="fmtMoney(projection?.projectedAnnual)"></p>
                 <p class="mt-1 text-sm text-amber-700" x-show="projection?.projectionSuppressed" x-text="projection?.message || '—'"></p>
@@ -60,7 +60,7 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div class="rounded-lg bg-white p-4 shadow-sm lg:col-span-2">
+            <div class="card-base lg:col-span-2">
                 <div class="mb-2 flex items-center justify-between">
                     <h3 class="text-sm font-semibold text-gray-800">Gross vs net</h3>
                     <div class="flex gap-2 text-xs">
@@ -70,7 +70,7 @@
                 </div>
                 <div class="h-64"><canvas id="payrollBarChart"></canvas></div>
             </div>
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <h3 class="mb-2 text-sm font-semibold text-gray-800">Tax mix</h3>
                 <div class="h-52"><canvas id="payrollDonutChart"></canvas></div>
                 <div id="payrollDonutLegend" class="mt-2 space-y-1 text-xs text-gray-600"></div>
@@ -78,11 +78,11 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <h3 class="mb-2 text-sm font-semibold text-gray-800">Cumulative net (YoY)</h3>
                 <div class="h-56"><canvas id="payrollYoyChart"></canvas></div>
             </div>
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <h3 class="mb-2 text-sm font-semibold text-gray-800">Goal tracker</h3>
                 <p class="text-sm text-gray-600" x-show="!goalAmount || Number(goalAmount)<=0">No goal set</p>
                 <template x-if="goalAmount && Number(goalAmount)>0">
@@ -109,7 +109,7 @@
         {{-- Federal Tax Bracket card (populated by buildBracketCard()) --}}
         <div id="bracketCardWrap"></div>
 
-        <div class="rounded-lg bg-white p-4 shadow-sm">
+        <div class="card-base">
             <h3 class="mb-2 text-sm font-semibold text-gray-800">Multi-year trend</h3>
             <div class="h-56"><canvas id="payrollTrendChart"></canvas></div>
         </div>
@@ -120,13 +120,13 @@
         <div>
             <button
                 type="button"
-                class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50"
+                class="btn btn-secondary btn-sm"
                 @click="drawerOpen = true; loadConsultants()"
             >Consultant breakdown</button>
         </div>
 
         <template x-if="IS_ADMIN">
-            <div class="rounded-lg bg-white p-4 shadow-sm">
+            <div class="card-base">
                 <h3 class="mb-3 text-sm font-semibold text-gray-800">AM comparison (<span x-text="year"></span>)</h3>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-left text-sm">
@@ -146,7 +146,7 @@
             </div>
         </template>
 
-        <div x-show="mappingsOpen" x-cloak class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div x-show="mappingsOpen" x-cloak class="card-base">
             @include('payroll.mappings')
         </div>
 
@@ -227,15 +227,15 @@
 
         {{-- Upload modal --}}
         <div x-show="uploadOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div class="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl" @click.outside="uploadOpen = false">
+            <div class="card-base" style="width:100%;max-width:520px" @click.outside="uploadOpen = false">
                 <h3 class="text-lg font-semibold">Upload payroll (.xlsx)</h3>
                 <form class="mt-4 space-y-4" @submit.prevent="submitUpload">
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">File</label>
+                        <label class="eyebrow">File</label>
                         <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" x-ref="payrollFile" class="mt-1 block w-full text-sm" required />
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Account manager</label>
+                        <label class="eyebrow">Account manager</label>
                         <select x-model.number="uploadAmId" class="mt-1 w-full rounded-md border-gray-300 text-sm" required>
                             @foreach ($accountManagers as $am)
                                 <option value="{{ $am->id }}">{{ $am->name }}</option>
@@ -243,7 +243,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600">Stop reading at row starting with…</label>
+                        <label class="eyebrow">Stop reading at row starting with…</label>
                         <input type="text" x-model="uploadStopName" class="mt-1 w-full rounded-md border-gray-300 text-sm" placeholder="AM's full name" required />
                         <p class="mt-1 text-xs text-gray-500">Auto-filled from the selected AM — override only if the name differs in the file.</p>
                     </div>
@@ -509,7 +509,7 @@
                         ? "You're in the " + marginal.rate + "% bracket, but only pay " + effectiveRate + "% on your total income \u2014 because lower brackets are taxed at their lower rates first."
                         : 'Enter payroll data to see your federal tax bracket position.';
 
-                    wrap.innerHTML = '<div class="rounded-lg bg-white p-4 shadow-sm">'
+                    wrap.innerHTML = '<div class="card-base">'
                         + '<div class="mb-3 flex items-center justify-between">'
                         + '<h3 class="text-sm font-semibold text-gray-800">&#9658; Federal Tax Bracket</h3>'
                         + '<span class="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">2026 Single Filer</span>'
@@ -622,7 +622,7 @@
                         ? '<button id="periodToggleBtn" type="button" style="border:1px solid #d1d5db;border-radius:6px;padding:2px 10px;font-size:12px;color:#374151;background:white;cursor:pointer">' + toggleLabel + '</button>'
                         : '';
 
-                    wrap.innerHTML = '<div class="rounded-lg bg-white p-4 shadow-sm">'
+                    wrap.innerHTML = '<div class="card-base">'
                         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
                         + '<div style="display:flex;align-items:center;gap:8px">'
                         + '<h3 style="font-size:14px;font-weight:600;color:#1f2937;margin:0">&#9658; Pay Period Detail</h3>'

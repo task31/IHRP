@@ -12,13 +12,13 @@
     x-data="emailInboxDrawer()"
     @keydown.escape.window="drawerOpen && closeDrawer()"
 >
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="rounded-lg bg-white p-6 shadow-sm">
+    <div >
+        <div class="card-base">
             <div class="mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Email inbox</h3>
-                <p class="mt-1 text-sm text-gray-500">
-                    Messages synced from the ingest mailbox (Microsoft Graph). Configure <code class="rounded bg-gray-100 px-1 text-xs">AZURE_*</code> and
-                    <code class="rounded bg-gray-100 px-1 text-xs">INBOUND_MAILBOX_UPN</code> in <code class="text-xs">.env</code>; run
+                <h3 class="text-base font-semibold" style="color:var(--fg-1)">Email inbox</h3>
+                <p style="margin-top:4px;font-size:13px;color:var(--fg-3)">
+                    Messages synced from the ingest mailbox (Microsoft Graph). Configure <code style="border-radius:var(--radius-sm);background:var(--bg-4);padding:1px 4px;font-size:11px;font-family:var(--font-mono)">AZURE_*</code> and
+                    <code style="border-radius:var(--radius-sm);background:var(--bg-4);padding:1px 4px;font-size:11px;font-family:var(--font-mono)">INBOUND_MAILBOX_UPN</code> in <code class="text-xs">.env</code>; run
                     <code class="text-xs">php artisan inbound-mail:sync</code> or wait for the scheduler.
                 </p>
             </div>
@@ -46,14 +46,14 @@
                 <div class="flex shrink-0 gap-2">
                     <button
                         type="submit"
-                        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        class="btn btn-primary btn-sm"
                     >
                         Search
                     </button>
                     @if ($inboxSearch !== '')
                         <a
                             href="{{ route('admin.users.index', request()->except(['inbox_search', 'inbox_page'])) }}"
-                            class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+                            class="btn btn-secondary btn-sm"
                         >
                             Clear
                         </a>
@@ -61,9 +61,9 @@
                 </div>
             </form>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
+            <div style="overflow-x:auto">
+                <table class="table">
+                    <thead >
                         <tr>
                             <th class="px-3 py-2 text-left font-semibold text-gray-700">From</th>
                             <th class="px-3 py-2 text-left font-semibold text-gray-700">Title</th>
@@ -73,7 +73,7 @@
                             <th class="px-3 py-2 text-right font-semibold text-gray-700">Action</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody >
                         @forelse ($inboxMessages as $msg)
                             <tr data-inbox-row="{{ $msg->id }}">
                                 <td class="px-3 py-2 align-top text-gray-900">
@@ -88,12 +88,12 @@
                                 </td>
                                 <td class="px-3 py-2 align-top text-gray-700">
                                     @if ($msg->attachments->isEmpty())
-                                        <span class="text-gray-400">—</span>
+                                        <span style="color:var(--fg-4)">—</span>
                                     @else
                                         <ul class="space-y-0.5 text-xs">
                                             @foreach ($msg->attachments as $att)
                                                 <li class="flex items-center gap-1">
-                                                    <span class="text-gray-400" aria-hidden="true">📎</span>
+                                                    <span style="color:var(--fg-4)" aria-hidden="true">📎</span>
                                                     <span class="truncate" title="{{ $att->filename }}">{{ $att->filename }}</span>
                                                 </li>
                                             @endforeach
@@ -161,14 +161,14 @@
             x-transition:leave="transform transition ease-in duration-150"
             x-transition:leave-start="translate-x-0"
             x-transition:leave-end="translate-x-full"
-            class="absolute inset-y-0 right-0 z-50 flex w-full max-w-xl flex-col bg-white shadow-xl"
+            class="card-base" style="position:fixed;inset-block:0;right:0;z-index:50;display:flex;flex-direction:column;width:100%;max-width:480px;border-radius:0;overflow-y:auto"
             @click.stop
         >
             <div class="flex items-start justify-between border-b border-gray-200 px-4 py-3">
                 <h4 class="pr-8 text-base font-semibold text-gray-900" x-text="detail && detail.subject ? detail.subject : 'Message'"></h4>
                 <button
                     type="button"
-                    class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                    class="btn btn-ghost btn-sm"
                     @click="closeDrawer()"
                     aria-label="Close"
                 >
@@ -184,7 +184,7 @@
                     <p class="text-red-600">Could not load message.</p>
                 </template>
                 <template x-if="!loading && detail && !detail.error">
-                    <div class="space-y-4">
+                    <div class="stack">
                         <div class="text-xs text-gray-500">
                             <div><span class="font-medium text-gray-600">From:</span> <span x-text="detail.from_label"></span></div>
                             <div class="mt-1"><span class="font-medium text-gray-600">Mailbox:</span> <span x-text="detail.mailbox_upn"></span></div>
@@ -214,7 +214,7 @@
                                     <select
                                         id="inbox-apply-consultant"
                                         x-model="selectedConsultantId"
-                                        class="w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-gray-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                                     >
                                         <option value="">Select consultant…</option>
                                         <template x-for="c in consultantsList" :key="c.id">
@@ -237,12 +237,12 @@
                             <p class="mb-2 text-xs text-gray-500">
                                 Import timesheet from here works only for the official bi-weekly Excel template (one consultant per file). For CSV or multi-row files, use <a href="{{ route('timesheets.index') }}" class="font-medium text-indigo-600 hover:underline">Timesheets → Upload</a>.
                             </p>
-                            <ul class="space-y-3" x-show="detail.attachments && detail.attachments.length">
+                            <ul style="display:flex;flex-direction:column;gap:12px" x-show="detail.attachments && detail.attachments.length">
                                 <template x-for="att in (detail.attachments || [])" :key="att.id">
-                                    <li class="rounded border border-gray-100 bg-gray-50 px-3 py-2 text-xs">
+                                    <li style="border-radius:var(--radius-sm);border:1px solid var(--border-1);background:var(--bg-2);padding:8px 12px;font-size:11px">
                                         <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                                             <span class="flex min-w-0 items-center gap-1">
-                                                <span class="text-gray-400" aria-hidden="true">📎</span>
+                                                <span style="color:var(--fg-4)" aria-hidden="true">📎</span>
                                                 <span class="truncate font-medium text-gray-800" x-text="att.filename"></span>
                                             </span>
                                             <a
@@ -428,12 +428,12 @@
             },
             badgeClass(status) {
                 if (status === 'read') {
-                    return 'inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600';
+                    return 'badge neutral';
                 }
                 if (status === 'new') {
                     return 'inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-800';
                 }
-                return 'inline-flex rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700';
+                return 'badge neutral';
             },
             syncRowStatus(id, status) {
                 if (!status) {

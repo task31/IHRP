@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">Reports &amp; budgets</h2>
+        <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Reports &amp; budgets</h2>
     </x-slot>
 
-    <div x-data="reportsPage()" x-init="loadBudget()" class="space-y-6">
+    <div x-data="reportsPage()" x-init="loadBudget()" class="stack">
         <div class="flex flex-wrap items-center gap-3">
             <label class="text-sm font-semibold text-gray-700">Fiscal year</label>
             <select x-model.number="year" @change="loadBudget()" class="rounded border border-gray-300 px-2 py-1.5 text-sm">
@@ -13,7 +13,7 @@
             </select>
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
+        <div class="card-base">
             <h3 class="font-semibold text-red-700">Year-end summary</h3>
             <p class="mt-1 text-sm text-gray-500">PDF with revenue by client / consultant for the selected year.</p>
             <button type="button" @click="generateYearEnd()" :disabled="loadingYearEnd"
@@ -23,7 +23,7 @@
             </button>
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
+        <div class="card-base">
             <h3 class="font-semibold text-green-700">QuickBooks CSV export</h3>
             <p class="mt-2 rounded bg-yellow-50 px-3 py-2 text-xs text-yellow-800">
                 Account names in the CSV must match your QuickBooks chart of accounts.
@@ -35,7 +35,7 @@
             </button>
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
+        <div class="card-base">
             <h3 class="font-semibold text-blue-700">Monthly report</h3>
             <div class="mt-2 flex flex-wrap items-center gap-3">
                 <select x-model.number="month" class="rounded border border-gray-300 px-2 py-1.5 text-sm">
@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
+        <div class="card-base">
             <h3 class="font-semibold text-gray-800">FY budgets</h3>
             <p class="mt-1 text-sm text-gray-500">BridgeBio vs other spend for the fiscal year selected above.</p>
             <div class="mt-4 space-y-4">
@@ -99,7 +99,7 @@
                                     <input type="number" step="0.01" min="0" x-model.number="budgetForm.otherBudget" class="mt-1 w-full rounded border border-gray-300 px-2 py-1 text-sm" />
                                 </label>
                                 <button type="submit" :disabled="budgetSaving"
-                                    class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 sm:col-span-2">
+                                    class="btn btn-primary sm:col-span-2">
                                     Save FY budgets
                                 </button>
                             </form>
@@ -111,7 +111,7 @@
 
         <div x-show="pdfUrl" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
             @keydown.escape.window="closePdf()">
-            <div class="flex h-[90vh] w-full max-w-5xl flex-col rounded-lg bg-white shadow-xl">
+            <div class="card-base" style="display:flex;flex-direction:column;max-height:90vh;width:100%;max-width:900px">
                 <div class="flex items-center justify-between border-b p-3">
                     <h3 class="font-semibold">PDF preview</h3>
                     <div class="flex gap-2">

@@ -9,16 +9,13 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <h2 class="text-xl font-semibold text-gray-800">Daily Call Reports</h2>
-                <p class="mt-1 text-sm text-gray-500">
+                <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Daily Call Reports</h2>
+                <p style="margin-top:4px;font-size:13px;color:var(--fg-3)">
                     Today: <span class="font-medium text-gray-700">{{ \Illuminate\Support\Carbon::parse($todayDate)->format('l, F j, Y') }}</span>
                 </p>
             </div>
             @can('admin')
-                <a
-                    href="{{ route('calls.report') }}"
-                    class="text-sm font-medium text-indigo-600 hover:text-indigo-800 hover:underline"
-                >Admin summaries</a>
+                <a href="{{ route('calls.report') }}" class="btn btn-secondary btn-sm">Admin summaries</a>
             @endcan
         </div>
     </x-slot>
@@ -32,7 +29,7 @@
     @endif
 
     <div
-        class="space-y-8"
+        class="stack"
         x-data="callReportForm(@js($myReportsByDate), @js($todayDate), @js(
             $errors->any()
                 ? [
@@ -57,20 +54,20 @@
                 ['label' => 'Submittals — ' . $statMonth, 'value' => $monthlyStats?->submittals ?? 0],
                 ['label' => 'Interviews — ' . $statMonth, 'value' => $monthlyStats?->interviews_scheduled ?? 0],
             ] as $stat)
-                <div class="rounded-lg bg-white px-4 py-3 shadow-sm">
-                    <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ $stat['label'] }}</p>
+                <div class="card-base">
+                    <p class="eyebrow">{{ $stat['label'] }}</p>
                     <p class="mt-1 text-2xl font-semibold text-gray-900">{{ $stat['value'] }}</p>
                 </div>
             @endforeach
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-sm font-semibold text-gray-700">Submit or update your report</h3>
-            <form method="POST" action="{{ route('calls.store') }}" class="space-y-4">
+        <div class="card-base">
+            <h3 class="eyebrow">Submit or update your report</h3>
+            <form method="POST" action="{{ route('calls.store') }}" class="stack">
                 @csrf
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div>
-                        <label for="report_date" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Date</label>
+                        <label for="report_date" class="eyebrow">Date</label>
                         <input
                             type="date"
                             name="report_date"
@@ -79,14 +76,14 @@
                             @change="syncFromDate()"
                             max="{{ $todayDate }}"
                             required
-                            class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                         />
                         @error('report_date')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="calls_made" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Calls made</label>
+                        <label for="calls_made" class="eyebrow">Calls made</label>
                         <input
                             type="number"
                             name="calls_made"
@@ -94,14 +91,14 @@
                             x-model.number="callsMade"
                             min="0"
                             required
-                            class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                         />
                         @error('calls_made')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="contacts_reached" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Contacts reached</label>
+                        <label for="contacts_reached" class="eyebrow">Contacts reached</label>
                         <input
                             type="number"
                             name="contacts_reached"
@@ -109,14 +106,14 @@
                             x-model.number="contactsReached"
                             min="0"
                             required
-                            class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                         />
                         @error('contacts_reached')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="submittals" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Submittals</label>
+                        <label for="submittals" class="eyebrow">Submittals</label>
                         <input
                             type="number"
                             name="submittals"
@@ -124,14 +121,14 @@
                             x-model.number="submittals"
                             min="0"
                             required
-                            class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                         />
                         @error('submittals')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
-                        <label for="interviews_scheduled" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Interviews scheduled</label>
+                        <label for="interviews_scheduled" class="eyebrow">Interviews scheduled</label>
                         <input
                             type="number"
                             name="interviews_scheduled"
@@ -139,7 +136,7 @@
                             x-model.number="interviewsScheduled"
                             min="0"
                             required
-                            class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                         />
                         @error('interviews_scheduled')
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -147,13 +144,13 @@
                     </div>
                 </div>
                 <div>
-                    <label for="notes" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Notes</label>
+                    <label for="notes" class="eyebrow">Notes</label>
                     <textarea
                         name="notes"
                         id="notes"
                         rows="3"
                         x-model="notes"
-                        class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                     ></textarea>
                     @error('notes')
                         <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -162,7 +159,7 @@
                 <div>
                     <button
                         type="submit"
-                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                        class="btn btn-primary"
                         x-text="hasExistingForDate ? 'Update Report' : 'Submit Report'"
                     ></button>
                 </div>
@@ -172,8 +169,8 @@
         <div>
             <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-700">History</h3>
-                    <p class="mt-1 text-xs text-gray-500">{{ $historyRangeLabel }}</p>
+                    <h3 style="font-size:13px;font-weight:600;color:var(--fg-2)">History</h3>
+                    <p style="margin-top:4px;font-size:11px;color:var(--fg-3)">{{ $historyRangeLabel }}</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     @foreach ([
@@ -190,18 +187,14 @@
                         @endphp
                         <a
                             href="{{ $href }}"
-                            @class([
-                                'rounded-md px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition',
-                                'bg-indigo-600 text-white ring-indigo-600' => $active,
-                                'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50' => ! $active,
-                            ])
+                            @class(['btn btn-sm', 'btn-primary' => $active, 'btn-secondary' => !$active])
                         >{{ $opt['label'] }}</a>
                     @endforeach
                 </div>
             </div>
-            <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+            <div class="card-base" style="padding:0;overflow-x:auto">
+                <table class="table">
+                    <thead >
                         <tr>
                             <th class="px-4 py-3">Date</th>
                             @if ($showEmployeeColumn)
@@ -214,9 +207,9 @@
                             <th class="px-4 py-3">Notes</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody >
                         @forelse ($reports as $report)
-                            <tr class="hover:bg-gray-50/80">
+                            <tr>
                                 <td class="whitespace-nowrap px-4 py-3 text-gray-900">
                                     {{ $report->report_date->format('M j, Y') }}
                                 </td>
@@ -233,7 +226,7 @@
                                     @if ($report->notes)
                                         <span class="line-clamp-2" title="{{ $report->notes }}">{{ $report->notes }}</span>
                                     @else
-                                        <span class="text-gray-400">—</span>
+                                        <span style="color:var(--fg-4)">—</span>
                                     @endif
                                 </td>
                             </tr>

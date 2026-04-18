@@ -23,37 +23,37 @@
 
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-gray-800">Settings</h2>
+        <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Settings</h2>
     </x-slot>
 
     <div x-data="settingsPage(@js($settingsArr), @js(['prefix' => $sequence->prefix, 'next_number' => $sequence->next_number]))" class="flex flex-col gap-6 md:flex-row">
         <nav class="w-full shrink-0 space-y-1 md:w-48">
             @foreach (['agency' => 'Agency Info', 'logo' => 'Logo', 'invoicing' => 'Invoice #', 'smtp' => 'SMTP', 'backup' => 'Backup', 'alerts' => 'Alerts'] as $tab => $label)
                 <button type="button" @click="activeTab = '{{ $tab }}'"
-                    :class="activeTab === '{{ $tab }}' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-600 hover:bg-gray-50'"
-                    class="w-full rounded px-3 py-2 text-left text-sm">{{ $label }}</button>
+                    :style="activeTab === '{{ $tab }}' ? 'background:rgba(34,211,238,0.12);color:var(--accent-400);font-weight:600;border-left:2px solid var(--accent-400);border-radius:0 var(--radius-sm) var(--radius-sm) 0' : 'color:var(--fg-3)'"
+                    style="display:block;width:100%;padding:8px 12px;text-align:left;font-size:13px;background:none;border:none;cursor:pointer;border-left:2px solid transparent">{{ $label }}</button>
             @endforeach
         </nav>
 
-        <div class="min-w-0 flex-1 rounded-lg bg-white p-5 shadow-sm">
-            <div x-show="activeTab === 'agency'" class="space-y-3">
-                <label class="block text-sm text-gray-600">Agency name
-                    <input type="text" x-model="form.agency_name" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+        <div class="card-base">
+            <div x-show="activeTab === 'agency'" style="display:flex;flex-direction:column;gap:12px">
+                <label style="font-size:13px;color:var(--fg-2)">Agency name
+                    <input type="text" x-model="form.agency_name" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">Mailing address
-                    <textarea x-model="form.agency_address" rows="3" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm"></textarea>
+                <label style="font-size:13px;color:var(--fg-2)">Mailing address
+                    <textarea x-model="form.agency_address" rows="3" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;"></textarea>
                 </label>
-                <label class="block text-sm text-gray-600">Phone
-                    <input type="text" x-model="form.agency_phone" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">Phone
+                    <input type="text" x-model="form.agency_phone" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">Email
-                    <input type="email" x-model="form.agency_email" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">Email
+                    <input type="email" x-model="form.agency_email" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
                 <button type="button" @click="save(['agency_name','agency_address','agency_phone','agency_email'])"
-                    class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Save</button>
+                    class="btn btn-primary btn-sm">Save</button>
             </div>
 
-            <div x-show="activeTab === 'logo'" class="space-y-3">
+            <div x-show="activeTab === 'logo'" style="display:flex;flex-direction:column;gap:12px">
                 <img x-show="form.agency_logo_base64" :src="form.agency_logo_base64" class="mb-4 max-h-20 rounded border border-gray-100 p-1" alt="Logo" />
                 <form method="POST" action="{{ route('settings.logo') }}" enctype="multipart/form-data" class="space-y-2">
                     @csrf
@@ -62,51 +62,51 @@
                 </form>
             </div>
 
-            <div x-show="activeTab === 'invoicing'" class="space-y-3">
-                <label class="block text-sm text-gray-600">Prefix
+            <div x-show="activeTab === 'invoicing'" style="display:flex;flex-direction:column;gap:12px">
+                <label style="font-size:13px;color:var(--fg-2)">Prefix
                     <input type="text" x-model="seq.prefix" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Next number
+                <label style="font-size:13px;color:var(--fg-2)">Next number
                     <input type="number" min="1" x-model.number="seq.next_number" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <p class="text-sm text-gray-600">Preview: <code class="rounded bg-gray-100 px-2 py-0.5 text-sm" x-text="invoicePreview()"></code></p>
-                <button type="button" @click="saveSequence()" class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Save</button>
+                <p class="text-sm text-gray-600">Preview: <code style="border-radius:var(--radius-sm);background:var(--bg-4);padding:2px 6px;font-size:12px;font-family:var(--font-mono)" x-text="invoicePreview()"></code></p>
+                <button type="button" @click="saveSequence()" class="btn btn-primary btn-sm">Save</button>
             </div>
 
-            <div x-show="activeTab === 'smtp'" class="space-y-3">
-                <label class="block text-sm text-gray-600">Host
-                    <input type="text" x-model="form.smtp_host" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+            <div x-show="activeTab === 'smtp'" style="display:flex;flex-direction:column;gap:12px">
+                <label style="font-size:13px;color:var(--fg-2)">Host
+                    <input type="text" x-model="form.smtp_host" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">Port
+                <label style="font-size:13px;color:var(--fg-2)">Port
                     <input type="number" x-model.number="form.smtp_port" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Username
-                    <input type="text" x-model="form.smtp_user" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">Username
+                    <input type="text" x-model="form.smtp_user" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">Password
-                    <input type="password" x-model="form.smtp_password" autocomplete="new-password" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">Password
+                    <input type="password" x-model="form.smtp_password" autocomplete="new-password" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">Encryption
+                <label style="font-size:13px;color:var(--fg-2)">Encryption
                     <select x-model="form.smtp_encryption" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm">
                         <option value="tls">tls</option>
                         <option value="ssl">ssl</option>
                     </select>
                 </label>
-                <label class="block text-sm text-gray-600">From name
-                    <input type="text" x-model="form.smtp_from_name" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">From name
+                    <input type="text" x-model="form.smtp_from_name" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
-                <label class="block text-sm text-gray-600">From address
-                    <input type="email" x-model="form.smtp_from_address" class="mt-1 w-full max-w-md rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                <label style="font-size:13px;color:var(--fg-2)">From address
+                    <input type="email" x-model="form.smtp_from_address" style="margin-top:6px;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;max-width:420px;" />
                 </label>
                 <div class="flex flex-wrap gap-2">
-                    <button type="button" @click="testSmtp()" class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50">Test connection</button>
+                    <button type="button" @click="testSmtp()" class="btn btn-secondary btn-sm">Test connection</button>
                     <button type="button"
                         @click="save(['smtp_host','smtp_port','smtp_user','smtp_password','smtp_encryption','smtp_from_name','smtp_from_address'])"
-                        class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Save</button>
+                        class="btn btn-primary btn-sm">Save</button>
                 </div>
             </div>
 
-            <div x-show="activeTab === 'backup'" class="space-y-3">
+            <div x-show="activeTab === 'backup'" style="display:flex;flex-direction:column;gap:12px">
                 <button type="button" @click="createBackup()" class="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">Create backup now</button>
                 <table class="mt-4 w-full text-sm">
                     <thead class="border-b text-left text-xs uppercase text-gray-500">
@@ -117,7 +117,7 @@
                             <th class="pb-2"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody >
                         @forelse ($backups as $b)
                             <tr>
                                 <td class="py-2 pr-2 text-gray-600">{{ $b->created_at }}</td>
@@ -136,25 +136,25 @@
                 </table>
             </div>
 
-            <div x-show="activeTab === 'alerts'" class="space-y-3">
-                <label class="block text-sm text-gray-600">Critical (days)
+            <div x-show="activeTab === 'alerts'" style="display:flex;flex-direction:column;gap:12px">
+                <label style="font-size:13px;color:var(--fg-2)">Critical (days)
                     <input type="number" min="0" x-model="form.alert_threshold_critical" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Warning (days)
+                <label style="font-size:13px;color:var(--fg-2)">Warning (days)
                     <input type="number" min="0" x-model="form.alert_threshold_warning" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Notice (days)
+                <label style="font-size:13px;color:var(--fg-2)">Notice (days)
                     <input type="number" min="0" x-model="form.alert_threshold_notice" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Budget warning (%)
+                <label style="font-size:13px;color:var(--fg-2)">Budget warning (%)
                     <input type="number" min="0" step="0.1" x-model="form.budget_alert_threshold_warning" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
-                <label class="block text-sm text-gray-600">Budget critical (%)
+                <label style="font-size:13px;color:var(--fg-2)">Budget critical (%)
                     <input type="number" min="0" step="0.1" x-model="form.budget_alert_threshold_critical" class="mt-1 w-full max-w-xs rounded border border-gray-300 px-2 py-1.5 text-sm" />
                 </label>
                 <button type="button"
                     @click="save(['alert_threshold_critical','alert_threshold_warning','alert_threshold_notice','budget_alert_threshold_warning','budget_alert_threshold_critical'])"
-                    class="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Save</button>
+                    class="btn btn-primary btn-sm">Save</button>
             </div>
         </div>
     </div>

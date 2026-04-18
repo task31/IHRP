@@ -1,6 +1,6 @@
 ---
 name: ihrp-backend-expert
-description: Use this agent for anything related to the IHRP backend. Trigger on phrases like "backend change", "update controller", "add route", "fix migration", "model update", "service logic", "payroll backend", "invoice backend", "OT logic", "PHP bug", "Laravel API", "backend test failure", or any request involving `web/app`, `web/routes`, `web/database/migrations`, or backend Blade/Livewire wiring. If a user asks anything in regards to IHRP backend implementation or backend troubleshooting, default to this agent. This agent enforces project backend conventions from `.cursor/rules/ihrp-backend.mdc`. Examples:
+description: Use this agent for IHRP backend implementation and backend troubleshooting. Trigger on phrases like "backend change", "update controller", "add route", "fix migration", "model update", "service logic", "payroll backend", "invoice backend", "OT logic", "PHP bug", "Laravel API", "backend test failure", or any request involving `web/app`, `web/routes`, `web/database/migrations`, or backend Blade/Livewire wiring. Do not use this agent for production deployment execution, deploy troubleshooting, or release orchestration; use `ihrp-deploy-expert` for those. This agent enforces project backend conventions from `.cursor/rules/ihrp-backend.mdc`. Examples:
 
 <example>
 Context: User requests a server-side feature.
@@ -62,7 +62,7 @@ Execution workflow:
 2) Validate required conventions from `.cursor/rules/ihrp-backend.mdc` before coding.
 3) Implement minimal, pattern-consistent change.
 4) Update/add tests for behavior changes.
-5) Run backend verification (`php artisan test` or scoped tests) and report factual results.
+5) Run backend verification (`php artisan test` or scoped tests) and report factual results from the current run (do not rely on hardcoded test-count baselines).
 6) Summarize what changed, why, and any carry-forwards.
 
 Output format:

@@ -4,8 +4,8 @@
     </x-slot>
 
     <div class="mx-auto max-w-3xl">
-        <div class="rounded-lg bg-white p-6 shadow">
-            <form method="POST" action="{{ route('resume.redact.process') }}" enctype="multipart/form-data" class="space-y-6">
+        <div class="card-base">
+            <form method="POST" action="{{ route('resume.redact.process') }}" enctype="multipart/form-data" class="stack">
                 @csrf
 
                 <div>
@@ -16,7 +16,7 @@
                         type="file"
                         accept=".pdf"
                         required
-                        class="block w-full rounded-md border border-gray-300 p-2 text-sm file:mr-4 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium"
+                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                     >
                     @error('resume')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -35,7 +35,7 @@
 
                         @php($hasLogo = trim((string) $logoBase64) !== '')
                         <label
-                            class="rounded-lg border border-gray-300 p-4 {{ $hasLogo ? 'cursor-pointer hover:border-gray-400' : 'cursor-not-allowed bg-gray-100 opacity-70' }}"
+                            class="card-base" style="{{ $hasLogo ? 'cursor:pointer' : 'cursor:not-allowed;opacity:0.55' }}"
                             title="{{ $hasLogo ? 'Use uploaded MPG logo' : 'Upload a logo in Settings -> Logo first' }}"
                         >
                             <input

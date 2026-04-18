@@ -53,33 +53,31 @@
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: j.error || 'Update failed', type: 'error' } }));
                 }
             },
-        }" class="space-y-6">
+        }" class="stack">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-xl font-semibold text-gray-800">Timesheets</h2>
+            <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Timesheets</h2>
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('timesheets.template') }}"
-                    class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('timesheets.template') }}" class="btn btn-secondary btn-sm">
                     Download template
                 </a>
                 @can('admin')
-                    <button type="button" x-on:click="importOpen = true"
-                        class="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">
+                    <button type="button" x-on:click="importOpen = true" class="btn btn-primary btn-sm">
                         Import timesheet
                     </button>
                 @endcan
             </div>
         </div>
         @can('admin')
-            <div class="rounded-lg bg-white p-5 shadow-sm" x-data="manualTimesheet(@js($consultantMeta))">
-                <h3 class="font-semibold text-gray-800">Manual entry</h3>
-                <p class="mt-1 text-xs text-gray-500">Enter bi-weekly hours (Mon–Sun × 2). Optional state override for OT preview.</p>
-                <form method="POST" action="{{ route('timesheets.store') }}" class="mt-4 space-y-4">
+            <div class="card-base" x-data="manualTimesheet(@js($consultantMeta))">
+                <h3 class="font-semibold" style="color:var(--fg-1)">Manual entry</h3>
+                <p style="margin-top:4px;font-size:12px;color:var(--fg-3)">Enter bi-weekly hours (Mon–Sun × 2). Optional state override for OT preview.</p>
+                <form method="POST" action="{{ route('timesheets.store') }}" class="mt-4" style="display:flex;flex-direction:column;gap:16px">
                     @csrf
                     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         <label class="block text-sm">
-                            <span class="text-gray-600">Consultant</span>
+                            <span class="eyebrow">Consultant</span>
                             <select name="consultant_id" x-model="consultantId" required
-                                class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                                style="margin-top:6px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;">
                                 <option value="">—</option>
                                 @foreach ($consultants as $c)
                                     <option value="{{ $c->id }}">{{ $c->full_name }}</option>
@@ -87,8 +85,9 @@
                             </select>
                         </label>
                         <label class="block text-sm">
-                            <span class="text-gray-600">Client (optional)</span>
-                            <select name="client_id" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                            <span class="eyebrow">Client (optional)</span>
+                            <select name="client_id"
+                                style="margin-top:6px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;">
                                 <option value="">Default from consultant</option>
                                 @foreach ($clients as $cl)
                                     <option value="{{ $cl->id }}">{{ $cl->name }}</option>
@@ -96,8 +95,9 @@
                             </select>
                         </label>
                         <label class="block text-sm">
-                            <span class="text-gray-600">State override (OT preview)</span>
-                            <select name="state" x-model="overrideState" class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm">
+                            <span class="eyebrow">State override (OT preview)</span>
+                            <select name="state" x-model="overrideState"
+                                style="margin-top:6px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;">
                                 <option value="">Use consultant state</option>
                                 @foreach ($usStates as $st)
                                     <option value="{{ $st }}">{{ $st }}</option>
@@ -105,27 +105,27 @@
                             </select>
                         </label>
                         <label class="block text-sm">
-                            <span class="text-gray-600">Pay period start</span>
+                            <span class="eyebrow">Pay period start</span>
                             <input type="date" name="pay_period_start" required
-                                class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                                style="margin-top:6px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;color-scheme:dark;" />
                         </label>
                         <label class="block text-sm">
-                            <span class="text-gray-600">Pay period end</span>
+                            <span class="eyebrow">Pay period end</span>
                             <input type="date" name="pay_period_end" required
-                                class="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm" />
+                                style="margin-top:6px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;color-scheme:dark;" />
                         </label>
                     </div>
 
                     @foreach ([1 => 'Week 1', 2 => 'Week 2'] as $wn => $label)
                         <div>
-                            <p class="text-sm font-medium text-gray-700">{{ $label }} (Mon → Sun)</p>
+                            <p style="font-size:12px;font-weight:600;color:var(--fg-2)">{{ $label }} (Mon → Sun)</p>
                             <div class="mt-2 grid grid-cols-7 gap-2">
                                 @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $i => $day)
-                                    <label class="text-xs text-gray-600">
+                                    <label style="font-size:11px;color:var(--fg-3)">
                                         {{ $day }}
                                         <input type="number" step="0.25" min="0" name="week{{ $wn }}[]" value="0"
                                             x-model.number="week{{ $wn }}[{{ $i }}]"
-                                            class="mt-0.5 w-full rounded border border-gray-300 px-1 py-1 text-sm" />
+                                            style="margin-top:4px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:4px;color:var(--fg-1);font-size:12px;outline:none;text-align:center;" />
                                     </label>
                                 @endforeach
                             </div>
@@ -133,30 +133,28 @@
                     @endforeach
 
                     <div class="flex flex-wrap items-end gap-3">
-                        <button type="button" @click="previewOT()"
-                            class="rounded border border-gray-400 bg-white px-3 py-1.5 text-sm hover:bg-gray-50">
+                        <button type="button" @click="previewOT()" class="btn btn-secondary btn-sm">
                             Preview OT
                         </button>
-                        <button type="submit"
-                            class="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                        <button type="submit" class="btn btn-primary btn-sm">
                             Save timesheet
                         </button>
                     </div>
 
                     <template x-if="otPreview">
-                        <div class="rounded border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900">
-                            <p class="font-medium">OT preview (approx.)</p>
-                            <p class="mt-1" x-text="'Regular: ' + otPreview.totals.regularHours + ' h, OT: ' + otPreview.totals.otHours + ' h, DT: ' + otPreview.totals.doubleTimeHours + ' h'"></p>
-                            <p class="text-gray-600" x-text="'Rule: ' + otPreview.otRuleApplied"></p>
+                        <div style="border-radius:var(--radius-md);border:1px solid rgba(34,211,238,0.2);background:rgba(34,211,238,0.06);padding:12px;font-size:12px;color:var(--accent-400)">
+                            <p style="font-weight:600">OT preview (approx.)</p>
+                            <p style="margin-top:4px;color:var(--fg-2)" x-text="'Regular: ' + otPreview.totals.regularHours + ' h, OT: ' + otPreview.totals.otHours + ' h, DT: ' + otPreview.totals.doubleTimeHours + ' h'"></p>
+                            <p style="color:var(--fg-3)" x-text="'Rule: ' + otPreview.otRuleApplied"></p>
                         </div>
                     </template>
                 </form>
             </div>
         @endcan
 
-        <div class="overflow-hidden rounded-lg bg-white shadow-sm">
-            <table class="min-w-full divide-y divide-gray-200 text-sm">
-                <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+        <div class="card-base" style="padding:0;overflow-x:auto">
+            <table class="table">
+                <thead>
                     <tr>
                         <th class="px-4 py-3">Pay period</th>
                         <th class="px-4 py-3">Consultant</th>
@@ -168,31 +166,29 @@
                         <th class="px-4 py-3">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody>
                     @forelse ($timesheets as $t)
                         <tr>
-                            <td class="px-4 py-2 text-gray-700">
-                                {{ $t['pay_period_label'] ?? '' }}
+                            <td>{{ $t['pay_period_label'] ?? '' }}</td>
+                            <td>{{ $t['consultant_name'] ?? '—' }}</td>
+                            <td style="color:var(--fg-3)">{{ $t['client_name'] ?? '—' }}</td>
+                            <td>{{ $t['total_regular_hours'] ?? '—' }}</td>
+                            <td>{{ $t['total_ot_hours'] ?? '—' }}</td>
+                            <td>{{ $t['total_dt_hours'] ?? '—' }}</td>
+                            <td>
+                                <span class="badge neutral">{{ $t['invoice_status'] ?? '—' }}</span>
                             </td>
-                            <td class="px-4 py-2">{{ $t['consultant_name'] ?? '—' }}</td>
-                            <td class="px-4 py-2 text-gray-600">{{ $t['client_name'] ?? '—' }}</td>
-                            <td class="px-4 py-2">{{ $t['total_regular_hours'] ?? '—' }}</td>
-                            <td class="px-4 py-2">{{ $t['total_ot_hours'] ?? '—' }}</td>
-                            <td class="px-4 py-2">{{ $t['total_dt_hours'] ?? '—' }}</td>
-                            <td class="px-4 py-2">
-                                <span class="rounded bg-gray-100 px-2 py-0.5 text-xs">{{ $t['invoice_status'] ?? '—' }}</span>
-                            </td>
-                            <td class="px-4 py-2">
+                            <td>
                                 <button type="button"
                                     x-on:click="viewOpen = true; viewLoading = true; viewData = null; apiFetch('{{ route('timesheets.show', $t['id']) }}').then(r => r.json()).then(d => { viewData = d; viewLoading = false; syncEditHoursFromViewData(); })"
-                                    class="text-xs font-medium text-indigo-600 hover:underline">
+                                    class="btn btn-ghost btn-sm">
                                     View
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">No timesheets yet.</td>
+                            <td colspan="8" style="text-align:center;padding:32px;color:var(--fg-3)">No timesheets yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -202,10 +198,10 @@
         {{-- Import modal --}}
         <div x-show="importOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="importOpen = false">
-            <div @click.away="importOpen = false" class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-                <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-                    <h3 class="text-lg font-semibold">Import timesheet</h3>
-                    <button type="button" @click="importOpen = false" class="text-gray-500 hover:text-gray-800">✕</button>
+            <div @click.away="importOpen = false" class="card-base" style="max-height:90vh;width:100%;max-width:640px;overflow-y:auto">
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-1);padding-bottom:12px;margin-bottom:16px">
+                    <h3 style="font-size:16px;font-weight:600;color:var(--fg-1)">Import timesheet</h3>
+                    <button type="button" @click="importOpen = false" style="color:var(--fg-3);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">✕</button>
                 </div>
                 <div class="mt-4">
                     @livewire('timesheet-wizard')
@@ -216,152 +212,151 @@
         {{-- View modal --}}
         <div x-show="viewOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             @keydown.escape.window="viewOpen = false">
-            <div @click.away="viewOpen = false" class="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl">
-                <div class="flex items-center justify-between border-b pb-3">
-                    <h3 class="text-lg font-semibold">Timesheet detail</h3>
-                    <button type="button" @click="viewOpen = false" class="text-gray-500 hover:text-gray-800">✕</button>
+            <div @click.away="viewOpen = false" class="card-base" style="max-height:90vh;width:100%;max-width:760px;overflow-y:auto">
+                <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-1);padding-bottom:12px;margin-bottom:16px">
+                    <h3 style="font-size:16px;font-weight:600;color:var(--fg-1)">Timesheet detail</h3>
+                    <button type="button" @click="viewOpen = false" style="color:var(--fg-3);background:none;border:none;cursor:pointer;font-size:16px;padding:4px">✕</button>
                 </div>
-                <div class="mt-4 text-sm">
+                <div style="font-size:13px">
                     <template x-if="viewLoading">
-                        <p class="text-gray-500">Loading…</p>
+                        <p style="color:var(--fg-3)">Loading…</p>
                     </template>
                     <template x-if="!viewLoading && viewData">
-                        <div class="space-y-5" x-init="syncEditHoursFromViewData()">
+                        <div style="display:flex;flex-direction:column;gap:20px" x-init="syncEditHoursFromViewData()">
 
                             {{-- Header info --}}
-                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg bg-gray-50 p-4 text-sm sm:grid-cols-3">
+                            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 24px;border-radius:var(--radius-md);background:var(--bg-2);padding:16px" class="sm:grid-cols-3">
                                 <div>
-                                    <p class="text-xs text-gray-500">Consultant</p>
-                                    <p class="font-medium" x-text="viewData.consultant_name ?? '—'"></p>
+                                    <p class="eyebrow">Consultant</p>
+                                    <p style="font-weight:500;margin-top:4px" x-text="viewData.consultant_name ?? '—'"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Client</p>
-                                    <p class="font-medium" x-text="viewData.client_name ?? '—'"></p>
+                                    <p class="eyebrow">Client</p>
+                                    <p style="font-weight:500;margin-top:4px" x-text="viewData.client_name ?? '—'"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Pay period</p>
-                                    <p class="font-medium" x-text="viewData.pay_period_label || (viewData.pay_period_start + ' – ' + viewData.pay_period_end)"></p>
+                                    <p class="eyebrow">Pay period</p>
+                                    <p style="font-weight:500;margin-top:4px" x-text="viewData.pay_period_label || (viewData.pay_period_start + ' – ' + viewData.pay_period_end)"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">State</p>
-                                    <p class="font-medium" x-text="viewData.state_snapshot"></p>
+                                    <p class="eyebrow">State</p>
+                                    <p style="font-weight:500;margin-top:4px" x-text="viewData.state_snapshot"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Pay rate</p>
-                                    <p class="font-medium" x-text="'$' + parseFloat(viewData.pay_rate_snapshot).toFixed(2) + ' / hr'"></p>
+                                    <p class="eyebrow">Pay rate</p>
+                                    <p class="mono-num" style="font-weight:500;margin-top:4px" x-text="'$' + parseFloat(viewData.pay_rate_snapshot).toFixed(2) + ' / hr'"></p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-gray-500">Bill rate</p>
-                                    <p class="font-medium" x-text="'$' + parseFloat(viewData.bill_rate_snapshot).toFixed(2) + ' / hr'"></p>
+                                    <p class="eyebrow">Bill rate</p>
+                                    <p class="mono-num" style="font-weight:500;margin-top:4px" x-text="'$' + parseFloat(viewData.bill_rate_snapshot).toFixed(2) + ' / hr'"></p>
                                 </div>
-                                <div class="col-span-2 sm:col-span-3">
-                                    <p class="text-xs text-gray-500">OT rule applied</p>
-                                    <p class="font-medium" x-text="viewData.ot_rule_applied"></p>
+                                <div style="grid-column:1/-1">
+                                    <p class="eyebrow">OT rule applied</p>
+                                    <p style="font-weight:500;margin-top:4px" x-text="viewData.ot_rule_applied"></p>
                                 </div>
                             </div>
 
                             @can('admin')
-                                <div x-show="!viewData.locked_for_hour_edit" class="rounded-lg border border-amber-100 bg-amber-50/80 p-4 text-sm">
-                                    <p class="font-medium text-amber-900">Edit daily hours</p>
-                                    <p class="mt-1 text-xs text-amber-800">Totals below use pay/bill rates and state <span class="font-medium">from when this timesheet was saved</span> (snapshots).</p>
-                                    <div class="mt-3 space-y-3">
+                                <div x-show="!viewData.locked_for_hour_edit" style="border-radius:var(--radius-md);border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.06);padding:16px">
+                                    <p style="font-weight:600;color:var(--warn-400)">Edit daily hours</p>
+                                    <p style="margin-top:4px;font-size:11px;color:var(--fg-3)">Totals below use pay/bill rates and state <span style="font-weight:600">from when this timesheet was saved</span> (snapshots).</p>
+                                    <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
                                         <div>
-                                            <p class="mb-1 text-xs font-medium text-gray-700">Week 1 (Mon → Sun)</p>
+                                            <p style="margin-bottom:6px;font-size:11px;font-weight:600;color:var(--fg-2)">Week 1 (Mon → Sun)</p>
                                             <div class="grid grid-cols-7 gap-1">
                                                 @foreach (['M', 'T', 'W', 'T', 'F', 'S', 'S'] as $i => $_d)
-                                                    <label class="text-center text-[10px] text-gray-500">{{ $_d }}
+                                                    <label style="text-align:center;font-size:10px;color:var(--fg-3)">{{ $_d }}
                                                         <input type="number" step="0.25" min="0" x-model.number="editW1[{{ $i }}]"
-                                                            class="mt-0.5 w-full rounded border border-gray-300 px-0.5 py-1 text-xs" />
+                                                            style="margin-top:4px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:3px;color:var(--fg-1);font-size:11px;outline:none;text-align:center;" />
                                                     </label>
                                                 @endforeach
                                             </div>
                                         </div>
                                         <div>
-                                            <p class="mb-1 text-xs font-medium text-gray-700">Week 2 (Mon → Sun)</p>
+                                            <p style="margin-bottom:6px;font-size:11px;font-weight:600;color:var(--fg-2)">Week 2 (Mon → Sun)</p>
                                             <div class="grid grid-cols-7 gap-1">
                                                 @foreach (['M', 'T', 'W', 'T', 'F', 'S', 'S'] as $i => $_d)
-                                                    <label class="text-center text-[10px] text-gray-500">{{ $_d }}
+                                                    <label style="text-align:center;font-size:10px;color:var(--fg-3)">{{ $_d }}
                                                         <input type="number" step="0.25" min="0" x-model.number="editW2[{{ $i }}]"
-                                                            class="mt-0.5 w-full rounded border border-gray-300 px-0.5 py-1 text-xs" />
+                                                            style="margin-top:4px;width:100%;background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:3px;color:var(--fg-1);font-size:11px;outline:none;text-align:center;" />
                                                     </label>
                                                 @endforeach
                                             </div>
                                         </div>
-                                        <button type="button" @click="saveEditedHours()" :disabled="editSaving"
-                                            class="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+                                        <button type="button" @click="saveEditedHours()" :disabled="editSaving" class="btn btn-primary btn-sm" style="align-self:flex-start">
                                             <span x-show="!editSaving">Save hours &amp; recalculate</span>
                                             <span x-show="editSaving">Saving…</span>
                                         </button>
                                     </div>
                                 </div>
-                                <div x-show="viewData.locked_for_hour_edit" class="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                                <div x-show="viewData.locked_for_hour_edit" style="border-radius:var(--radius-md);border:1px solid var(--border-1);background:var(--bg-2);padding:12px;font-size:11px;color:var(--fg-3)">
                                     Hours cannot be edited because an invoice is linked to this timesheet.
                                 </div>
                             @endcan
 
                             {{-- Hours & pay by week --}}
                             <div>
-                                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Hours &amp; Pay</p>
-                                <table class="w-full text-sm">
+                                <p class="eyebrow" style="margin-bottom:8px">Hours &amp; Pay</p>
+                                <table class="table" style="font-size:12px">
                                     <thead>
-                                        <tr class="border-b text-xs text-gray-500">
-                                            <th class="pb-1 text-left font-normal"></th>
-                                            <th class="pb-1 text-right font-normal">Reg hrs</th>
-                                            <th class="pb-1 text-right font-normal">OT hrs</th>
-                                            <th class="pb-1 text-right font-normal">DT hrs</th>
-                                            <th class="pb-1 text-right font-normal">Consultant pay</th>
-                                            <th class="pb-1 text-right font-normal">Client billable</th>
+                                        <tr>
+                                            <th></th>
+                                            <th style="text-align:right">Reg hrs</th>
+                                            <th style="text-align:right">OT hrs</th>
+                                            <th style="text-align:right">DT hrs</th>
+                                            <th style="text-align:right">Consultant pay</th>
+                                            <th style="text-align:right">Client billable</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-100">
+                                    <tbody>
                                         <tr>
-                                            <td class="py-1.5 text-gray-600">Week 1</td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_regular_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_ot_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week1_dt_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week1_regular_pay) + parseFloat(viewData.week1_ot_pay) + parseFloat(viewData.week1_dt_pay)).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week1_regular_billable) + parseFloat(viewData.week1_ot_billable) + parseFloat(viewData.week1_dt_billable)).toFixed(2)"></td>
+                                            <td style="color:var(--fg-3)">Week 1</td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week1_regular_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week1_ot_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week1_dt_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + (parseFloat(viewData.week1_regular_pay) + parseFloat(viewData.week1_ot_pay) + parseFloat(viewData.week1_dt_pay)).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + (parseFloat(viewData.week1_regular_billable) + parseFloat(viewData.week1_ot_billable) + parseFloat(viewData.week1_dt_billable)).toFixed(2)"></td>
                                         </tr>
                                         <tr>
-                                            <td class="py-1.5 text-gray-600">Week 2</td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_regular_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_ot_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.week2_dt_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week2_regular_pay) + parseFloat(viewData.week2_ot_pay) + parseFloat(viewData.week2_dt_pay)).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + (parseFloat(viewData.week2_regular_billable) + parseFloat(viewData.week2_ot_billable) + parseFloat(viewData.week2_dt_billable)).toFixed(2)"></td>
+                                            <td style="color:var(--fg-3)">Week 2</td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week2_regular_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week2_ot_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.week2_dt_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + (parseFloat(viewData.week2_regular_pay) + parseFloat(viewData.week2_ot_pay) + parseFloat(viewData.week2_dt_pay)).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + (parseFloat(viewData.week2_regular_billable) + parseFloat(viewData.week2_ot_billable) + parseFloat(viewData.week2_dt_billable)).toFixed(2)"></td>
                                         </tr>
-                                        <tr class="font-semibold">
-                                            <td class="py-1.5">Total</td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_regular_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_ot_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="parseFloat(viewData.total_dt_hours).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + parseFloat(viewData.total_consultant_cost).toFixed(2)"></td>
-                                            <td class="py-1.5 text-right" x-text="'$' + parseFloat(viewData.total_client_billable).toFixed(2)"></td>
+                                        <tr style="font-weight:600">
+                                            <td>Total</td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.total_regular_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.total_ot_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="parseFloat(viewData.total_dt_hours).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + parseFloat(viewData.total_consultant_cost).toFixed(2)"></td>
+                                            <td class="mono-num" style="text-align:right" x-text="'$' + parseFloat(viewData.total_client_billable).toFixed(2)"></td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             {{-- Margin summary --}}
-                            <div class="grid grid-cols-3 gap-3">
-                                <div class="rounded-lg border border-gray-200 p-3 text-center">
-                                    <p class="text-xs text-gray-500">Gross revenue</p>
-                                    <p class="mt-0.5 text-lg font-semibold" x-text="'$' + parseFloat(viewData.gross_revenue).toFixed(2)"></p>
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+                                <div style="border-radius:var(--radius-md);border:1px solid var(--border-1);background:var(--bg-2);padding:12px;text-align:center">
+                                    <p class="eyebrow">Gross revenue</p>
+                                    <p class="mono-num" style="margin-top:4px;font-size:18px;font-weight:600" x-text="'$' + parseFloat(viewData.gross_revenue).toFixed(2)"></p>
                                 </div>
-                                <div class="rounded-lg border border-gray-200 p-3 text-center">
-                                    <p class="text-xs text-gray-500">Gross margin</p>
-                                    <p class="mt-0.5 text-lg font-semibold" x-text="'$' + parseFloat(viewData.gross_margin_dollars).toFixed(2)"></p>
+                                <div style="border-radius:var(--radius-md);border:1px solid var(--border-1);background:var(--bg-2);padding:12px;text-align:center">
+                                    <p class="eyebrow">Gross margin</p>
+                                    <p class="mono-num" style="margin-top:4px;font-size:18px;font-weight:600" x-text="'$' + parseFloat(viewData.gross_margin_dollars).toFixed(2)"></p>
                                 </div>
-                                <div class="rounded-lg border border-gray-200 p-3 text-center">
-                                    <p class="text-xs text-gray-500">Margin %</p>
-                                    <p class="mt-0.5 text-lg font-semibold" x-text="parseFloat(viewData.gross_margin_percent).toFixed(1) + '%'"></p>
+                                <div style="border-radius:var(--radius-md);border:1px solid var(--border-1);background:var(--bg-2);padding:12px;text-align:center">
+                                    <p class="eyebrow">Margin %</p>
+                                    <p class="mono-num" style="margin-top:4px;font-size:18px;font-weight:600" x-text="parseFloat(viewData.gross_margin_percent).toFixed(1) + '%'"></p>
                                 </div>
                             </div>
 
                             {{-- Invoice status --}}
-                            <div class="flex items-center gap-2 text-sm text-gray-600">
-                                <span class="text-xs text-gray-500">Invoice status:</span>
-                                <span class="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium" x-text="viewData.invoice_status ?? 'pending'"></span>
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <span class="eyebrow">Invoice status:</span>
+                                <span class="badge neutral" x-text="viewData.invoice_status ?? 'pending'"></span>
                             </div>
 
                         </div>

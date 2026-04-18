@@ -9,24 +9,24 @@
     <x-slot name="header">
         <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <h2 class="text-xl font-semibold text-gray-800">Call report — by month</h2>
-                <p class="mt-1 text-sm text-gray-500">Team totals per calendar month. Administrators only.</p>
+                <h2 class="text-lg font-semibold" style="color:var(--fg-1)">Call report — by month</h2>
+                <p style="margin-top:4px;font-size:13px;color:var(--fg-3)">Team totals per calendar month. Administrators only.</p>
             </div>
         </div>
     </x-slot>
 
-    <div class="space-y-8">
+    <div class="stack">
         @include('calls.partials.report-tabs', ['active' => 'monthly'])
 
-        <div class="rounded-lg bg-white p-5 shadow-sm">
-            <h3 class="mb-4 text-sm font-semibold text-gray-700">Filters</h3>
+        <div class="card-base">
+            <h3 class="eyebrow">Filters</h3>
             <form method="GET" action="{{ route('calls.report.monthly') }}" class="flex flex-wrap items-end gap-4">
                 <div class="min-w-[10rem]">
-                    <label for="year" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Year</label>
+                    <label for="year" class="eyebrow">Year</label>
                     <select
                         name="year"
                         id="year"
-                        class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                     >
                         @foreach ($yearOptions as $y)
                             <option value="{{ $y }}" @selected((int) old('year', $filters['year'] ?? now()->year) === $y)>{{ $y }}</option>
@@ -37,11 +37,11 @@
                     @enderror
                 </div>
                 <div class="min-w-[12rem] flex-1">
-                    <label for="user_id" class="block text-xs font-medium uppercase tracking-wide text-gray-500">Employee</label>
+                    <label for="user_id" class="eyebrow">Employee</label>
                     <select
                         name="user_id"
                         id="user_id"
-                        class="mt-1 w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        style="background:var(--bg-2);border:1px solid var(--border-2);border-radius:var(--radius-md);padding:8px 10px;color:var(--fg-1);font-size:13px;outline:none;width:100%;"
                     >
                         <option value="" @selected((string) old('user_id', $filters['user_id'] ?? '') === '')>All users</option>
                         @foreach ($users as $u)
@@ -57,7 +57,7 @@
                 <div>
                     <button
                         type="submit"
-                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+                        class="btn btn-primary"
                     >
                         Apply
                     </button>
@@ -67,9 +67,9 @@
 
         <div>
             <h3 class="mb-3 text-sm font-semibold text-gray-700">Totals for {{ (int) ($filters['year'] ?? now()->year) }}</h3>
-            <div class="overflow-x-auto rounded-lg bg-white shadow-sm">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+            <div class="card-base" style="padding:0;overflow-x:auto">
+                <table class="table">
+                    <thead >
                         <tr>
                             <th class="px-4 py-3">Month</th>
                             <th class="px-4 py-3">Report days</th>
@@ -79,9 +79,9 @@
                             <th class="px-4 py-3">Interviews</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
+                    <tbody >
                         @foreach ($monthlyRows as $row)
-                            <tr class="hover:bg-gray-50/80">
+                            <tr>
                                 <td class="px-4 py-3 font-medium text-gray-900">{{ $row->label }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ $row->total_days }}</td>
                                 <td class="px-4 py-3 text-gray-700">{{ $row->total_calls }}</td>

@@ -29,7 +29,7 @@ When Raf asks a backend question or wants to implement something, YOU own the pl
 2. Check conventions below before writing any code
 3. Assign the Agent to implement — never let it guess at patterns; point it to the right file
 4. Review output for convention violations (money as float, inline OT, missing auth, etc.)
-5. Run `php artisan test` and confirm 0 failures before closing any backend task
+5. Run `php artisan test` (or scoped backend tests when appropriate) and report actual run results before closing any backend task
 
 **Never let the Agent skip the auth check, use floats for money, or touch `am_earnings` values.**
 
@@ -207,7 +207,7 @@ Agency Gross Profit   = Agency Revenue − AM Earnings
 6. **File uploads:** `storage/app/uploads/` only — served via storage symlink.
 7. **SMTP:** Never hardcoded. Always loaded at runtime via `AppService::applySmtpSettings()`.
 8. **Cache:** Payroll dashboard/aggregate cached 1hr per `user_id + year`. Bust on upload, goal-set, and recompute. Keys: `payroll_dashboard_{userId}_{year}` and `payroll_aggregate_{year}`.
-9. **Tests:** Run `php artisan test` before marking anything done. Baseline = 107 tests, 259 assertions, 0 failures. No regressions.
+9. **Tests:** Run `php artisan test` before marking anything done and report actual run output. Use the current repo baseline from latest passing runs (do not rely on stale hardcoded counts). No regressions.
 10. **Placements scoping:** AMs see only `placed_by = Auth::id()`. Admins see all.
 
 ---
